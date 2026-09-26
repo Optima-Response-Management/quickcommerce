@@ -6,25 +6,21 @@ import ProtectedLayout from "../components/layout/ProtectedLayout";
 import CustomerDashboardPage from "../features/campaigns/pages/CustomerDashboardPage";
 import AdminDashboardPage from "../features/campaigns/pages/AdminDashboardPage";
 import UploadPage from "../features/campaigns/pages/UploadPage";
-// import DataGridPage from "../features/campaigns/pages/DataGridPage";
-import DataGridPage from "../features/campaigns/components/CampaignDataGrid";
+import DataGridPage from "../features/campaigns/pages/DataGridPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
-  // { path: "/unauthorized", element: <div className="p-10">Not authorized</div> },
 
   {
-    element: <ProtectedRoute />, // must be logged in
+    element: <ProtectedRoute />,
     children: [
       {
-        element: <ProtectedLayout />, // sidebar + topbar shell
+        element: <ProtectedLayout />,
         children: [
-          // Customer-only
           {
             element: <RoleRoute allowedRoles={["customer"]} />,
             children: [{ path: "/dashboard", element: <CustomerDashboardPage /> }],
           },
-          // Super admin-only
           {
             element: <RoleRoute allowedRoles={["super_admin"]} />,
             children: [

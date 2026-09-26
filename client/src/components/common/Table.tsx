@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 
 export interface Column<T> {
   key: keyof T;
@@ -11,6 +11,7 @@ interface TableProps<T> {
   data: T[];
   columns: Column<T>[];
   pageSize?: number;
+  title?: string;
 }
 
 type SortDirection = "asc" | "desc" | null;
@@ -18,15 +19,25 @@ type SortDirection = "asc" | "desc" | null;
 export default function Table<T extends Record<string, any>>({
   data,
   columns,
-  pageSize = 5,
+  pageSize = 10,
+  title,
 }: TableProps<T>) {
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+
+  const filteredData = useMemo(() => {
+    if (!search.trim()) return data;
+    const q = search.toLowerCase();
+    return data.filter((row) =>
+      columns.some((col) => String(row[col.key] ?? "").toLowerCase().includes(q))
+    );
+  }, [data, search, columns]);
 
   const sortedData = useMemo(() => {
-    if (!sortKey || !sortDir) return data;
-    return [...data].sort((a, b) => {
+    if (!sortKey || !sortDir) return filteredData;
+    return [...filteredData].sort((a, b) => {
       const aVal = a[sortKey];
       const bVal = b[sortKey];
       if (typeof aVal === "number" && typeof bVal === "number") {
@@ -36,10 +47,12 @@ export default function Table<T extends Record<string, any>>({
         ? String(aVal).localeCompare(String(bVal))
         : String(bVal).localeCompare(String(aVal));
     });
-  }, [data, sortKey, sortDir]);
+  }, [filteredData, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
   const paginatedData = sortedData.slice((page - 1) * pageSize, page * pageSize);
+  const startRow = sortedData.length === 0 ? 0 : (page - 1) * pageSize + 1;
+  const endRow = Math.min(page * pageSize, sortedData.length);
 
   const handleSort = (key: keyof T) => {
     if (sortKey !== key) {
@@ -63,8 +76,31 @@ export default function Table<T extends Record<string, any>>({
     );
   };
 
+  const pageNumbers = useMemo(() => {
+    const range: number[] = [];
+    const start = Math.max(1, page - 2);
+    const end = Math.min(totalPages, start + 4);
+    for (let i = start; i <= end; i++) range.push(i);
+    return range;
+  }, [page, totalPages]);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        {title && <h3 className="text-sm font-semibold text-brand-black">{title}</h3>}
+        <div className="flex items-center gap-2 ml-auto">
+          <label className="text-sm text-brand-gray">Search:</label>
+          <input
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange"
+          />
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -73,7 +109,7 @@ export default function Table<T extends Record<string, any>>({
                 <th
                   key={String(col.key)}
                   onClick={() => handleSort(col.key)}
-                  className="px-5 py-3 font-medium cursor-pointer select-none hover:text-brand-black transition-colors"
+                  className="px-5 py-3 font-medium cursor-pointer select-none hover:text-brand-black transition-colors whitespace-nowrap"
                 >
                   <div className="flex items-center gap-1.5">
                     {col.label}
@@ -87,14 +123,14 @@ export default function Table<T extends Record<string, any>>({
             {paginatedData.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-5 py-10 text-center text-brand-gray">
-                  No data available
+                  No matching records found
                 </td>
               </tr>
             ) : (
               paginatedData.map((row, i) => (
                 <tr key={i} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
                   {columns.map((col) => (
-                    <td key={String(col.key)} className="px-5 py-3 text-brand-gray">
+                    <td key={String(col.key)} className="px-5 py-3 text-brand-gray whitespace-nowrap">
                       {col.render ? col.render(row) : String(row[col.key] ?? "—")}
                     </td>
                   ))}
@@ -105,25 +141,37 @@ export default function Table<T extends Record<string, any>>({
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-        <p className="text-xs text-brand-gray">
-          Page {page} of {totalPages} · {sortedData.length} rows
+        <p className="text-sm text-brand-gray">
+          Showing {startRow} to {endRow} of {sortedData.length} entries
         </p>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="p-1.5 rounded-md text-brand-gray hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 rounded-md text-sm font-medium border border-gray-300 text-brand-gray hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            Previous
           </button>
+          {pageNumbers.map((n) => (
+            <button
+              key={n}
+              onClick={() => setPage(n)}
+              className={`w-9 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                n === page
+                  ? "bg-brand-orange text-white"
+                  : "border border-gray-300 text-brand-gray hover:bg-gray-50"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="p-1.5 rounded-md text-brand-gray hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 rounded-md text-sm font-medium border border-gray-300 text-brand-gray hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <ChevronRight className="w-4 h-4" />
+            Next
           </button>
         </div>
       </div>
