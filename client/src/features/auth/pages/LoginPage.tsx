@@ -1,24 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { useDispatch } from "react-redux";
 import LoginForm from "../components/LoginForm";
-// import { useLoginMutation } from "../authApi";
-import type { LoginFormValues } from "../authSchema";
 import { mockLogin } from "../mockAuth";
+import { setCredentials } from "../authSlice";
+import type { LoginFormValues } from "../authSchema";
 
 export default function LoginPage() {
-  // const [login, { isLoading }] = useLoginMutation();
-    const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-    const handleLogin = async (values: LoginFormValues) => {
+  const handleLogin = async (values: LoginFormValues) => {
     setError("");
     setLoading(true);
     try {
       const result = await mockLogin(values);
-      localStorage.setItem("token", result.token); // temporary, for testing only
-      navigate("/dashboard");
+      dispatch(setCredentials({ user: result.user, token: result.token }));
+
+      navigate(result.user.role === "super_admin" ? "/admin/dashboard" : "/dashboard");
     } catch {
       setError("Invalid email or password");
     } finally {
