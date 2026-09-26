@@ -1,21 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import LoginForm from "../components/LoginForm";
-import { useLoginMutation } from "../authApi";
+// import { useLoginMutation } from "../authApi";
 import type { LoginFormValues } from "../authSchema";
+import { mockLogin } from "../mockAuth";
 
 export default function LoginPage() {
-  const [login, { isLoading }] = useLoginMutation();
+  // const [login, { isLoading }] = useLoginMutation();
+    const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (values: LoginFormValues) => {
+    const handleLogin = async (values: LoginFormValues) => {
     setError("");
+    setLoading(true);
     try {
-      await login(values).unwrap();
+      const result = await mockLogin(values);
+      localStorage.setItem("token", result.token); // temporary, for testing only
       navigate("/dashboard");
     } catch {
       setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,7 +74,7 @@ export default function LoginPage() {
             Sign in to your campaign dashboard
           </p>
 
-          <LoginForm onSubmit={handleLogin} loading={isLoading} error={error} />
+          <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
 
           <p className="text-center text-sm text-brand-gray mt-8">
             Having trouble signing in?{" "}
