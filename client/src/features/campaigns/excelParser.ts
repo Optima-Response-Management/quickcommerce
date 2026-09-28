@@ -67,7 +67,6 @@ export async function parseExcelFile(
     orders: toNumber(row[map.orders]),
     roas: toNumber(row[map.roas]),
     status: String(row[map.status] ?? ""),
-    uniqueConsiderations: map.uniqueConsiderations ? toNumber(row[map.uniqueConsiderations]) : undefined,
-    uniqueReach: map.uniqueReach ? toNumber(row[map.uniqueReach]) : undefined,
+   
   }));
 }
