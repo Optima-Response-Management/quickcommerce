@@ -1,11 +1,13 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Role } from "../users/types";
+import type { Feature } from "../users/access";
 
 export interface AuthUser {
   email: string;
   name: string;
   role: Role;
   platforms: string[];
+  features: Feature[];
 }
 
 interface AuthState {

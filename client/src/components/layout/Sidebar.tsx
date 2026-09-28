@@ -15,8 +15,7 @@ const navItems: { to: string; label: string; icon: typeof Upload; feature: Featu
 export default function Sidebar() {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
-  const links = navItems.filter((item) => canAccess(user?.role, item.feature));
-
+const links = navItems.filter((item) => canAccess(user, item.feature));
   return (
     <aside className="w-64 h-screen bg-brand-black flex flex-col sticky top-0">
       <div className="flex items-center gap-2.5 px-6 h-16 border-b border-white/10">

@@ -8,6 +8,7 @@ export const createUserSchema = z
     role: z.enum(["super_admin", "admin", "user"]),
     platformAccess: z.enum(["all", "custom"]),
     platforms: z.array(z.string()),
+    features: z.array(z.enum(["dashboard", "data_grid", "upload_data"])).min(1, "Select at least one feature"),
   })
   .refine((d) => d.platformAccess === "all" || d.platforms.length > 0, {
     message: "Select at least one platform",

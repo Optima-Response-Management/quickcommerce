@@ -1,3 +1,5 @@
+import type { Feature } from "./access";
+
 export type Role = "super_admin" | "admin" | "user";
 export type PlatformAccess = "all" | "custom";
 
@@ -15,6 +17,8 @@ export interface ManagedUser {
   email: string;
   role: Role;
   platformAccess: PlatformAccess;
-  platforms: string[]; // the platforms this person can see
+  platforms: string[];
+  features: Feature[]; // which screens this person can open
+  createdBy: string;   // email of the super admin who created this user ("system" for seeded accounts)
   createdAt: string;
 }

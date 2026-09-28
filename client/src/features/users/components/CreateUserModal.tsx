@@ -1,11 +1,15 @@
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
 import { createUserSchema, type CreateUserFormValues } from "../userSchema";
 import { ROLES, ROLE_LABELS, type PlatformAccess, type Role } from "../types";
-// Import feature constants
-import { FEATURE_LABELS, ROLE_ACCESS, type Feature } from "../access"; 
+import {
+  GRANTABLE_FEATURES,
+  FEATURE_LABELS,
+  FEATURE_DESCRIPTIONS,
+  defaultFeatures,
+  type GrantableFeature,
+} from "../access";
 import { PLATFORMS } from "../../campaigns/filterOptions";
 
 interface CreateUserModalProps {
@@ -40,26 +44,24 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
       role: "user",
       platformAccess: "all",
       platforms: [],
-      // Set default features based on the default 'user' role
-      features: ROLE_ACCESS["user"], 
+      features: defaultFeatures("user"),
     },
   });
 
   const role = watch("role");
   const platformAccess = watch("platformAccess");
   const platforms = watch("platforms");
-  const selectedFeatures = watch("features") || [];
-
-  // Automatically update features when the selected role changes
-  useEffect(() => {
-    if (role) {
-      setValue("features", ROLE_ACCESS[role] || []);
-    }
-  }, [role, setValue]);
+  const features = watch("features");
 
   if (!open) return null;
 
-  const features = Object.keys(FEATURE_LABELS) as Feature[];
+  const isSuperAdmin = role === "super_admin";
+
+  const handleRoleChange = (r: Role) => {
+    setValue("role", r);
+    setValue("features", defaultFeatures(r)); // pre-tick that role's defaults
+    clearErrors("features");
+  };
 
   const handleAccessChange = (type: PlatformAccess) => {
     setValue("platformAccess", type);
@@ -71,17 +73,15 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
     setValue("platforms", next, { shouldValidate: true });
   };
 
-  const toggleFeature = (f: Feature) => {
-    const next = selectedFeatures.includes(f)
-      ? selectedFeatures.filter((x) => x !== f)
-      : [...selectedFeatures, f];
+  const toggleFeature = (f: GrantableFeature) => {
+    const next = features.includes(f) ? features.filter((x) => x !== f) : [...features, f];
     setValue("features", next, { shouldValidate: true });
   };
 
   const submit = (values: CreateUserFormValues) => {
     onCreate({
       ...values,
-      platforms: values.platformAccess === "all" ? PLATFORMS : values.platforms,
+      platforms: values.platformAccess === "all" ? [...PLATFORMS] : values.platforms,
     });
     reset();
     onClose();
@@ -95,16 +95,14 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-brand-black">Create User</h3>
           <button onClick={handleClose} className="p-1.5 rounded-md text-brand-gray hover:bg-gray-100">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(submit)} noValidate className="px-6 py-5 space-y-5">
-          {/* Name */}
+        <form onSubmit={handleSubmit(submit)} noValidate className="px-6 py-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">Full name</label>
             <input
@@ -115,7 +113,6 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             {errors.name && <p className="text-xs text-red-600 mt-1.5">{errors.name.message}</p>}
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">Email address</label>
             <input
@@ -127,7 +124,6 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email.message}</p>}
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">Temporary password</label>
             <input
@@ -139,45 +135,55 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password.message}</p>}
           </div>
 
-          {/* Role Selection */}
+          {/* Role */}
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">Role</label>
             <div className="grid grid-cols-3 gap-3">
-              {ROLES.map((r: Role) => (
-                <button key={r} type="button" onClick={() => setValue("role", r)} className={cardClass(role === r)}>
+              {ROLES.map((r) => (
+                <button key={r} type="button" onClick={() => handleRoleChange(r)} className={cardClass(role === r)}>
                   <p className="text-sm font-semibold text-brand-black">{ROLE_LABELS[r]}</p>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* 🌟 NEW: Feature Access Section 🌟 */}
+          {/* Feature access */}
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Feature Access</label>
-            <p className="text-xs text-brand-gray mb-2.5">Auto-filled based on role, but you can customize it.</p>
-            <div className="grid grid-cols-2 gap-2">
-              {features.map((f) => (
+            <label className="block text-sm font-medium text-brand-black mb-1.5">Feature access</label>
+            <div className="space-y-2">
+              {GRANTABLE_FEATURES.map((f) => (
                 <label
                   key={f}
-                  className="flex items-center gap-2.5 rounded-lg border border-gray-300 px-3.5 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors"
+                  className={`flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${
+                    isSuperAdmin
+                      ? "border-gray-200 bg-gray-50 cursor-not-allowed"
+                      : "border-gray-300 cursor-pointer hover:bg-gray-50"
+                  }`}
                 >
                   <input
                     type="checkbox"
-                    checked={selectedFeatures.includes(f)}
+                    checked={features.includes(f)}
+                    disabled={isSuperAdmin}
                     onChange={() => toggleFeature(f)}
-                    className="w-4 h-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange/40"
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange/40"
                   />
-                  <span className="text-sm text-brand-black">{FEATURE_LABELS[f]}</span>
+                  <div>
+                    <p className="text-sm font-medium text-brand-black">{FEATURE_LABELS[f]}</p>
+                    <p className="text-xs text-brand-gray">{FEATURE_DESCRIPTIONS[f]}</p>
+                  </div>
                 </label>
               ))}
             </div>
+            {isSuperAdmin && (
+              <p className="text-xs text-brand-gray mt-1.5">Super Admins always have full feature access.</p>
+            )}
             {errors.features && <p className="text-xs text-red-600 mt-1.5">{errors.features.message}</p>}
           </div>
 
           {/* Platform access */}
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">Platform access</label>
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => handleAccessChange("all")} className={cardClass(platformAccess === "all")}>
                 <p className="text-sm font-semibold text-brand-black">All Platforms</p>
                 <p className="text-xs text-brand-gray mt-0.5">See data from every platform</p>
@@ -189,11 +195,11 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             </div>
 
             {platformAccess === "custom" && (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 mt-3">
                 {PLATFORMS.map((p) => (
                   <label
                     key={p}
-                    className="flex items-center gap-2.5 rounded-lg border border-gray-300 px-3.5 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors"
+                    className="flex items-center gap-2.5 rounded-lg border border-gray-300 px-3.5 py-2.5 cursor-pointer hover:bg-gray-50"
                   >
                     <input
                       type="checkbox"
@@ -209,7 +215,6 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             {errors.platforms && <p className="text-xs text-red-600 mt-1.5">{errors.platforms.message}</p>}
           </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"

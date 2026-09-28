@@ -6,7 +6,7 @@ import { canAccess, type Feature } from "../features/users/access";
 export default function RoleRoute({ feature }: { feature: Feature }) {
   const user = useSelector((state: RootState) => state.auth.user);
 
-  if (!canAccess(user?.role, feature)) {
+  if (!canAccess(user, feature)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
