@@ -13,7 +13,7 @@ export const PLATFORMS = ["Blinkit", "BigBasket", "Flipkart", "Swiggy Instamart"
 export const platformOptions = toOptions(PLATFORMS);
 export const marketOptions = toOptions(["Tamil Nadu", "Karnataka", "Andhra Pradesh", "Kerala"]);
 export const brandOptions = toOptions(["Gold Winner", "Dheepam"]);
-export const productOptions = toOptions(["Rice Bran Oil", "Gingelly Oil", "Groundnut Oil", "Refined Sunflower Oil"]);
+export const productOptions = toOptions(["Rice Bran Oil", "Gingelly Oil", "Groundnut Oil", "Refined Sunflower Oil" , "Dheepam Oil"]);
 
 export const dateOptions: FilterOption[] = [
   { label: "All", value: "all" },
