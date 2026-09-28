@@ -1,27 +1,21 @@
+import { mockUsers } from "../users/mockUsers";
 import type { LoginFormValues } from "./authSchema";
+import type { AuthUser } from "./authSlice";
 
-// Fake users for frontend-only testing
-const MOCK_USERS = [
-  { email: "admin@test.com", password: "123456", role: "super_admin" as const },
-  { email: "customer@test.com", password: "123456", role: "customer" as const },
-];
+const DEMO_PASSWORD = "123456"; // same password for every mock user
 
 export function mockLogin(values: LoginFormValues) {
-  return new Promise<{ token: string; user: { email: string; role: string } }>(
-    (resolve, reject) => {
-      setTimeout(() => {
-        const match = MOCK_USERS.find(
-          (u) => u.email === values.email && u.password === values.password
-        );
-        if (match) {
-          resolve({
-            token: "mock-jwt-token",
-            user: { email: match.email, role: match.role },
-          });
-        } else {
-          reject(new Error("Invalid credentials"));
-        }
-      }, 500); // simulate network delay
-    }
-  );
+  return new Promise<{ token: string; user: AuthUser }>((resolve, reject) => {
+    setTimeout(() => {
+      const match = mockUsers.find((u) => u.email.toLowerCase() === values.email.toLowerCase());
+      if (match && values.password === DEMO_PASSWORD) {
+        resolve({
+          token: "mock-jwt-token",
+          user: { email: match.email, name: match.name, role: match.role, platforms: match.platforms },
+        });
+      } else {
+        reject(new Error("Invalid credentials"));
+      }
+    }, 500);
+  });
 }

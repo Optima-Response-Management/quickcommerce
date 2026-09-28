@@ -6,6 +6,9 @@ export interface CityRow {
   revenue: number;
   orders: number;
   roas: number;
+  brandName?: string;
+  product?: string;
+  date?: string; // YYYY-MM-DD
 }
 
 export interface CampaignRow {
@@ -19,4 +22,7 @@ export interface CampaignRow {
   orders: number;
   roas: number;
   status: string;
+  market?: string;
+  product?: string;
+  date?: string; // YYYY-MM-DD
 }

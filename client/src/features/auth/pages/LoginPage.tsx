@@ -14,19 +14,18 @@ export default function LoginPage() {
 
   const handleLogin = async (values: LoginFormValues) => {
     setError("");
-    setLoading(true);
+    setLoading(true); 
     try {
       const result = await mockLogin(values);
-      dispatch(setCredentials({ user: result.user, token: result.token }));
-
-      navigate(result.user.role === "super_admin" ? "/admin/dashboard" : "/dashboard");
-    } catch {
+dispatch(setCredentials({ user: result.user, token: result.token }));
+navigate("/dashboard");
+    } catch { 
       setError("Invalid email or password");
     } finally {
       setLoading(false);
     }
   };
-
+ 
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}

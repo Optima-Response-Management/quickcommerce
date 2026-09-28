@@ -1,16 +1,13 @@
 import { Navigate, Outlet } from "react-router";
 import { useSelector } from "react-redux";
 import type { RootState } from "../app/store";
+import { canAccess, type Feature } from "../features/users/access";
 
-interface RoleRouteProps {
-  allowedRoles: ("super_admin" | "customer")[];
-}
-
-export default function RoleRoute({ allowedRoles }: RoleRouteProps) {
+export default function RoleRoute({ feature }: { feature: Feature }) {
   const user = useSelector((state: RootState) => state.auth.user);
 
-  if (!user || !allowedRoles.includes(user.role)) {
-    // return <Navigate to="/unauthorized" replace />;
+  if (!canAccess(user?.role, feature)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <Outlet />;

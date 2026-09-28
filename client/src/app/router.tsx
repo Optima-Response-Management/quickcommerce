@@ -1,38 +1,34 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import LoginPage from "../features/auth/pages/LoginPage";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import RoleRoute from "../routes/RoleRoute";
 import ProtectedLayout from "../components/layout/ProtectedLayout";
-import CustomerDashboardPage from "../features/campaigns/pages/CustomerDashboardPage";
-import AdminDashboardPage from "../features/campaigns/pages/AdminDashboardPage";
+import DashboardPage from "../features/campaigns/pages/DashboardPage";
 import UploadPage from "../features/campaigns/pages/UploadPage";
 import DataGridPage from "../features/campaigns/pages/DataGridPage";
+import UsersPage from "../features/users/pages/UsersPage";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
+  {
+    path: "/unauthorized",
+    element: <div className="p-10 text-brand-black">You don't have access to this page.</div>,
+  },
 
   {
-    element: <ProtectedRoute />,
+    element: <ProtectedRoute />, // must be logged in
     children: [
       {
-        element: <ProtectedLayout />,
+        element: <ProtectedLayout />, // sidebar + topbar shell
         children: [
-          {
-            element: <RoleRoute allowedRoles={["customer"]} />,
-            children: [{ path: "/dashboard", element: <CustomerDashboardPage /> }],
-          },
-          {
-            element: <RoleRoute allowedRoles={["super_admin"]} />,
-            children: [
-              { path: "/admin/dashboard", element: <AdminDashboardPage /> },
-              { path: "/admin/upload", element: <UploadPage /> },
-              { path: "/admin/grid", element: <DataGridPage /> },
-            ],
-          },
+          { element: <RoleRoute feature="dashboard" />, children: [{ path: "/dashboard", element: <DashboardPage /> }] },
+          { element: <RoleRoute feature="upload_data" />, children: [{ path: "/admin/upload", element: <UploadPage /> }] },
+          { element: <RoleRoute feature="data_grid" />, children: [{ path: "/admin/grid", element: <DataGridPage /> }] },
+          { element: <RoleRoute feature="manage_users" />, children: [{ path: "/admin/users", element: <UsersPage /> }] },
         ],
       },
     ],
   },
 
-  { path: "/", element: <LoginPage /> },
+  { path: "/", element: <Navigate to="/dashboard" replace /> },
 ]);

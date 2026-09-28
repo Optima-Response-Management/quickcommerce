@@ -1,66 +1,68 @@
 import { useState, useMemo } from "react";
-import FilterBar, { type FilterOption } from "../components/FilterBar";
+import FilterBar from "../components/FilterBar";
 import Table, { type Column } from "../../../components/common/Table";
 import { mockCampaignData, mockCityData } from "../mockData";
+import {
+  platformOptions,
+  marketOptions,
+  brandOptions,
+  productOptions,
+  dateOptions,
+} from "../filterOptions";
+import { matchesDate, type DateFilterValue } from "../dateUtils";
 import type { CampaignRow, CityRow } from "../types";
 
-const ALL: FilterOption = { label: "All", value: "all" };
-const DATE_OPTIONS: FilterOption[] = [
-  ALL,
-  { label: "Today", value: "today" },
-  { label: "Last 7 Days", value: "last7" },
-  { label: "Last 30 Days", value: "last30" },
-  { label: "This Month", value: "thisMonth" },
-];
+interface AppliedFilters {
+  platform: string;
+  market: string;
+  brand: string;
+  product: string;
+  date: DateFilterValue;
+}
+
+const INITIAL_FILTERS: AppliedFilters = {
+  platform: "all",
+  market: "all",
+  brand: "all",
+  product: "all",
+  date: { preset: "all" },
+};
+
+const platformBadge = (name: string) => (
+  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-brand-orange-dark">
+    {name}
+  </span>
+);
 
 export default function DataGridPage() {
   const [tab, setTab] = useState<"campaign" | "city">("campaign");
 
+  // Draft values (what the dropdowns show) vs applied values (what the table uses)
   const [platform, setPlatform] = useState("all");
-  const [date, setDate] = useState("all");
   const [market, setMarket] = useState("all");
   const [brand, setBrand] = useState("all");
   const [product, setProduct] = useState("all");
-
-  const [applied, setApplied] = useState({ platform: "all", market: "all", brand: "all" });
+  const [date, setDate] = useState<DateFilterValue>({ preset: "all" });
+  const [applied, setApplied] = useState<AppliedFilters>(INITIAL_FILTERS);
 
   const source = tab === "campaign" ? mockCampaignData : mockCityData;
-
-  const platformOptions: FilterOption[] = [
-    ALL,
-    ...Array.from(new Set(source.map((r) => r.platform))).map((p) => ({ label: p, value: p })),
-  ];
-  const marketOptions: FilterOption[] =
-    tab === "city"
-      ? [ALL, ...Array.from(new Set((source as CityRow[]).map((r) => r.market))).map((m) => ({ label: m, value: m }))]
-      : [ALL];
-  const brandOptions: FilterOption[] =
-    tab === "campaign"
-      ? [ALL, ...Array.from(new Set((source as CampaignRow[]).map((r) => r.brandName))).map((b) => ({ label: b, value: b }))]
-      : [ALL];
-  const productOptions: FilterOption[] = [ALL];
 
   const filteredData = useMemo(() => {
     return source.filter((row: any) => {
       if (applied.platform !== "all" && row.platform !== applied.platform) return false;
       if (applied.market !== "all" && row.market !== applied.market) return false;
       if (applied.brand !== "all" && row.brandName !== applied.brand) return false;
-      return true;
+      if (applied.product !== "all" && row.product !== applied.product) return false;
+      return matchesDate(row.date, applied.date);
     });
   }, [source, applied]);
 
   const campaignColumns: Column<CampaignRow>[] = [
     { key: "campaignName", label: "Campaign" },
-    {
-      key: "platform",
-      label: "Platform",
-      render: (r) => (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-brand-orange-dark">
-          {r.platform}
-        </span>
-      ),
-    },
+    { key: "platform", label: "Platform", render: (r) => platformBadge(r.platform) },
     { key: "brandName", label: "Brand" },
+    { key: "product", label: "Product" },
+    { key: "market", label: "Market" },
     { key: "campaignType", label: "Type" },
     { key: "budget", label: "Budget", render: (r) => `₹${r.budget.toLocaleString()}` },
     { key: "spend", label: "Spend", render: (r) => `₹${r.spend.toLocaleString()}` },
@@ -68,27 +70,25 @@ export default function DataGridPage() {
     { key: "orders", label: "Orders" },
     { key: "roas", label: "ROAS", render: (r) => `${r.roas}x` },
     { key: "status", label: "Status" },
-    { key: "uniqueConsiderations", label: "Unique Considerations", render: (r) => r.uniqueConsiderations ?? "—" },
-    { key: "uniqueReach", label: "Unique Reach", render: (r) => r.uniqueReach ?? "—" },
+    { key: "date", label: "Date" },
   ];
 
   const cityColumns: Column<CityRow>[] = [
-    {
-      key: "platform",
-      label: "Platform",
-      render: (r) => (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-brand-orange-dark">
-          {r.platform}
-        </span>
-      ),
-    },
+    { key: "platform", label: "Platform", render: (r) => platformBadge(r.platform) },
+    { key: "brandName", label: "Brand" },
+    { key: "product", label: "Product" },
     { key: "market", label: "Market" },
     { key: "city", label: "City" },
     { key: "spend", label: "Spend", render: (r) => (r.spend ? `₹${r.spend.toLocaleString()}` : "—") },
     { key: "revenue", label: "Revenue", render: (r) => `₹${r.revenue.toLocaleString()}` },
     { key: "orders", label: "Orders" },
     { key: "roas", label: "ROAS", render: (r) => (r.roas ? `${r.roas}x` : "—") },
+    { key: "date", label: "Date" },
   ];
+
+  const platformTitle = applied.platform === "all" ? "All" : applied.platform;
+  // Remounts the table when filters change so page/search/sort reset cleanly
+  const tableKey = `${tab}-${JSON.stringify(applied)}`;
 
   return (
     <div>
@@ -111,7 +111,7 @@ export default function DataGridPage() {
 
       <FilterBar
         platformOptions={platformOptions}
-        dateOptions={DATE_OPTIONS}
+        dateOptions={dateOptions}
         marketOptions={marketOptions}
         brandOptions={brandOptions}
         productOptions={productOptions}
@@ -125,21 +125,23 @@ export default function DataGridPage() {
         onMarketChange={setMarket}
         onBrandChange={setBrand}
         onProductChange={setProduct}
-        onApply={() => setApplied({ platform, market, brand })}
+        onApply={() => setApplied({ platform, market, brand, product, date })}
       />
 
       {tab === "campaign" ? (
         <Table
+          key={tableKey}
           data={filteredData as CampaignRow[]}
           columns={campaignColumns}
-          title={`${platform === "all" ? "All" : platform} Campaign Report`}
+          title={`${platformTitle} Campaign Report`}
           pageSize={10}
         />
       ) : (
         <Table
+          key={tableKey}
           data={filteredData as CityRow[]}
           columns={cityColumns}
-          title={`${platform === "all" ? "All" : platform} City Report`}
+          title={`${platformTitle} City Report`}
           pageSize={10}
         />
       )}
