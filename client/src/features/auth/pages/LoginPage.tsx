@@ -38,7 +38,7 @@ navigate("/dashboard");
           }}
         />
         <div className="relative">
-          <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-brand-orange">
+          <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-brand-primary">
             <span className="text-brand-black font-bold text-lg">C</span>
           </div>
         </div>
@@ -64,7 +64,7 @@ navigate("/dashboard");
       <div className="flex-1 flex items-center justify-center bg-brand-offwhite px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-xl bg-brand-black mb-8">
-            <span className="text-brand-orange font-bold text-lg">C</span>
+            <span className="text-brand-primary font-bold text-lg">C</span>
           </div>
 
           <h1 className="text-3xl font-bold text-brand-black mb-2">
@@ -78,7 +78,7 @@ navigate("/dashboard");
 
           <p className="text-center text-sm text-brand-gray mt-8">
             Having trouble signing in?{" "}
-            <a href="#" className="text-brand-orange font-medium hover:underline">
+            <a href="#" className="text-brand-primary font-medium hover:underline">
               Contact support
             </a>
           </p>

@@ -36,9 +36,9 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
             {...register("email")}
             className={`w-full rounded-lg border bg-white pl-11 pr-4 py-3 text-sm
                        placeholder:text-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-brand-orange/40
+                       focus:outline-none focus:ring-2 focus:ring-brand-primary/40
                        transition-all
-                       ${errors.email ? "border-red-400 focus:border-red-400" : "border-gray-300 focus:border-brand-orange"}`}
+                       ${errors.email ? "border-red-400 focus:border-red-400" : "border-gray-300 focus:border-brand-primary"}`}
             placeholder="you@company.com"
           />
         </div>
@@ -52,7 +52,7 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
           <label htmlFor="password" className="block text-sm font-medium text-brand-black">
             Password
           </label>
-          <a href="#" className="text-xs text-brand-orange font-medium hover:underline">
+          <a href="#" className="text-xs text-brand-primary font-medium hover:underline">
             Forgot password?
           </a>
         </div>
@@ -64,9 +64,9 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
             {...register("password")}
             className={`w-full rounded-lg border bg-white pl-11 pr-11 py-3 text-sm
                        placeholder:text-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-brand-orange/40
+                       focus:outline-none focus:ring-2 focus:ring-brand-primary/40
                        transition-all
-                       ${errors.password ? "border-red-400 focus:border-red-400" : "border-gray-300 focus:border-brand-orange"}`}
+                       ${errors.password ? "border-red-400 focus:border-red-400" : "border-gray-300 focus:border-brand-primary"}`}
             placeholder="••••••••"
           />
           <button
@@ -87,7 +87,7 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
         <input
           id="remember"
           type="checkbox"
-          className="w-4 h-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange/40"
+          className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
         />
         <label htmlFor="remember" className="ml-2 text-sm text-brand-gray">
           Remember me
@@ -103,7 +103,7 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-brand-orange hover:bg-brand-orange-dark active:scale-[0.98]
+        className="w-full bg-brand-primary hover:bg-brand-primary-dark active:scale-[0.98]
                    text-white font-semibold text-sm py-3 rounded-lg
                    shadow-sm shadow-orange-500/20
                    transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"

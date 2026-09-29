@@ -70,9 +70,9 @@ export default function Table<T extends Record<string, any>>({
   const SortIcon = ({ colKey }: { colKey: keyof T }) => {
     if (sortKey !== colKey) return <ChevronsUpDown className="w-3.5 h-3.5 text-gray-300" />;
     return sortDir === "asc" ? (
-      <ChevronUp className="w-3.5 h-3.5 text-brand-orange" />
+      <ChevronUp className="w-3.5 h-3.5 text-brand-primary" />
     ) : (
-      <ChevronDown className="w-3.5 h-3.5 text-brand-orange" />
+      <ChevronDown className="w-3.5 h-3.5 text-brand-primary" />
     );
   };
 
@@ -96,7 +96,7 @@ export default function Table<T extends Record<string, any>>({
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary"
           />
         </div>
       </div>
@@ -159,7 +159,7 @@ export default function Table<T extends Record<string, any>>({
               onClick={() => setPage(n)}
               className={`w-9 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 n === page
-                  ? "bg-brand-orange text-white"
+                  ? "bg-brand-primary text-white"
                   : "border border-gray-300 text-brand-gray hover:bg-gray-50"
               }`}
             >

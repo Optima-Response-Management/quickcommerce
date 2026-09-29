@@ -70,7 +70,7 @@ export default function UploadExcel() {
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as typeof platform)}
-            className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange"
+            className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary"
           >
             {PLATFORMS.map((p) => (
               <option key={p} value={p}>{p}</option>
@@ -82,7 +82,7 @@ export default function UploadExcel() {
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value as typeof reportType)}
-            className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange"
+            className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary"
           >
             {REPORT_TYPES.map((r) => (
               <option key={r} value={r} className="capitalize">{r}-wise</option>
@@ -102,7 +102,7 @@ export default function UploadExcel() {
         }}
         onClick={() => inputRef.current?.click()}
         className={`rounded-xl border-2 border-dashed p-12 text-center cursor-pointer transition-colors ${
-          dragActive ? "border-brand-orange bg-orange-50" : "border-gray-300 bg-white hover:border-gray-400"
+          dragActive ? "border-brand-primary bg-brand-primary-soft" : "border-gray-300 bg-white hover:border-gray-400"
         }`}
       >
         <input
@@ -115,7 +115,7 @@ export default function UploadExcel() {
 
         {file ? (
           <div className="flex items-center justify-center gap-3">
-            <FileSpreadsheet className="w-8 h-8 text-brand-orange" />
+            <FileSpreadsheet className="w-8 h-8 text-brand-primary" />
             <div className="text-left">
               <p className="text-sm font-medium text-brand-black">{file.name}</p>
               <p className="text-xs text-brand-gray">{(file.size / 1024).toFixed(1)} KB</p>
@@ -147,7 +147,7 @@ export default function UploadExcel() {
       <button
         onClick={handleProcess}
         disabled={!file || loading}
-        className="flex items-center justify-center gap-2 bg-brand-orange hover:bg-brand-orange-dark text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary-dark text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
         {loading ? "Processing..." : "Process File"}

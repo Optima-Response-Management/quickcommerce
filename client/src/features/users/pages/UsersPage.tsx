@@ -14,7 +14,7 @@ import type { RootState } from "../../../app/store";
 
 const roleBadge: Record<Role, string> = {
   super_admin: "bg-brand-black text-white",
-  admin: "bg-orange-50 text-brand-orange-dark",
+  admin: "bg-brand-primary-soft text-brand-primary-dark",
   user: "bg-gray-100 text-brand-gray",
 };
 
@@ -74,7 +74,7 @@ export default function UsersPage() {
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {granted.map((f) => (
-              <span key={f} className="px-2 py-0.5 rounded-md text-xs bg-orange-50 text-brand-orange-dark">
+              <span key={f} className="px-2 py-0.5 rounded-md text-xs bg-brand-primary-soft text-brand-primary-dark">
                 {FEATURE_LABELS[f]}
               </span>
             ))}
@@ -111,7 +111,7 @@ export default function UsersPage() {
             <button
               onClick={() => setEditing(u)}
               title="Manage access"
-              className="p-1.5 rounded-md text-brand-gray hover:bg-orange-50 hover:text-brand-orange-dark transition-colors"
+              className="p-1.5 rounded-md text-brand-gray hover:bg-brand-primary-soft hover:text-brand-primary-dark transition-colors"
             >
               <ShieldCheck className="w-4 h-4" />
             </button>
@@ -149,7 +149,7 @@ export default function UsersPage() {
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="flex items-center gap-2 bg-brand-orange hover:bg-brand-orange-dark text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-brand-primary hover:bg-brand-primary-dark text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
         >
           <UserPlus className="w-4 h-4" />
           Create User

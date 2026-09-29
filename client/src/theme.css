@@ -1,9 +1,10 @@
 @theme {
-  --color-brand-orange: #FF6B00;
-  --color-brand-orange-light: #FF8A33;
-  --color-brand-orange-dark: #CC5500;
-  --color-brand-black: #171717;
-  --color-brand-gray: #4B4B4B;
+  --color-brand-primary: #4F46E5;
+  --color-brand-primary-light: #6366F1;
+  --color-brand-primary-dark: #4338CA;
+  --color-brand-primary-soft: #EEF2FF; /* light tint for hovers and badges */
+  --color-brand-black: #0F172A;
+  --color-brand-gray: #475569;
   --color-brand-white: #FFFFFF;
-  --color-brand-offwhite: #FAFAFA;
+  --color-brand-offwhite: #F8FAFC;
 }

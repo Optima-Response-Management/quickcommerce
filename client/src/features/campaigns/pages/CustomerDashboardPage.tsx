@@ -25,7 +25,7 @@ export default function CustomerDashboardPage() {
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <p className="text-xs text-brand-gray font-medium mb-1">{s.label}</p>
             <p className="text-2xl font-bold text-brand-black">{s.value}</p>
-            {s.sub && <p className="text-xs text-brand-orange-dark font-medium mt-1">{s.sub}</p>}
+            {s.sub && <p className="text-xs text-brand-primary-dark font-medium mt-1">{s.sub}</p>}
           </div>
         ))}
       </div>
@@ -52,7 +52,7 @@ export default function CustomerDashboardPage() {
                 <tr key={i} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3 font-medium text-brand-black whitespace-nowrap">{c.campaignName}</td>
                   <td className="px-5 py-3">
-                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-brand-orange-dark whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-primary-soft text-brand-primary-dark whitespace-nowrap">
                       {c.platform}
                     </span>
                   </td>

@@ -27,7 +27,7 @@ export default function AccessMatrix() {
                 {features.map((f) => (
                   <td key={f} className="px-5 py-3">
                     {ROLE_ACCESS[role].includes(f) ? (
-                      <span className="text-brand-orange-dark font-semibold">✓</span>
+                      <span className="text-brand-primary-dark font-semibold">✓</span>
                     ) : (
                       <span className="text-gray-300">—</span>
                     )}

@@ -19,11 +19,11 @@ interface CreateUserModalProps {
 }
 
 const inputClass =
-  "w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-orange/40 transition-all";
+  "w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition-all";
 
 const cardClass = (active: boolean) =>
   `rounded-lg border px-4 py-3 text-left transition-colors ${
-    active ? "border-brand-orange bg-orange-50" : "border-gray-300 hover:border-gray-400"
+    active ? "border-brand-primary bg-brand-primary-soft" : "border-gray-300 hover:border-gray-400"
   }`;
 
 export default function CreateUserModal({ open, onClose, onCreate }: CreateUserModalProps) {
@@ -108,7 +108,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             <input
               {...register("name")}
               placeholder="e.g. Priya Sharma"
-              className={`${inputClass} ${errors.name ? "border-red-400" : "border-gray-300 focus:border-brand-orange"}`}
+              className={`${inputClass} ${errors.name ? "border-red-400" : "border-gray-300 focus:border-brand-primary"}`}
             />
             {errors.name && <p className="text-xs text-red-600 mt-1.5">{errors.name.message}</p>}
           </div>
@@ -119,7 +119,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
               type="email"
               {...register("email")}
               placeholder="user@company.com"
-              className={`${inputClass} ${errors.email ? "border-red-400" : "border-gray-300 focus:border-brand-orange"}`}
+              className={`${inputClass} ${errors.email ? "border-red-400" : "border-gray-300 focus:border-brand-primary"}`}
             />
             {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email.message}</p>}
           </div>
@@ -130,7 +130,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
               type="password"
               {...register("password")}
               placeholder="••••••••"
-              className={`${inputClass} ${errors.password ? "border-red-400" : "border-gray-300 focus:border-brand-orange"}`}
+              className={`${inputClass} ${errors.password ? "border-red-400" : "border-gray-300 focus:border-brand-primary"}`}
             />
             {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password.message}</p>}
           </div>
@@ -165,7 +165,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
                     checked={features.includes(f)}
                     disabled={isSuperAdmin}
                     onChange={() => toggleFeature(f)}
-                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange/40"
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                   />
                   <div>
                     <p className="text-sm font-medium text-brand-black">{FEATURE_LABELS[f]}</p>
@@ -205,7 +205,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
                       type="checkbox"
                       checked={platforms.includes(p)}
                       onChange={() => togglePlatform(p)}
-                      className="w-4 h-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange/40"
+                      className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                     />
                     <span className="text-sm text-brand-black">{p}</span>
                   </label>
@@ -225,7 +225,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-brand-orange hover:bg-brand-orange-dark text-white transition-colors"
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-brand-primary hover:bg-brand-primary-dark text-white transition-colors"
             >
               Create User
             </button>

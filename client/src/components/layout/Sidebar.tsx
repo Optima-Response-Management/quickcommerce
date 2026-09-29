@@ -19,7 +19,7 @@ const links = navItems.filter((item) => canAccess(user, item.feature));
   return (
     <aside className="w-64 h-screen bg-brand-black flex flex-col sticky top-0">
       <div className="flex items-center gap-2.5 px-6 h-16 border-b border-white/10">
-        <div className="w-8 h-8 rounded-lg bg-brand-orange flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center">
           <span className="text-brand-black font-bold text-sm">C</span>
         </div>
         <span className="text-white font-semibold text-sm">Campaign Hub</span>
@@ -32,7 +32,7 @@ const links = navItems.filter((item) => canAccess(user, item.feature));
             to={to}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive ? "bg-brand-orange text-white" : "text-gray-400 hover:bg-white/5 hover:text-white"
+                isActive ? "bg-brand-primary text-white" : "text-gray-400 hover:bg-white/5 hover:text-white"
               }`
             }
           >

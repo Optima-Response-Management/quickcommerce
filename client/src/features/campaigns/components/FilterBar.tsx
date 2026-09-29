@@ -2,7 +2,7 @@ import type { FilterOption } from "../filterOptions";
 import type { DateFilterValue } from "../dateUtils";
 
 const selectClass =
-  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/40 focus:border-brand-orange";
+  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary";
 
 interface FilterBarProps {
   platformOptions: FilterOption[];
@@ -132,7 +132,7 @@ export default function FilterBar({
       <button
         onClick={onApply}
         disabled={invalidRange}
-        className="bg-brand-orange hover:bg-brand-orange-dark text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="bg-brand-primary hover:bg-brand-primary-dark text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
         Filter
       </button>

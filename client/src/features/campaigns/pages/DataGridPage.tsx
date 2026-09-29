@@ -29,7 +29,7 @@ const INITIAL_FILTERS: AppliedFilters = {
 };
 
 const platformBadge = (name: string) => (
-  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-brand-orange-dark">
+  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-primary-soft text-brand-primary-dark">
     {name}
   </span>
 );

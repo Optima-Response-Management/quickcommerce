@@ -15,7 +15,7 @@ export default function Navbar() {
           <p className="text-sm font-medium text-brand-black">{user?.email}</p>
           <p className="text-xs text-brand-gray capitalize">{user?.role.replace("_", " ")}</p>
         </div>
-        <div className="w-9 h-9 rounded-full bg-brand-orange flex items-center justify-center text-white font-semibold text-sm">
+        <div className="w-9 h-9 rounded-full bg-brand-primary flex items-center justify-center text-white font-semibold text-sm">
           {user?.email?.[0]?.toUpperCase()}
         </div>
       </div>

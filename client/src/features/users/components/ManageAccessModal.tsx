@@ -19,7 +19,7 @@ interface ManageAccessModalProps {
 
 const cardClass = (active: boolean) =>
   `rounded-lg border px-4 py-3 text-left transition-colors ${
-    active ? "border-brand-orange bg-orange-50" : "border-gray-300 hover:border-gray-400"
+    active ? "border-brand-primary bg-brand-primary-soft" : "border-gray-300 hover:border-gray-400"
   }`;
 
 export default function ManageAccessModal({ user, onClose, onSave }: ManageAccessModalProps) {
@@ -92,7 +92,7 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
                     checked={isSuperAdmin || features.includes(f)}
                     disabled={isSuperAdmin}
                     onChange={() => toggleFeature(f)}
-                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange/40"
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                   />
                   <div>
                     <p className="text-sm font-medium text-brand-black">{FEATURE_LABELS[f]}</p>
@@ -133,7 +133,7 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
                         type="checkbox"
                         checked={selected.includes(p)}
                         onChange={() => togglePlatform(p)}
-                        className="w-4 h-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange/40"
+                        className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                       />
                       <span className="text-sm text-brand-black">{p}</span>
                     </label>
@@ -154,7 +154,7 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
             </button>
             <button
               onClick={save}
-              className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-brand-orange hover:bg-brand-orange-dark text-white transition-colors"
+              className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-brand-primary hover:bg-brand-primary-dark text-white transition-colors"
             >
               Save Changes
             </button>
