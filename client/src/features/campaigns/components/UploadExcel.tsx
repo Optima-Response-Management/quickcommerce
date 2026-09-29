@@ -66,7 +66,7 @@ export default function UploadExcel() {
       {/* Platform + report type selectors */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-brand-black mb-1.5">Platform</label>
+          <label className="block text-sm font-medium text-brand-ink mb-1.5">Platform</label>
           <select
             value={platform}
             onChange={(e) => setPlatform(e.target.value as typeof platform)}
@@ -78,7 +78,7 @@ export default function UploadExcel() {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-brand-black mb-1.5">Report Type</label>
+          <label className="block text-sm font-medium text-brand-ink mb-1.5">Report Type</label>
           <select
             value={reportType}
             onChange={(e) => setReportType(e.target.value as typeof reportType)}
@@ -117,7 +117,7 @@ export default function UploadExcel() {
           <div className="flex items-center justify-center gap-3">
             <FileSpreadsheet className="w-8 h-8 text-brand-primary" />
             <div className="text-left">
-              <p className="text-sm font-medium text-brand-black">{file.name}</p>
+              <p className="text-sm font-medium text-brand-ink">{file.name}</p>
               <p className="text-xs text-brand-gray">{(file.size / 1024).toFixed(1)} KB</p>
             </div>
             <button
@@ -130,7 +130,7 @@ export default function UploadExcel() {
         ) : (
           <>
             <UploadCloud className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-            <p className="text-sm font-medium text-brand-black mb-1">
+            <p className="text-sm font-medium text-brand-ink mb-1">
               Drag & drop your Excel file here
             </p>
             <p className="text-xs text-brand-gray">or click to browse — .xlsx, .xls</p>
@@ -156,7 +156,7 @@ export default function UploadExcel() {
       {/* Preview */}
       {parsedData && (
         <div>
-          <h3 className="text-sm font-semibold text-brand-black mb-3">
+          <h3 className="text-sm font-semibold text-brand-ink mb-3">
             Preview — {parsedData.length} rows extracted
           </h3>
           {reportType === "campaign" ? (

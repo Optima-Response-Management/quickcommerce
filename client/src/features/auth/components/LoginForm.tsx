@@ -25,7 +25,7 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-brand-black mb-1.5">
+        <label htmlFor="email" className="block text-sm font-medium text-brand-ink mb-1.5">
           Email address
         </label>
         <div className="relative">
@@ -49,7 +49,7 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="password" className="block text-sm font-medium text-brand-black">
+          <label htmlFor="password" className="block text-sm font-medium text-brand-ink">
             Password
           </label>
           <a href="#" className="text-xs text-brand-primary font-medium hover:underline">
@@ -72,7 +72,7 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-black transition-colors"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-ink transition-colors"
             tabIndex={-1}
           >
             {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}

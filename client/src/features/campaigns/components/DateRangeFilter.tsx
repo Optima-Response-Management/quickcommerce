@@ -73,7 +73,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
             value={value.from}
             max={value.to || undefined}
             onChange={(e) => onChange({ ...value, from: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-brand-black"
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-brand-ink"
           />
           <label className="text-brand-gray">To</label>
           <input
@@ -81,7 +81,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
             value={value.to}
             min={value.from || undefined}
             onChange={(e) => onChange({ ...value, to: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-brand-black"
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-brand-ink"
           />
         </div>
       )}

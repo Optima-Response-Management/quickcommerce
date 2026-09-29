@@ -2,5 +2,5 @@
 @import "./theme.css";
 
 body {
-  @apply bg-brand-offwhite text-brand-black;
+  @apply bg-brand-offwhite text-brand-ink;
 }

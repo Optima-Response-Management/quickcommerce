@@ -13,7 +13,7 @@ import type { CreateUserFormValues } from "../userSchema";
 import type { RootState } from "../../../app/store";
 
 const roleBadge: Record<Role, string> = {
-  super_admin: "bg-brand-black text-white",
+  super_admin: "bg-brand-ink text-white",
   admin: "bg-brand-primary-soft text-brand-primary-dark",
   user: "bg-gray-100 text-brand-gray",
 };
@@ -68,7 +68,7 @@ export default function UsersPage() {
       render: (u) => {
         const granted = GRANTABLE_FEATURES.filter((f) => u.features.includes(f));
         return granted.length === GRANTABLE_FEATURES.length ? (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-black text-white">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-ink text-white">
             All Features
           </span>
         ) : (
@@ -87,7 +87,7 @@ export default function UsersPage() {
       label: "Platform Access",
       render: (u) =>
         u.platformAccess === "all" ? (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-black text-white">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-ink text-white">
             All Platforms
           </span>
         ) : (
@@ -142,7 +142,7 @@ export default function UsersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-brand-black mb-1">Users</h2>
+          <h2 className="text-2xl font-bold text-brand-ink mb-1">Users</h2>
           <p className="text-sm text-brand-gray">
             Create users and choose which features and platforms they can access
           </p>

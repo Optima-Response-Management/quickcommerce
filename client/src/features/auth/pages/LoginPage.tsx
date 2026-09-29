@@ -29,7 +29,7 @@ navigate("/dashboard");
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-brand-black relative overflow-hidden flex-col justify-between p-12">
+      <div className="hidden lg:flex lg:w-1/2 bg-brand-ink relative overflow-hidden flex-col justify-between p-12">
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -39,7 +39,7 @@ navigate("/dashboard");
         />
         <div className="relative">
           <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-brand-primary">
-            <span className="text-brand-black font-bold text-lg">C</span>
+            <span className="text-brand-ink font-bold text-lg">C</span>
           </div>
         </div>
 
@@ -63,11 +63,11 @@ navigate("/dashboard");
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center bg-brand-offwhite px-6 py-12">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-xl bg-brand-black mb-8">
+          <div className="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-xl bg-brand-ink mb-8">
             <span className="text-brand-primary font-bold text-lg">C</span>
           </div>
 
-          <h1 className="text-3xl font-bold text-brand-black mb-2">
+          <h1 className="text-3xl font-bold text-brand-ink mb-2">
             Welcome back
           </h1>
           <p className="text-sm text-brand-gray mb-8">

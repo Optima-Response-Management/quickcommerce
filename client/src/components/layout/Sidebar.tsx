@@ -17,10 +17,10 @@ export default function Sidebar() {
   const user = useSelector((state: RootState) => state.auth.user);
 const links = navItems.filter((item) => canAccess(user, item.feature));
   return (
-    <aside className="w-64 h-screen bg-brand-black flex flex-col sticky top-0">
+    <aside className="w-64 h-screen bg-brand-ink flex flex-col sticky top-0">
       <div className="flex items-center gap-2.5 px-6 h-16 border-b border-white/10">
         <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center">
-          <span className="text-brand-black font-bold text-sm">C</span>
+          <span className="text-brand-ink font-bold text-sm">C</span>
         </div>
         <span className="text-white font-semibold text-sm">Campaign Hub</span>
       </div>

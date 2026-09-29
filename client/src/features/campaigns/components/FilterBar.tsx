@@ -50,7 +50,7 @@ export default function FilterBar({
     <div className="mb-5">
       <div className="grid grid-cols-5 gap-4 mb-4">
         <div>
-          <label className="block text-sm font-medium text-brand-black mb-1.5">Platform</label>
+          <label className="block text-sm font-medium text-brand-ink mb-1.5">Platform</label>
           <select value={platform} onChange={(e) => onPlatformChange(e.target.value)} className={selectClass}>
             {platformOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -59,7 +59,7 @@ export default function FilterBar({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-brand-black mb-1.5">Date</label>
+          <label className="block text-sm font-medium text-brand-ink mb-1.5">Date</label>
           <select
             value={date.preset}
             onChange={(e) => onDateChange({ ...date, preset: e.target.value })}
@@ -72,7 +72,7 @@ export default function FilterBar({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-brand-black mb-1.5">Market</label>
+          <label className="block text-sm font-medium text-brand-ink mb-1.5">Market</label>
           <select value={market} onChange={(e) => onMarketChange(e.target.value)} className={selectClass}>
             {marketOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -81,7 +81,7 @@ export default function FilterBar({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-brand-black mb-1.5">Brand</label>
+          <label className="block text-sm font-medium text-brand-ink mb-1.5">Brand</label>
           <select value={brand} onChange={(e) => onBrandChange(e.target.value)} className={selectClass}>
             {brandOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -90,7 +90,7 @@ export default function FilterBar({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-brand-black mb-1.5">Product</label>
+          <label className="block text-sm font-medium text-brand-ink mb-1.5">Product</label>
           <select value={product} onChange={(e) => onProductChange(e.target.value)} className={selectClass}>
             {productOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -102,7 +102,7 @@ export default function FilterBar({
         {date.preset === "custom" && (
           <>
             <div className="col-start-2">
-              <label className="block text-sm font-medium text-brand-black mb-1.5">From Date</label>
+              <label className="block text-sm font-medium text-brand-ink mb-1.5">From Date</label>
               <input
                 type="date"
                 value={date.from ?? ""}
@@ -112,7 +112,7 @@ export default function FilterBar({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-brand-black mb-1.5">To Date</label>
+              <label className="block text-sm font-medium text-brand-ink mb-1.5">To Date</label>
               <input
                 type="date"
                 value={date.to ?? ""}

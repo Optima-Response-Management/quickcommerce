@@ -12,7 +12,7 @@ export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
   {
     path: "/unauthorized",
-    element: <div className="p-10 text-brand-black">You don't have access to this page.</div>,
+    element: <div className="p-10 text-brand-ink">You don't have access to this page.</div>,
   },
 
   {

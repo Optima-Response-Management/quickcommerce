@@ -63,7 +63,7 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h3 className="text-lg font-semibold text-brand-black">Manage Access</h3>
+            <h3 className="text-lg font-semibold text-brand-ink">Manage Access</h3>
             <p className="text-xs text-brand-gray mt-0.5">
               {user.name} · {ROLE_LABELS[user.role]}
             </p>
@@ -76,7 +76,7 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
         <div className="px-6 py-5 space-y-5">
           {/* Features */}
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Feature access</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Feature access</label>
             <div className="space-y-2">
               {GRANTABLE_FEATURES.map((f) => (
                 <label
@@ -95,7 +95,7 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
                     className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                   />
                   <div>
-                    <p className="text-sm font-medium text-brand-black">{FEATURE_LABELS[f]}</p>
+                    <p className="text-sm font-medium text-brand-ink">{FEATURE_LABELS[f]}</p>
                     <p className="text-xs text-brand-gray">{FEATURE_DESCRIPTIONS[f]}</p>
                   </div>
                 </label>
@@ -108,14 +108,14 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
 
           {/* Platforms */}
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Platform access</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Platform access</label>
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => { setAccess("all"); setError(""); }} className={cardClass(access === "all")}>
-                <p className="text-sm font-semibold text-brand-black">All Platforms</p>
+                <p className="text-sm font-semibold text-brand-ink">All Platforms</p>
                 <p className="text-xs text-brand-gray mt-0.5">See data from every platform</p>
               </button>
               <button type="button" onClick={() => setAccess("custom")} className={cardClass(access === "custom")}>
-                <p className="text-sm font-semibold text-brand-black">Custom</p>
+                <p className="text-sm font-semibold text-brand-ink">Custom</p>
                 <p className="text-xs text-brand-gray mt-0.5">Pick specific platforms</p>
               </button>
             </div>
@@ -135,7 +135,7 @@ export default function ManageAccessModal({ user, onClose, onSave }: ManageAcces
                         onChange={() => togglePlatform(p)}
                         className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                       />
-                      <span className="text-sm text-brand-black">{p}</span>
+                      <span className="text-sm text-brand-ink">{p}</span>
                     </label>
                   ))}
                 </div>

@@ -92,7 +92,7 @@ export default function DataGridPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-brand-black mb-1">Campaign Dashboard</h2>
+      <h2 className="text-2xl font-bold text-brand-ink mb-1">Campaign Dashboard</h2>
       <p className="text-sm text-brand-gray mb-6">Sortable, filterable view of extracted campaign data</p>
 
       <div className="flex gap-1 mb-5 bg-gray-100 rounded-lg p-1 w-fit">
@@ -101,7 +101,7 @@ export default function DataGridPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`px-5 py-2 rounded-md text-sm font-semibold transition-colors ${
-              tab === t ? "bg-brand-black text-white" : "text-brand-gray hover:text-brand-black"
+              tab === t ? "bg-brand-ink text-white" : "text-brand-gray hover:text-brand-ink"
             }`}
           >
             {t === "campaign" ? "Campaign Wise" : "City Wise"}

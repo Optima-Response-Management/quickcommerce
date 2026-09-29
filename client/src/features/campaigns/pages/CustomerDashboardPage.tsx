@@ -17,14 +17,14 @@ export default function CustomerDashboardPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-brand-black mb-1">Campaign Overview</h2>
+      <h2 className="text-2xl font-bold text-brand-ink mb-1">Campaign Overview</h2>
       <p className="text-sm text-brand-gray mb-6">Processed data and insights across your campaigns</p>
 
       <div className="grid grid-cols-4 gap-4 mb-6">
         {stats.map((s) => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <p className="text-xs text-brand-gray font-medium mb-1">{s.label}</p>
-            <p className="text-2xl font-bold text-brand-black">{s.value}</p>
+            <p className="text-2xl font-bold text-brand-ink">{s.value}</p>
             {s.sub && <p className="text-xs text-brand-primary-dark font-medium mt-1">{s.sub}</p>}
           </div>
         ))}
@@ -36,7 +36,7 @@ export default function CustomerDashboardPage() {
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-brand-black">Campaigns</h3>
+          <h3 className="text-sm font-semibold text-brand-ink">Campaigns</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -50,7 +50,7 @@ export default function CustomerDashboardPage() {
             <tbody>
               {mockCampaignData.map((c, i) => (
                 <tr key={i} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-3 font-medium text-brand-black whitespace-nowrap">{c.campaignName}</td>
+                  <td className="px-5 py-3 font-medium text-brand-ink whitespace-nowrap">{c.campaignName}</td>
                   <td className="px-5 py-3">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-primary-soft text-brand-primary-dark whitespace-nowrap">
                       {c.platform}

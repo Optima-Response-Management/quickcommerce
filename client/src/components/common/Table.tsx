@@ -87,7 +87,7 @@ export default function Table<T extends Record<string, any>>({
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        {title && <h3 className="text-sm font-semibold text-brand-black">{title}</h3>}
+        {title && <h3 className="text-sm font-semibold text-brand-ink">{title}</h3>}
         <div className="flex items-center gap-2 ml-auto">
           <label className="text-sm text-brand-gray">Search:</label>
           <input
@@ -109,7 +109,7 @@ export default function Table<T extends Record<string, any>>({
                 <th
                   key={String(col.key)}
                   onClick={() => handleSort(col.key)}
-                  className="px-5 py-3 font-medium cursor-pointer select-none hover:text-brand-black transition-colors whitespace-nowrap"
+                  className="px-5 py-3 font-medium cursor-pointer select-none hover:text-brand-ink transition-colors whitespace-nowrap"
                 >
                   <div className="flex items-center gap-1.5">
                     {col.label}

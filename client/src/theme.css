@@ -1,10 +1,10 @@
 @theme {
-  --color-brand-primary: #4F46E5;
-  --color-brand-primary-light: #6366F1;
-  --color-brand-primary-dark: #4338CA;
-  --color-brand-primary-soft: #EEF2FF; /* light tint for hovers and badges */
-  --color-brand-black: #0F172A;
+  --color-brand-primary: #F97316;
+  --color-brand-primary-light: #FB923C;
+  --color-brand-primary-dark: #EA580C;
+  --color-brand-primary-soft: #FFF7ED; /* light tint for hovers and badges */
+  --color-brand-ink: #1E3A5F;          /* navy, replaces black for text */
   --color-brand-gray: #475569;
   --color-brand-white: #FFFFFF;
-  --color-brand-offwhite: #F8FAFC;
+  --color-brand-offwhite: #FFFBF7;
 }

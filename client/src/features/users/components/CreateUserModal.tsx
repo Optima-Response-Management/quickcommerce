@@ -96,7 +96,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-brand-black">Create User</h3>
+          <h3 className="text-lg font-semibold text-brand-ink">Create User</h3>
           <button onClick={handleClose} className="p-1.5 rounded-md text-brand-gray hover:bg-gray-100">
             <X className="w-4 h-4" />
           </button>
@@ -104,7 +104,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
 
         <form onSubmit={handleSubmit(submit)} noValidate className="px-6 py-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Full name</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Full name</label>
             <input
               {...register("name")}
               placeholder="e.g. Priya Sharma"
@@ -114,7 +114,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Email address</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Email address</label>
             <input
               type="email"
               {...register("email")}
@@ -125,7 +125,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Temporary password</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Temporary password</label>
             <input
               type="password"
               {...register("password")}
@@ -137,11 +137,11 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
 
           {/* Role */}
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Role</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Role</label>
             <div className="grid grid-cols-3 gap-3">
               {ROLES.map((r) => (
                 <button key={r} type="button" onClick={() => handleRoleChange(r)} className={cardClass(role === r)}>
-                  <p className="text-sm font-semibold text-brand-black">{ROLE_LABELS[r]}</p>
+                  <p className="text-sm font-semibold text-brand-ink">{ROLE_LABELS[r]}</p>
                 </button>
               ))}
             </div>
@@ -149,7 +149,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
 
           {/* Feature access */}
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Feature access</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Feature access</label>
             <div className="space-y-2">
               {GRANTABLE_FEATURES.map((f) => (
                 <label
@@ -168,7 +168,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
                     className="mt-0.5 w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                   />
                   <div>
-                    <p className="text-sm font-medium text-brand-black">{FEATURE_LABELS[f]}</p>
+                    <p className="text-sm font-medium text-brand-ink">{FEATURE_LABELS[f]}</p>
                     <p className="text-xs text-brand-gray">{FEATURE_DESCRIPTIONS[f]}</p>
                   </div>
                 </label>
@@ -182,14 +182,14 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
 
           {/* Platform access */}
           <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">Platform access</label>
+            <label className="block text-sm font-medium text-brand-ink mb-1.5">Platform access</label>
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={() => handleAccessChange("all")} className={cardClass(platformAccess === "all")}>
-                <p className="text-sm font-semibold text-brand-black">All Platforms</p>
+                <p className="text-sm font-semibold text-brand-ink">All Platforms</p>
                 <p className="text-xs text-brand-gray mt-0.5">See data from every platform</p>
               </button>
               <button type="button" onClick={() => handleAccessChange("custom")} className={cardClass(platformAccess === "custom")}>
-                <p className="text-sm font-semibold text-brand-black">Custom</p>
+                <p className="text-sm font-semibold text-brand-ink">Custom</p>
                 <p className="text-xs text-brand-gray mt-0.5">Pick specific platforms</p>
               </button>
             </div>
@@ -207,7 +207,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
                       onChange={() => togglePlatform(p)}
                       className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
                     />
-                    <span className="text-sm text-brand-black">{p}</span>
+                    <span className="text-sm text-brand-ink">{p}</span>
                   </label>
                 ))}
               </div>

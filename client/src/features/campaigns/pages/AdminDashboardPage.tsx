@@ -3,17 +3,22 @@ import { Link } from "react-router";
 import { Upload } from "lucide-react";
 import BudgetSpendChart from "../components/BudgetSpendChart";
 import DateRangeFilter, { getRangeForPreset, type DateRange } from "../components/DateRangeFilter";
+import PlatformFilter from "../components/PlatformFilter";
 import { mockCampaignData } from "../mockData";
 
 export default function AdminDashboardPage() {
   const [range, setRange] = useState<DateRange>(getRangeForPreset("yesterday"));
+  const [platforms, setPlatforms] = useState<string[]>([]);
 
   const filtered = useMemo(
     () =>
       mockCampaignData.filter(
-        (c) => (!range.from || c.date >= range.from) && (!range.to || c.date <= range.to)
+        (c) =>
+          (!range.from || c.date >= range.from) &&
+          (!range.to || c.date <= range.to) &&
+          (platforms.length === 0 || platforms.includes(c.platform))
       ),
-    [range]
+    [range, platforms]
   );
 
   const totalBudget = filtered.reduce((sum, c) => sum + c.budget, 0);
@@ -37,7 +42,7 @@ export default function AdminDashboardPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-brand-black mb-1">Admin Dashboard</h2>
+          <h2 className="text-2xl font-bold text-brand-ink mb-1">Admin Dashboard</h2>
           <p className="text-sm text-brand-gray">Full visibility across all uploaded campaign data</p>
         </div>
         <Link
@@ -49,7 +54,8 @@ export default function AdminDashboardPage() {
         </Link>
       </div>
 
-      <div className="mb-6">
+      <div className="flex flex-col gap-3 mb-6">
+        <PlatformFilter selected={platforms} onChange={setPlatforms} />
         <DateRangeFilter value={range} onChange={setRange} />
       </div>
 
@@ -57,7 +63,7 @@ export default function AdminDashboardPage() {
         {stats.map((s) => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <p className="text-xs text-brand-gray font-medium mb-1">{s.label}</p>
-            <p className="text-2xl font-bold text-brand-black">{s.value}</p>
+            <p className="text-2xl font-bold text-brand-ink">{s.value}</p>
             {s.sub && <p className="text-xs text-brand-primary-dark font-medium mt-1">{s.sub}</p>}
           </div>
         ))}

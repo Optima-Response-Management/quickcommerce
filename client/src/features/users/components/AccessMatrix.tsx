@@ -7,7 +7,7 @@ export default function AccessMatrix() {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
       <div className="px-5 py-4 border-b border-gray-100">
-        <h3 className="text-sm font-semibold text-brand-black">What each role can access</h3>
+        <h3 className="text-sm font-semibold text-brand-ink">What each role can access</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -23,7 +23,7 @@ export default function AccessMatrix() {
           <tbody>
             {ROLES.map((role) => (
               <tr key={role} className="border-t border-gray-100">
-                <td className="px-5 py-3 font-medium text-brand-black">{ROLE_LABELS[role]}</td>
+                <td className="px-5 py-3 font-medium text-brand-ink">{ROLE_LABELS[role]}</td>
                 {features.map((f) => (
                   <td key={f} className="px-5 py-3">
                     {ROLE_ACCESS[role].includes(f) ? (
