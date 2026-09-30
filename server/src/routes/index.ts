@@ -2,6 +2,7 @@ import { Router } from "express";
 import mongoose from "mongoose";
 import { ApiResponse } from "../utils/ApiResponse";
 import authRoutes from "../modules/auth/auth.routes";
+import platformRoutes from "../modules/platforms/platform.routes";
 
 const router = Router();
 
@@ -11,5 +12,6 @@ router.get("/health", (_req, res) => {
 });
 
 router.use("/auth", authRoutes);
+router.use("/platforms", platformRoutes);
 
 export default router;

@@ -1,21 +1,31 @@
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
+import { HydratedDocument } from "mongoose";
 import { env } from "../../config/env";
 import { ApiError } from "../../utils/ApiError";
-import { User } from "../users/user.model";
+import { User, IUser } from "../users/user.model";
 import { SignInInput } from "./auth.schema";
 
-// Used when the email doesn't exist, so the response takes the same time
-// as a real password check and doesn't reveal which emails are registered.
-const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 12);
+export const toSafeUser = (user: HydratedDocument<IUser>) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  platformAccess: user.platformAccess,
+  platforms: user.platforms,
+  features: user.features,
+});
 
 export async function signIn({ email, password, role }: SignInInput) {
   const user = await User.findOne({ email }).select("+password");
+  if (!user) {
+    throw new ApiError(401, "Invalid credentials");
+  }
 
-  const passwordOk = await bcrypt.compare(password, user?.password ?? DUMMY_HASH);
+  const passwordOk = await bcrypt.compare(password, user.password);
 
-  // One generic error for unknown email, wrong password, or wrong role
-  if (!user || !passwordOk || user.role !== role) {
+  // Same generic error for wrong password or wrong role
+  if (!passwordOk || user.role !== role) {
     throw new ApiError(401, "Invalid credentials");
   }
 
@@ -29,16 +39,5 @@ export async function signIn({ email, password, role }: SignInInput) {
     expiresIn: env.JWT_EXPIRES_IN as SignOptions["expiresIn"],
   });
 
-  return {
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      platformAccess: user.platformAccess,
-      platforms: user.platforms,
-      features: user.features,
-    },
-  };
+  return { token, user: toSafeUser(user) };
 }
