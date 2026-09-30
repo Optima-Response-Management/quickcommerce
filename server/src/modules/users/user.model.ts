@@ -12,6 +12,8 @@ export interface IUser {
   createdBy: Types.ObjectId | null;
   isActive: boolean;
   lastLoginAt?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const userSchema = new Schema<IUser>(

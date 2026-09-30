@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import authRoutes from "../modules/auth/auth.routes";
 import platformRoutes from "../modules/platforms/platform.routes";
 import campaignRoutes from "../modules/campaigns/campaign.routes";
-
+import userRoutes from "../modules/users/user.routes";
 
 const router = Router();
 
@@ -16,5 +16,6 @@ router.get("/health", (_req, res) => {
 router.use("/auth", authRoutes);
 router.use("/platforms", platformRoutes);
 router.use("/campaigns", campaignRoutes);
+router.use("/users", userRoutes);
 
 export default router;
