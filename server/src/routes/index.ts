@@ -7,6 +7,7 @@ import campaignRoutes from "../modules/campaigns/campaign.routes";
 import userRoutes from "../modules/users/user.routes";
 import dashboardRoutes from "../modules/dashboard/dashboard.routes";
 import uploadHistoryRoutes from "../modules/campaigns/uploadHistory.routes";
+import locationRoutes from "../modules/locations/location.routes";
 
 const router = Router();
 
@@ -21,4 +22,5 @@ router.use("/campaigns", campaignRoutes);
 router.use("/users", userRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/uploads", uploadHistoryRoutes);
+router.use("/locations", locationRoutes);
 export default router;
