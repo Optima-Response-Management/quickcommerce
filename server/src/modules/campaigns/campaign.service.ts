@@ -67,19 +67,9 @@ export async function uploadCampaignFile(
   // It runs in a transaction, so a failure never leaves a half-replaced upload.
   const session = await mongoose.startSession();
   let uploadId = "";
-  let replaced = false;
 
   try {
     await session.withTransaction(async () => {
-      replaced = false;
-
-      const existing = await Upload.findOne({ platform: slug, reportDate, market }).session(session);
-      if (existing) {
-        replaced = true;
-        await Campaign.deleteMany({ uploadId: existing._id }, { session });
-        await Upload.deleteOne({ _id: existing._id }, { session });
-      }
-
       const [upload] = await Upload.create(
         [
           {
@@ -102,14 +92,10 @@ export async function uploadCampaignFile(
 
       uploadId = upload.id;
     });
-  } catch (err) {
-    if ((err as { code?: number }).code === 11000) {
-      throw new ApiError(409, "Another upload for the same platform and date is in progress. Try again.");
-    }
-    throw err;
   } finally {
     await session.endSession();
   }
+
 
   return {
     uploadId,
@@ -120,6 +106,5 @@ export async function uploadCampaignFile(
     fileName: file.originalname,
     rowCount: valid.length,
     skippedTotalRows,
-    replaced,
   };
 }

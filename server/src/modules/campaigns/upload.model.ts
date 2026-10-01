@@ -25,6 +25,5 @@ const uploadSchema = new Schema<IUpload>(
 );
 
 // One upload per platform, date and market. Uploading again replaces the earlier one.
-uploadSchema.index({ platform: 1, reportDate: 1, market: 1 }, { unique: true });
-
+uploadSchema.index({ platform: 1, reportDate: 1 });
 export const Upload = model<IUpload>("Upload", uploadSchema);
