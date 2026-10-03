@@ -6,9 +6,9 @@ import { canAccess, type Feature } from "../../features/users/access";
 import type { RootState } from "../../app/store";
 
 const navItems: { to: string; label: string; icon: typeof Upload; feature: Feature }[] = [
-  { to: "/admin/upload", label: "Upload Data", icon: Upload, feature: "upload_data" },
-  { to: "/admin/grid", label: "Data Grid", icon: Table2, feature: "data_grid" },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, feature: "dashboard" },
+  { to: "/admin/grid", label: "Data Grid", icon: Table2, feature: "data_grid" },
+  { to: "/admin/upload", label: "Upload Data", icon: Upload, feature: "upload_data" },  
   { to: "/admin/users", label: "Users", icon: Users, feature: "manage_users" },
 ];
 
