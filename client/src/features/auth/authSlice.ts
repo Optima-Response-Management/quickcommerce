@@ -3,41 +3,42 @@ import type { Role } from "../users/types";
 import type { Feature } from "../users/access";
 
 export interface AuthUser {
+  id: string;
   email: string;
   name: string;
   role: Role;
+  platformAccess: string;
   platforms: string[];
   features: Feature[];
 }
 
 interface AuthState {
   user: AuthUser | null;
-  token: string | null;
+  checking: boolean;
 }
 
 const initialState: AuthState = {
-  user: JSON.parse(localStorage.getItem("user") || "null"),
-  token: localStorage.getItem("token"),
+  user: null,
+  checking: true,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setCredentials: (state, action: PayloadAction<{ user: AuthUser; token: string }>) => {
+    setCredentials: (state, action: PayloadAction<{ user: AuthUser }>) => {
       state.user = action.payload.user;
-      state.token = action.payload.token;
-      localStorage.setItem("token", action.payload.token);
-      localStorage.setItem("user", JSON.stringify(action.payload.user));
+      state.checking = false;
     },
     logout: (state) => {
       state.user = null;
-      state.token = null;
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      state.checking = false;
+    },
+    sessionChecked: (state) => {
+      state.checking = false;
     },
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, logout, sessionChecked } = authSlice.actions;
 export default authSlice.reducer;

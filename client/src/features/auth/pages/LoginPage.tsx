@@ -2,30 +2,48 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
 import LoginForm from "../components/LoginForm";
-import { mockLogin } from "../mockAuth";
+import { useLoginMutation } from "../authApi";
 import { setCredentials } from "../authSlice";
 import type { LoginFormValues } from "../authSchema";
 
 export default function LoginPage() {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [login, { isLoading }] = useLoginMutation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleLogin = async (values: LoginFormValues) => {
+    console.log("1. handleLogin called", values);
+  
     setError("");
-    setLoading(true); 
+  
     try {
-      const result = await mockLogin(values);
-dispatch(setCredentials({ user: result.user, token: result.token }));
-navigate("/dashboard");
-    } catch { 
-      setError("Invalid email or password");
-    } finally {
-      setLoading(false);
+      console.log("2. Calling login API...");
+  
+      const result = await login(values).unwrap();
+  
+      console.log("3. Login successful:", result);
+  
+      dispatch(setCredentials({ user: result.user}));
+  
+      console.log("4. Credentials dispatched");
+  
+      navigate("/dashboard");
+  
+      console.log("5. Navigation called");
+    } catch (err) {
+      console.error("LOGIN ERROR:", err);
+  
+      const e = err as {
+        data?: {
+          message?: string;
+        };
+      };
+  
+      setError(e?.data?.message || "Invalid email or password");
     }
   };
- 
+
   return (
     <div className="min-h-screen flex">
       {/* Left brand panel */}
@@ -74,7 +92,7 @@ navigate("/dashboard");
             Sign in to your campaign dashboard
           </p>
 
-          <LoginForm onSubmit={handleLogin} loading={loading} error={error} />
+          <LoginForm onSubmit={handleLogin} loading={isLoading} error={error} />
 
           <p className="text-center text-sm text-brand-gray mt-8">
             Having trouble signing in?{" "}

@@ -4,38 +4,44 @@ import { Upload } from "lucide-react";
 import BudgetSpendChart from "../components/BudgetSpendChart";
 import DateRangeFilter, { getRangeForPreset, type DateRange } from "../components/DateRangeFilter";
 import PlatformFilter from "../components/PlatformFilter";
-import { mockCampaignData } from "../mockData";
-
+import { useGetDashboardSummaryQuery } from "../dashboardApi";
 export default function AdminDashboardPage() {
   const [range, setRange] = useState<DateRange>(getRangeForPreset("yesterday"));
   const [platforms, setPlatforms] = useState<string[]>([]);
 
-  const filtered = useMemo(
+  const { data, isLoading, isError, refetch } = useGetDashboardSummaryQuery({
+    platforms: platforms.map((p) => p.toLowerCase()), // slugs are lowercase platform names
+    from: range.from ? String(range.from) : undefined,
+    to: range.to ? String(range.to) : undefined,
+  });
+
+  const totals = data?.totals;
+
+  // Convert API byDate rows into the row shape the chart already uses
+  const chartData = useMemo(
     () =>
-      mockCampaignData.filter(
-        (c) =>
-          (!range.from || c.date >= range.from) &&
-          (!range.to || c.date <= range.to) &&
-          (platforms.length === 0 || platforms.includes(c.platform))
-      ),
-    [range, platforms]
+      (data?.byDate ?? []).map((d) => ({
+        date: d.reportDate,
+        platform: "all",
+        budget: d.Budget,
+        spend: d.Spend,
+        revenue: d.Revenue,
+        orders: d.Orders,
+        roas: d.Spend ? Number((d.Revenue / d.Spend).toFixed(2)) : 0,
+      })),
+    [data]
   );
 
-  const totalBudget = filtered.reduce((sum, c) => sum + c.budget, 0);
-  const totalSpend = filtered.reduce((sum, c) => sum + c.spend, 0);
-  const totalRevenue = filtered.reduce((sum, c) => sum + c.revenue, 0);
-  const totalOrders = filtered.reduce((sum, c) => sum + c.orders, 0);
-  const avgRoas = filtered.length
-    ? (filtered.reduce((sum, c) => sum + c.roas, 0) / filtered.length).toFixed(2)
-    : "0.00";
-  const utilisation = totalBudget ? Math.round((totalSpend / totalBudget) * 100) : 0;
-
   const stats = [
-    { label: "Total Budget", value: `₹${totalBudget.toLocaleString()}`, sub: `${utilisation}% utilised` },
-    { label: "Total Spend", value: `₹${totalSpend.toLocaleString()}` },
-    { label: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}` },
-    { label: "Total Orders", value: totalOrders.toLocaleString() },
-    { label: "Avg. ROAS", value: `${avgRoas}x` },
+    {
+      label: "Total Budget",
+      value: `₹${(totals?.Budget ?? 0).toLocaleString()}`,
+      sub: `${totals?.utilisation ?? 0}% utilised`,
+    },
+    { label: "Total Spend", value: `₹${(totals?.Spend ?? 0).toLocaleString()}` },
+    { label: "Total Revenue", value: `₹${(totals?.Revenue ?? 0).toLocaleString()}` },
+    { label: "Total Orders", value: (totals?.Orders ?? 0).toLocaleString() },
+    { label: "Avg. ROAS", value: `${(totals?.avgRoas ?? 0).toFixed(2)}x` },
   ];
 
   return (
@@ -59,17 +65,28 @@ export default function AdminDashboardPage() {
         <DateRangeFilter value={range} onChange={setRange} />
       </div>
 
-      <div className="grid grid-cols-5 gap-4 mb-6">
+      {isError && (
+        <div className="flex items-center justify-between text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6">
+          <span>Could not load dashboard data.</span>
+          <button onClick={() => refetch()} className="font-medium underline">
+            Retry
+          </button>
+        </div>
+      )}
+
+      <div className={`grid grid-cols-5 gap-4 mb-6 ${isLoading ? "opacity-60" : ""}`}>
         {stats.map((s) => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <p className="text-xs text-brand-gray font-medium mb-1">{s.label}</p>
-            <p className="text-2xl font-bold text-brand-ink">{s.value}</p>
-            {s.sub && <p className="text-xs text-brand-primary-dark font-medium mt-1">{s.sub}</p>}
+            <p className="text-2xl font-bold text-brand-ink">{isLoading ? "—" : s.value}</p>
+            {s.sub && !isLoading && (
+              <p className="text-xs text-brand-primary-dark font-medium mt-1">{s.sub}</p>
+            )}
           </div>
         ))}
       </div>
 
-      <BudgetSpendChart data={filtered} height={240} />
+      <BudgetSpendChart data={chartData} height={240} />
     </div>
   );
 }
