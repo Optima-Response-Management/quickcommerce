@@ -1,4 +1,4 @@
-export type DatePreset = "thisMonth" | "yesterday" | "last7" | "last30" | "custom";
+export type DatePreset = "mtd" | "yesterday" | "last7" | "last30" | "custom";
 
 export interface DateRange {
   preset: DatePreset;
@@ -20,7 +20,7 @@ const daysAgo = (n: number) => {
 };
 
 export function getRangeForPreset(preset: Exclude<DatePreset, "custom">): DateRange {
-  if (preset === "thisMonth") {
+  if (preset === "mtd") {
     const now = new Date();
     return {
       preset,
@@ -36,7 +36,7 @@ export function getRangeForPreset(preset: Exclude<DatePreset, "custom">): DateRa
 }
 
 const PRESETS: { key: DatePreset; label: string }[] = [
-  { key: "thisMonth", label: "This Month" },
+  { key: "mtd", label: "MTD" },
   { key: "yesterday", label: "Yesterday" },
   { key: "last7", label: "Last 7 Days" },
   { key: "last30", label: "Last 30 Days" },

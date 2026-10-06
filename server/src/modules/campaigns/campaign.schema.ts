@@ -16,8 +16,10 @@ const isRealDate = (s: string) => {
   );
 };
 
-// The file itself is handled by multer.
-// These are the text fields sent with it.
+// ============================================================
+// Upload Campaign Schema
+// ============================================================
+
 export const uploadCampaignSchema = z.object({
   platform: z.preprocess(
     (v) => v ?? "",
@@ -54,7 +56,9 @@ export const uploadCampaignSchema = z.object({
 export type UploadCampaignInput =
   z.infer<typeof uploadCampaignSchema>;
 
-// ---- Query string for GET /api/campaigns ----
+// ============================================================
+// GET /api/campaigns Query Schema
+// ============================================================
 
 const emptyToUndefined = (v: unknown) =>
   v === "" ? undefined : v;
@@ -128,6 +132,7 @@ export const listCampaignsSchema = z
       .enum(["asc", "desc"])
       .default("desc"),
 
+    // Server-side pagination
     page: z
       .coerce
       .number()
@@ -135,14 +140,15 @@ export const listCampaignsSchema = z
       .min(1)
       .default(1),
 
-    // CHANGED: 20 → 100
+    // Keep a reasonable API page size.
+    // The frontend will request pages as needed.
     limit: z
       .coerce
       .number()
       .int()
       .min(1)
       .max(100)
-      .default(100),
+      .default(20),
   })
   .refine(
     (q) =>
