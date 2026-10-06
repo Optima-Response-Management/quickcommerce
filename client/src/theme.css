@@ -1,10 +1,28 @@
 @theme {
-  --color-brand-primary: #F97316;
-  --color-brand-primary-light: #FB923C;
-  --color-brand-primary-dark: #EA580C;
-  --color-brand-primary-soft: #FFF7ED; /* light tint for hovers and badges */
-  --color-brand-ink: #1E3A5F;          /* navy, replaces black for text */
-  --color-brand-gray: #475569;
-  --color-brand-white: #FFFFFF;
-  --color-brand-offwhite: #FFFBF7;
+  /* Primary Orange */
+  --color-brand-primary: #F97316;        /* Main orange */
+  --color-brand-primary-light: #FB923C;   /* Light orange */
+  --color-brand-primary-dark: #EA580C;    /* Hover / pressed */
+
+  /* Soft Orange */
+  --color-brand-primary-soft: #FFF7ED;    /* Very subtle orange background */
+  --color-brand-primary-muted: #FFEDD5;   /* Badges / selected states */
+
+  /* Text */
+  --color-brand-ink: #1C1917;             /* Main text */
+  --color-brand-gray: #78716C;            /* Secondary text */
+  --color-brand-gray-light: #A8A29E;      /* Muted text */
+
+  /* Backgrounds */
+  --color-brand-white: #FFFFFF;           /* Cards / surfaces */
+  --color-brand-offwhite: #FFFCF9;        /* Main page background */
+  --color-brand-surface: #FFF7ED;         /* Warm surface */
+
+  /* Borders */
+  --color-brand-border: #F5E6D8;          /* Soft warm border */
+  --color-brand-border-light: #FAF3ED;    /* Very subtle border */
+
+  /* Accent */
+  --color-brand-orange-pale: #FFE4CC;     /* Highlight */
+  --color-brand-orange-tint: #FFF1E6;     /* Hover background */
 }

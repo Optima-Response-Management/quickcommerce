@@ -129,7 +129,7 @@ export default function UploadExcel() {
           </div>
         ) : (
           <>
-            <UploadCloud className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+            <UploadCloud className="w-10 h-10 text-brand-gray-light mx-auto mb-3" />
             <p className="text-sm font-medium text-brand-ink mb-1">
               Drag & drop your Excel file here
             </p>

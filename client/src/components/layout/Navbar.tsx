@@ -5,7 +5,7 @@ export default function Navbar() {
   const user = useSelector((state: RootState) => state.auth.user);
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-10">
+    <header className="h-16 bg-white border-b border-brand-border flex items-center justify-between px-8 sticky top-0 z-10">
       <h1 className="text-lg font-semibold text-brand-ink">
         {user?.role === "super_admin" ? "Admin Panel" : "Dashboard"}
       </h1>

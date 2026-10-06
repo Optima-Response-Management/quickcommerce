@@ -57,7 +57,7 @@ export const dashboardApi = createApi({
       query: ({ platforms, from, to }) => ({
         url: "/dashboard/summary", // change if your route is different
         params: {
-          platforms: platforms.length ? platforms.join(",") : undefined,
+          platform: platforms.length ? platforms.join(",") : undefined,
           from: from || undefined,
           to: to || undefined,
         },

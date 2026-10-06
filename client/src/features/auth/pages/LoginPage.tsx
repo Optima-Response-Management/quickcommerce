@@ -67,7 +67,7 @@ export default function LoginPage() {
             <br />
             all in one place.
           </h2>
-          <p className="text-gray-400 text-base max-w-md">
+          <p className="text-brand-gray-light text-base max-w-md">
             Upload, track, and analyze campaign performance across every
             advertising platform from a single dashboard.
           </p>

@@ -1,4 +1,4 @@
-export type DatePreset = "yesterday" | "last7" | "last30" | "custom";
+export type DatePreset = "thisMonth" | "yesterday" | "last7" | "last30" | "custom";
 
 export interface DateRange {
   preset: DatePreset;
@@ -20,6 +20,15 @@ const daysAgo = (n: number) => {
 };
 
 export function getRangeForPreset(preset: Exclude<DatePreset, "custom">): DateRange {
+  if (preset === "thisMonth") {
+    const now = new Date();
+    return {
+      preset,
+      from: toISO(new Date(now.getFullYear(), now.getMonth(), 1)),
+      to: toISO(now),
+    };
+  }
+
   const yesterday = daysAgo(1);
   if (preset === "yesterday") return { preset, from: yesterday, to: yesterday };
   if (preset === "last7") return { preset, from: daysAgo(7), to: yesterday };
@@ -27,6 +36,7 @@ export function getRangeForPreset(preset: Exclude<DatePreset, "custom">): DateRa
 }
 
 const PRESETS: { key: DatePreset; label: string }[] = [
+  { key: "thisMonth", label: "This Month" },
   { key: "yesterday", label: "Yesterday" },
   { key: "last7", label: "Last 7 Days" },
   { key: "last30", label: "Last 30 Days" },
@@ -49,7 +59,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+      <div className="inline-flex rounded-lg border border-brand-border bg-white p-1">
         {PRESETS.map((p) => (
           <button
             key={p.key}
@@ -73,7 +83,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
             value={value.from}
             max={value.to || undefined}
             onChange={(e) => onChange({ ...value, from: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-brand-ink"
+            className="border border-brand-border rounded-lg px-3 py-1.5 text-brand-ink"
           />
           <label className="text-brand-gray">To</label>
           <input
@@ -81,7 +91,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
             value={value.to}
             min={value.from || undefined}
             onChange={(e) => onChange({ ...value, to: e.target.value })}
-            className="border border-gray-200 rounded-lg px-3 py-1.5 text-brand-ink"
+            className="border border-brand-border rounded-lg px-3 py-1.5 text-brand-ink"
           />
         </div>
       )}

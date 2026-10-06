@@ -16,13 +16,17 @@ declare global {
 
 export const authenticate = asyncHandler(async (req, _res, next) => {
   const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
+  const token =
+    req.cookies?.token ??
+    (header?.startsWith("Bearer ") ? header.slice(7) : undefined);
+
+  if (!token) {
     throw new ApiError(401, "Authentication required");
   }
 
   let payload: JwtPayload;
   try {
-    payload = jwt.verify(header.slice(7), env.JWT_SECRET) as JwtPayload;
+    payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
   } catch {
     throw new ApiError(401, "Invalid or expired token");
   }

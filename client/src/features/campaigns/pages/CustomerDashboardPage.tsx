@@ -22,7 +22,7 @@ export default function CustomerDashboardPage() {
 
       <div className="grid grid-cols-4 gap-4 mb-6">
         {stats.map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-5">
+          <div key={s.label} className="bg-white rounded-xl border border-brand-border p-5">
             <p className="text-xs text-brand-gray font-medium mb-1">{s.label}</p>
             <p className="text-2xl font-bold text-brand-ink">{s.value}</p>
             {s.sub && <p className="text-xs text-brand-primary-dark font-medium mt-1">{s.sub}</p>}
@@ -34,14 +34,14 @@ export default function CustomerDashboardPage() {
         <BudgetSpendChart data={mockCampaignData} />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
+      <div className="bg-white rounded-xl border border-brand-border overflow-hidden">
+        <div className="px-5 py-4 border-b border-brand-border-light">
           <h3 className="text-sm font-semibold text-brand-ink">Campaigns</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 text-left text-xs text-brand-gray uppercase tracking-wide">
+              <tr className="bg-brand-surface text-left text-xs text-brand-gray uppercase tracking-wide">
                 {["Campaign", "Platform", "Brand", "Budget", "Spend", "Revenue", "Orders", "ROAS", "Status"].map((h) => (
                   <th key={h} className="px-5 py-3 font-medium whitespace-nowrap">{h}</th>
                 ))}
@@ -49,7 +49,7 @@ export default function CustomerDashboardPage() {
             </thead>
             <tbody>
               {mockCampaignData.map((c, i) => (
-                <tr key={i} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                <tr key={i} className="border-t border-brand-border-light hover:bg-brand-surface transition-colors">
                   <td className="px-5 py-3 font-medium text-brand-ink whitespace-nowrap">{c.campaignName}</td>
                   <td className="px-5 py-3">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-brand-primary-soft text-brand-primary-dark whitespace-nowrap">

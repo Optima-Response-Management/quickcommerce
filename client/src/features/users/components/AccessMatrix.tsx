@@ -5,14 +5,14 @@ const features = Object.keys(FEATURE_LABELS) as Feature[];
 
 export default function AccessMatrix() {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-      <div className="px-5 py-4 border-b border-gray-100">
+    <div className="bg-white rounded-xl border border-brand-border overflow-hidden mb-6">
+      <div className="px-5 py-4 border-b border-brand-border-light">
         <h3 className="text-sm font-semibold text-brand-ink">What each role can access</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 text-left text-xs text-brand-gray uppercase tracking-wide">
+            <tr className="bg-brand-surface text-left text-xs text-brand-gray uppercase tracking-wide">
               <th className="px-5 py-3 font-medium">Role</th>
               {features.map((f) => (
                 <th key={f} className="px-5 py-3 font-medium whitespace-nowrap">{FEATURE_LABELS[f]}</th>
@@ -22,7 +22,7 @@ export default function AccessMatrix() {
           </thead>
           <tbody>
             {ROLES.map((role) => (
-              <tr key={role} className="border-t border-gray-100">
+              <tr key={role} className="border-t border-brand-border-light">
                 <td className="px-5 py-3 font-medium text-brand-ink">{ROLE_LABELS[role]}</td>
                 {features.map((f) => (
                   <td key={f} className="px-5 py-3">

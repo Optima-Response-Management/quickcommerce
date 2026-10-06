@@ -39,4 +39,6 @@ export const authApi = createApi({
   }),
 });
 
+console.log("API base:", import.meta.env.VITE_API_BASE_URL);
+
 export const { useLoginMutation, useMeQuery, useLogoutMutation } = authApi;

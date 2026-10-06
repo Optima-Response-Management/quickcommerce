@@ -19,7 +19,7 @@ interface CreateUserModalProps {
 }
 
 const inputClass =
-  "w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition-all";
+  "w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm placeholder:text-brand-gray-light focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition-all";
 
 const cardClass = (active: boolean) =>
   `rounded-lg border px-4 py-3 text-left transition-colors ${
@@ -95,7 +95,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-brand-border-light">
           <h3 className="text-lg font-semibold text-brand-ink">Create User</h3>
           <button onClick={handleClose} className="p-1.5 rounded-md text-brand-gray hover:bg-gray-100">
             <X className="w-4 h-4" />
@@ -156,8 +156,8 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
                   key={f}
                   className={`flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${
                     isSuperAdmin
-                      ? "border-gray-200 bg-gray-50 cursor-not-allowed"
-                      : "border-gray-300 cursor-pointer hover:bg-gray-50"
+                      ? "border-brand-border bg-brand-surface cursor-not-allowed"
+                      : "border-gray-300 cursor-pointer hover:bg-brand-surface"
                   }`}
                 >
                   <input
@@ -199,7 +199,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
                 {PLATFORMS.map((p) => (
                   <label
                     key={p}
-                    className="flex items-center gap-2.5 rounded-lg border border-gray-300 px-3.5 py-2.5 cursor-pointer hover:bg-gray-50"
+                    className="flex items-center gap-2.5 rounded-lg border border-gray-300 px-3.5 py-2.5 cursor-pointer hover:bg-brand-surface"
                   >
                     <input
                       type="checkbox"
@@ -219,7 +219,7 @@ export default function CreateUserModal({ open, onClose, onCreate }: CreateUserM
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-brand-gray hover:bg-gray-50 transition-colors"
+              className="px-4 py-2.5 rounded-lg text-sm font-medium border border-gray-300 text-brand-gray hover:bg-brand-surface transition-colors"
             >
               Cancel
             </button>
