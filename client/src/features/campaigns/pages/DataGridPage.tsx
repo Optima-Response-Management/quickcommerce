@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import FilterBar from "../components/FilterBar";
 import Table, { type Column } from "../../../components/common/Table";
-import { mockCampaignData, mockCityData } from "../mockData";
+import { mockCityData } from "../mockData";
 import {
   platformOptions,
   marketOptions,
@@ -10,7 +10,8 @@ import {
   dateOptions,
 } from "../filterOptions";
 import { matchesDate, type DateFilterValue } from "../dateUtils";
-import type { CampaignRow, CityRow } from "../types";
+import type { CityRow } from "../types";
+import { useGetCampaignsQuery, type CampaignGridRow } from "../dashboardApi";
 
 interface AppliedFilters {
   platform: string;
@@ -45,11 +46,24 @@ export default function DataGridPage() {
   const [date, setDate] = useState<DateFilterValue>({ preset: "all" });
   const [applied, setApplied] = useState<AppliedFilters>(INITIAL_FILTERS);
 
-  const source = tab === "campaign" ? mockCampaignData : mockCityData;
+  const {
+    data: campaigns = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useGetCampaignsQuery();
+  console.log("Campaign count:", campaigns.length);
+console.log("Campaigns:", campaigns);
+
+  const source = tab === "campaign" ? campaigns : mockCityData;
 
   const filteredData = useMemo(() => {
     return source.filter((row: any) => {
-      if (applied.platform !== "all" && row.platform !== applied.platform) return false;
+      if (
+        applied.platform !== "all" &&
+        String(row.platform).toLowerCase() !== applied.platform.toLowerCase()
+      )
+        return false;
       if (applied.market !== "all" && row.market !== applied.market) return false;
       if (applied.brand !== "all" && row.brandName !== applied.brand) return false;
       if (applied.product !== "all" && row.product !== applied.product) return false;
@@ -57,19 +71,11 @@ export default function DataGridPage() {
     });
   }, [source, applied]);
 
-  const campaignColumns: Column<CampaignRow>[] = [
-    { key: "campaignName", label: "Campaign" },
-    { key: "platform", label: "Platform", render: (r) => platformBadge(r.platform) },
-    { key: "brandName", label: "Brand" },
-    { key: "product", label: "Product" },
-    { key: "market", label: "Market" },
-    { key: "campaignType", label: "Type" },
+  const campaignColumns: Column<CampaignGridRow>[] = [
+    { key: "campaignName", label: "Campaign Name" },
     { key: "budget", label: "Budget", render: (r) => `₹${r.budget.toLocaleString()}` },
     { key: "spend", label: "Spend", render: (r) => `₹${r.spend.toLocaleString()}` },
     { key: "revenue", label: "Revenue", render: (r) => `₹${r.revenue.toLocaleString()}` },
-    { key: "orders", label: "Orders" },
-    { key: "roas", label: "ROAS", render: (r) => `${r.roas}x` },
-    { key: "status", label: "Status" },
     { key: "date", label: "Date" },
   ];
 
@@ -128,14 +134,29 @@ export default function DataGridPage() {
         onApply={() => setApplied({ platform, market, brand, product, date })}
       />
 
+      {tab === "campaign" && isError && (
+        <div className="flex items-center justify-between text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">
+          <span>Could not load campaigns.</span>
+          <button onClick={() => refetch()} className="font-medium underline">
+            Retry
+          </button>
+        </div>
+      )}
+
       {tab === "campaign" ? (
-        <Table
-          key={tableKey}
-          data={filteredData as CampaignRow[]}
-          columns={campaignColumns}
-          title={`${platformTitle} Campaign Report`}
-          pageSize={10}
-        />
+        isLoading ? (
+          <div className="bg-white rounded-xl border border-brand-border p-10 text-center text-sm text-brand-gray">
+            Loading campaigns...
+          </div>
+        ) : (
+          <Table
+            key={tableKey}
+            data={filteredData as CampaignGridRow[]}
+            columns={campaignColumns}
+            title={`${platformTitle} Campaign Report`}
+            pageSize={10}
+          />
+        )
       ) : (
         <Table
           key={tableKey}
