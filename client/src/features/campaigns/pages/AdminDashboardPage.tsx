@@ -12,7 +12,7 @@ const toYMD = (d: Date) =>
 function getMonthToDateRange(): DateRange {
   const now = new Date();
   return {
-    ...getRangeForPreset("thisMonth"),
+    ...getRangeForPreset("mtd"),
     from: toYMD(new Date(now.getFullYear(), now.getMonth(), 1)),
     to: toYMD(now),
   };
