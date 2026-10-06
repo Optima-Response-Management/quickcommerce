@@ -17,6 +17,8 @@ dist-ssr/
 # Environment variables
 .env
 .env.*
+.env.development  
+.env.production  
 !.env.example
 
 # Local files
