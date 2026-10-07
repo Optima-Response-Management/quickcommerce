@@ -57,6 +57,8 @@ export interface CampaignGridRow {
   budget: number;
   spend: number;
   revenue: number;
+  orders: number;
+
   date: string;
 }
 
@@ -141,6 +143,7 @@ function toGridRow(
       r.revenue ??
       0
     ),
+    orders: Number(r.Orders ?? r.orders ?? 0),
 
     date: String(
       r.reportDate ??
@@ -160,6 +163,13 @@ interface SummaryArgs {
   to?: string;
 }
 
+export interface LocationItem {
+  id: string;
+  platform: string; // slug, lowercase
+  state: string;
+  city: string;
+  brands: { name: string; products: string[] }[];
+}
 /* =========================================================
    API
 ========================================================= */
@@ -319,7 +329,31 @@ export const dashboardApi = createApi({
         };
       },
     }),
+    getLocations: builder.query<LocationItem[], void>({
+      query: () => "/locations",
+      transformResponse: (res: { data: unknown }) => {
+        const d = res.data as any;
+        const list: Record<string, any>[] = Array.isArray(d)
+          ? d
+          : d?.locations ?? d?.items ?? d?.rows ?? [];
+        return list
+          .filter((l) => l.isActive !== false)
+          .map((l, i) => ({
+            id: String(l.id ?? l._id ?? i),
+            platform: String(l.platform ?? "").toLowerCase(),
+            state: l.state ?? "",
+            city: l.city ?? "",
+            brands: Array.isArray(l.brands)
+              ? l.brands.map((b: any) => ({
+                  name: String(b.name ?? ""),
+                  products: Array.isArray(b.products) ? b.products.map(String) : [],
+                }))
+              : [],
+          }));
+      },
+    }),
   }),
+  
 });
 
 /* =========================================================
@@ -330,4 +364,5 @@ export const {
   useGetPlatformsQuery,
   useGetDashboardSummaryQuery,
   useGetCampaignsQuery,
+  useGetLocationsQuery
 } = dashboardApi;

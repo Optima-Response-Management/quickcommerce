@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware";
 import { requireFeature } from "../../middlewares/role.middleware";
 import { validate, validateQuery } from "../../middlewares/validate.middleware";
-import { locationQuerySchema } from "./location.schema";
+import { dropdownLocationsSchema } from "./location.schema";
 import { getLocationsController } from "./location.controller";
 import { createLocationSchema, listLocationsSchema, updateLocationStatusSchema } from "./locationManage.schema";
 import {
@@ -13,19 +13,29 @@ import {
 
 const router = Router();
 
-// manage_locations is a Super Admin only feature (it can't be given to a user one by one)
-router.use(authenticate, requireFeature("manage_locations"));    
+router.use(authenticate);
 
-// Active locations grouped by platform, state and city
-router.get("/", validateQuery(locationQuerySchema), getLocationsController);
+// Filter dropdowns: active locations with brands, not paginated.
+// Any signed-in user can call it, and the service only returns the platforms they may see.
+router.get("/", validateQuery(dropdownLocationsSchema), getLocationsController);
 
-// Flat list with ids and status (disabled ones included), for the management screen
-router.get("/list", validateQuery(listLocationsSchema), listLocationsController);
+// Management screen (Super Admin only): flat list with ids and status, paginated
+router.get(
+  "/list",
+  requireFeature("manage_locations"),
+  validateQuery(listLocationsSchema),
+  listLocationsController
+);
 
-// Add a location
-router.post("/", validate(createLocationSchema), createLocationController);
+// Add a location (Super Admin only)
+router.post("/", requireFeature("manage_locations"), validate(createLocationSchema), createLocationController);
 
-// Disable or enable a location
-router.patch("/:id/status", validate(updateLocationStatusSchema), updateLocationStatusController);
+// Disable or enable a location (Super Admin only)
+router.patch(
+  "/:id/status",
+  requireFeature("manage_locations"),
+  validate(updateLocationStatusSchema),
+  updateLocationStatusController
+);
 
 export default router;

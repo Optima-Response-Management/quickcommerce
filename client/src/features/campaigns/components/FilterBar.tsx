@@ -1,124 +1,193 @@
+import { ChevronDown, Filter, RotateCcw, X } from "lucide-react";
 import type { FilterOption } from "../filterOptions";
 import type { DateFilterValue } from "../dateUtils";
 
-const selectClass =
-  "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary";
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  options: FilterOption[];
+  onChange: (v: string) => void;
+  onClear: () => void;
+}
+
+function SelectField({ label, value, options, onChange, onClear }: SelectFieldProps) {
+  const active = value !== "all";
+  const disabled = options.length <= 1; // only "All" available, e.g. a platform with no states
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-brand-gray">
+        {label}
+      </label>
+
+      <div className="relative">
+        <select
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full appearance-none rounded-lg border py-2.5 pl-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:bg-brand-offwhite disabled:text-brand-gray-light ${
+            active
+              ? "border-brand-primary bg-brand-primary-soft pr-14 text-brand-primary-dark"
+              : "border-brand-border bg-white pr-9 text-brand-ink hover:border-brand-primary/50"
+          }`}
+        >
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+
+        {active && (
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label={`Clear ${label}`}
+            className="absolute right-8 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-brand-primary-dark transition-colors hover:bg-brand-primary hover:text-white"
+          >
+            <X size={12} />
+          </button>
+        )}
+
+        <ChevronDown
+          size={16}
+          className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-brand-gray"
+        />
+      </div>
+    </div>
+  );
+}
+
+const dateInputClass =
+  "w-full rounded-lg border border-brand-border bg-white px-3 py-2.5 text-sm font-medium text-brand-ink transition-colors hover:border-brand-primary/50 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30";
 
 interface FilterBarProps {
   platformOptions: FilterOption[];
   dateOptions: FilterOption[];
-  marketOptions: FilterOption[];
+  marketOptions: FilterOption[]; // these are the States for the selected platform
+  cityOptions: FilterOption[];
   brandOptions: FilterOption[];
   productOptions: FilterOption[];
 
   platform: string;
   date: DateFilterValue;
-  market: string;
+  market: string; // selected State
+  city: string;
   brand: string;
   product: string;
 
   onPlatformChange: (v: string) => void;
   onDateChange: (v: DateFilterValue) => void;
   onMarketChange: (v: string) => void;
+  onCityChange: (v: string) => void;
   onBrandChange: (v: string) => void;
   onProductChange: (v: string) => void;
 
   onApply: () => void;
+  onClear: () => void;
 }
 
 export default function FilterBar({
   platformOptions,
   dateOptions,
   marketOptions,
+  cityOptions,
   brandOptions,
   productOptions,
   platform,
   date,
   market,
+  city,
   brand,
   product,
   onPlatformChange,
   onDateChange,
   onMarketChange,
+  onCityChange,
   onBrandChange,
   onProductChange,
   onApply,
+  onClear,
 }: FilterBarProps) {
   const invalidRange = date.preset === "custom" && !!date.from && !!date.to && date.from > date.to;
 
   return (
-    <div className="mb-5">
-      <div className="grid grid-cols-5 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium text-brand-ink mb-1.5">Platform</label>
-          <select value={platform} onChange={(e) => onPlatformChange(e.target.value)} className={selectClass}>
-            {platformOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+    <div>
+            <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <SelectField
+          label="Platform"
+          value={platform}
+          options={platformOptions}
+          onChange={onPlatformChange}
+          onClear={() => onPlatformChange("all")}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-brand-ink mb-1.5">Date</label>
-          <select
-            value={date.preset}
-            onChange={(e) => onDateChange({ ...date, preset: e.target.value })}
-            className={selectClass}
-          >
-            {dateOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          label="State"
+          value={market}
+          options={marketOptions}
+          onChange={onMarketChange}
+          onClear={() => onMarketChange("all")}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-brand-ink mb-1.5">Market</label>
-          <select value={market} onChange={(e) => onMarketChange(e.target.value)} className={selectClass}>
-            {marketOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          label="City"
+          value={city}
+          options={cityOptions}
+          onChange={onCityChange}
+          onClear={() => onCityChange("all")}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-brand-ink mb-1.5">Brand</label>
-          <select value={brand} onChange={(e) => onBrandChange(e.target.value)} className={selectClass}>
-            {brandOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          label="Product"
+          value={product}
+          options={productOptions}
+          onChange={onProductChange}
+          onClear={() => onProductChange("all")}
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-brand-ink mb-1.5">Product</label>
-          <select value={product} onChange={(e) => onProductChange(e.target.value)} className={selectClass}>
-            {productOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
+        <SelectField
+          label="Brand"
+          value={brand}
+          options={brandOptions}
+          onChange={onBrandChange}
+          onClear={() => onBrandChange("all")}
+        />
 
-        {/* Custom range: From / To sit right under the Date column */}
+        <SelectField
+          label="Date"
+          value={date.preset}
+          options={dateOptions}
+          onChange={(v) => onDateChange({ ...date, preset: v })}
+          onClear={() => onDateChange({ preset: "all" })}
+        />
+
+        {/* Custom range: From / To sit on the last row, under Brand and Date */}
         {date.preset === "custom" && (
           <>
-            <div className="col-start-2">
-              <label className="block text-sm font-medium text-brand-ink mb-1.5">From Date</label>
+            <div className="xl:col-start-5">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-brand-gray">
+                From Date
+              </label>
               <input
                 type="date"
                 value={date.from ?? ""}
                 max={date.to || undefined}
                 onChange={(e) => onDateChange({ ...date, from: e.target.value })}
-                className={selectClass}
+                className={dateInputClass}
               />
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-brand-ink mb-1.5">To Date</label>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-brand-gray">
+                To Date
+              </label>
               <input
                 type="date"
                 value={date.to ?? ""}
                 min={date.from || undefined}
                 onChange={(e) => onDateChange({ ...date, to: e.target.value })}
-                className={selectClass}
+                className={dateInputClass}
               />
             </div>
           </>
@@ -126,16 +195,29 @@ export default function FilterBar({
       </div>
 
       {invalidRange && (
-        <p className="text-xs text-red-600 mb-3">From Date must be on or before To Date.</p>
+        <p className="mb-3 text-xs font-medium text-red-600">From Date must be on or before To Date.</p>
       )}
 
-      <button
-        onClick={onApply}
-        disabled={invalidRange}
-        className="bg-brand-primary hover:bg-brand-primary-dark text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        Filter
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={onApply}
+          disabled={invalidRange}
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/20 transition-colors hover:bg-brand-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <Filter size={15} />
+          Apply filters
+        </button>
+
+        <button
+          type="button"
+          onClick={onClear}
+          className="inline-flex items-center gap-2 rounded-lg border border-brand-border bg-white px-4 py-2.5 text-sm font-semibold text-brand-gray transition-colors hover:bg-brand-orange-tint hover:text-brand-primary-dark"
+        >
+          <RotateCcw size={15} />
+          Reset
+        </button>
+      </div>
     </div>
   );
 }
