@@ -625,7 +625,6 @@ export default function DataGridPage() {
             onProductChange={setProduct}
             onApply={handleApplyFilters}
             onClear={handleClearFilters}
-            onBrandChange={setBrand}
           />
         </div>
 
