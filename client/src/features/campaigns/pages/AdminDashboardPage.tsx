@@ -70,43 +70,150 @@ export default function AdminDashboardPage() {
     { label: "Total Orders", value: (totals?.Orders ?? 0).toLocaleString() },
     { label: "Avg. ROAS", value: `${(totals?.avgRoas ?? 0).toFixed(2)}x` },
   ];
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-brand-ink mb-1">Admin Dashboard</h2>
-          <p className="text-sm text-brand-gray">Full visibility across all uploaded campaign data</p>
+    <div className="page-enter space-y-6">
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-white p-6 shadow-brand-sm sm:p-7">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-200/25 blur-3xl" />
+  
+        <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-primary/10 bg-brand-primary-soft px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-primary-dark">
+              <span className="h-1.5 w-1.5 animate-soft-pulse rounded-full bg-brand-primary" />
+              Live workspace
+            </div>
+  
+            <h1 className="text-2xl font-bold tracking-[-0.03em] text-brand-ink sm:text-3xl">
+              Campaign performance
+            </h1>
+  
+            <p className="mt-2 max-w-xl text-sm leading-6 text-brand-gray">
+              Full visibility across your campaign ecosystem,
+              spend, revenue, orders, and return on ad spend.
+            </p>
+          </div>
+  
+          <div className="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3.5 py-2.5 text-xs text-brand-gray">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            Data synced
+          </div>
         </div>
       </div>
-
-      <div className="flex flex-col gap-3 mb-6">
-        <PlatformFilter selected={platforms} onChange={setPlatforms} />
-        <DateRangeFilter value={range} onChange={setRange} />
+  
+      {/* Filters */}
+      <div className="rounded-2xl border border-brand-border bg-white p-4 shadow-brand-sm">
+        <div className="mb-3 flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-brand-primary" />
+  
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-gray">
+            Filters
+          </p>
+        </div>
+  
+        <div className="flex flex-col gap-3">
+          <PlatformFilter
+            selected={platforms}
+            onChange={setPlatforms}
+          />
+  
+          <DateRangeFilter
+            value={range}
+            onChange={setRange}
+          />
+        </div>
       </div>
-
+  
+      {/* Error */}
       {isError && (
-        <div className="flex items-center justify-between text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6">
-          <span>Could not load dashboard data.</span>
-          <button onClick={() => refetch()} className="font-medium underline">
+        <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-700">
+          <span>
+            Could not load dashboard data.
+          </span>
+  
+          <button
+            onClick={() => refetch()}
+            className="font-semibold underline underline-offset-2"
+          >
             Retry
           </button>
         </div>
       )}
-
-      <div className={`grid grid-cols-5 gap-4 mb-6 ${isLoading ? "opacity-60" : ""}`}>
-        {stats.map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-brand-border p-5">
-            <p className="text-xs text-brand-gray font-medium mb-1">{s.label}</p>
-            <p className="text-2xl font-bold text-brand-ink">{isLoading ? "—" : s.value}</p>
-            {s.sub && !isLoading && (
-              <p className="text-xs text-brand-primary-dark font-medium mt-1">{s.sub}</p>
+  
+      {/* Stats */}
+      <div
+        className={`grid gap-4 sm:grid-cols-2 xl:grid-cols-5 ${
+          isLoading ? "opacity-60" : ""
+        }`}
+      >
+        {stats.map((stat, index) => (
+          <div
+            key={stat.label}
+            className="stagger-item ui-card rounded-2xl p-5"
+          >
+            <div className="mb-5 flex items-center justify-between">
+              <p className="text-xs font-semibold text-brand-gray">
+                {stat.label}
+              </p>
+  
+              <div className="h-2 w-2 rounded-full bg-brand-primary/60" />
+            </div>
+  
+            <p className="text-2xl font-bold tracking-[-0.03em] text-brand-ink">
+              {isLoading ? "—" : stat.value}
+            </p>
+  
+            {stat.sub && !isLoading && (
+              <p className="mt-2 text-[11px] font-semibold text-brand-primary-dark">
+                {stat.sub}
+              </p>
             )}
+  
+            <div className="mt-5 h-1 overflow-hidden rounded-full bg-brand-surface">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-600"
+                style={{
+                  width: `${Math.min(100, 35 + index * 13)}%`,
+                }}
+              />
+            </div>
           </div>
         ))}
       </div>
-
-      <BudgetSpendChart byPlatform={byPlatform} byDate={byDate} height={240} />
+  
+      {/* Chart */}
+      <div className="overflow-hidden rounded-2xl border border-brand-border bg-white shadow-brand-sm">
+        <div className="flex items-center justify-between border-b border-brand-border-light px-5 py-4">
+          <div>
+            <h2 className="text-sm font-bold text-brand-ink">
+              Budget & spend
+            </h2>
+  
+            <p className="mt-1 text-xs text-brand-gray">
+              Performance across the selected period
+            </p>
           </div>
+  
+          <div className="hidden items-center gap-4 sm:flex">
+            <div className="flex items-center gap-2 text-[11px] text-brand-gray">
+              <span className="h-2 w-2 rounded-full bg-brand-primary" />
+              Spend
+            </div>
+  
+            <div className="flex items-center gap-2 text-[11px] text-brand-gray">
+              <span className="h-2 w-2 rounded-full bg-brand-ink" />
+              Budget
+            </div>
+          </div>
+        </div>
+  
+        <div className="p-4 sm:p-6">
+          <BudgetSpendChart
+            byPlatform={byPlatform}
+            byDate={byDate}
+            height={280}
+          />
+        </div>
+      </div>
+    </div>
   );
 }

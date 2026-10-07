@@ -1,8 +1,19 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import { loginSchema, type LoginFormValues } from "../authSchema";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+} from "lucide-react";
+
+import {
+  loginSchema,
+  type LoginFormValues,
+} from "../authSchema";
 
 interface LoginFormProps {
   onSubmit: (values: LoginFormValues) => void;
@@ -10,8 +21,13 @@ interface LoginFormProps {
   error?: string;
 }
 
-export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) {
-  const [showPassword, setShowPassword] = useState(false);
+export default function LoginForm({
+  onSubmit,
+  loading,
+  error,
+}: LoginFormProps) {
+  const [showPassword, setShowPassword] =
+    useState(false);
 
   const {
     register,
@@ -23,92 +39,146 @@ export default function LoginForm({ onSubmit, loading, error }: LoginFormProps) 
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-5"
+      noValidate
+    >
+      {/* Email */}
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-brand-ink mb-1.5">
+        <label
+          htmlFor="email"
+          className="mb-2 block text-xs font-bold uppercase tracking-wide text-brand-ink"
+        >
           Email address
         </label>
-        <div className="relative">
-          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-brand-gray-light" />
+
+        <div className="group relative">
+          <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-gray-light transition group-focus-within:text-brand-primary" />
+
           <input
             id="email"
             type="email"
             {...register("email")}
-            className={`w-full rounded-lg border bg-white pl-11 pr-4 py-3 text-sm
-                       placeholder:text-brand-gray-light
-                       focus:outline-none focus:ring-2 focus:ring-brand-primary/40
-                       transition-all
-                       ${errors.email ? "border-red-400 focus:border-red-400" : "border-gray-300 focus:border-brand-primary"}`}
+            className={[
+              "h-12 w-full rounded-xl border bg-brand-surface pl-11 pr-4",
+              "text-sm text-brand-ink placeholder:text-brand-gray-light",
+              "outline-none transition-all",
+              "focus:border-brand-primary focus:bg-white focus:ring-4 focus:ring-brand-primary/10",
+              errors.email
+                ? "border-red-400"
+                : "border-brand-border",
+            ].join(" ")}
             placeholder="you@company.com"
           />
         </div>
+
         {errors.email && (
-          <p className="text-xs text-red-600 mt-1.5">{errors.email.message}</p>
+          <p className="mt-1.5 text-xs text-red-600">
+            {errors.email.message}
+          </p>
         )}
       </div>
 
+      {/* Password */}
       <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="password" className="block text-sm font-medium text-brand-ink">
+        <div className="mb-2 flex items-center justify-between">
+          <label
+            htmlFor="password"
+            className="text-xs font-bold uppercase tracking-wide text-brand-ink"
+          >
             Password
           </label>
-          <a href="#" className="text-xs text-brand-primary font-medium hover:underline">
+
+          <a
+            href="#"
+            className="text-xs font-semibold text-brand-primary transition hover:text-brand-primary-dark"
+          >
             Forgot password?
           </a>
         </div>
-        <div className="relative">
-          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-brand-gray-light" />
+
+        <div className="group relative">
+          <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-gray-light transition group-focus-within:text-brand-primary" />
+
           <input
             id="password"
             type={showPassword ? "text" : "password"}
             {...register("password")}
-            className={`w-full rounded-lg border bg-white pl-11 pr-11 py-3 text-sm
-                       placeholder:text-brand-gray-light
-                       focus:outline-none focus:ring-2 focus:ring-brand-primary/40
-                       transition-all
-                       ${errors.password ? "border-red-400 focus:border-red-400" : "border-gray-300 focus:border-brand-primary"}`}
+            className={[
+              "h-12 w-full rounded-xl border bg-brand-surface pl-11 pr-11",
+              "text-sm text-brand-ink placeholder:text-brand-gray-light",
+              "outline-none transition-all",
+              "focus:border-brand-primary focus:bg-white focus:ring-4 focus:ring-brand-primary/10",
+              errors.password
+                ? "border-red-400"
+                : "border-brand-border",
+            ].join(" ")}
             placeholder="••••••••"
           />
+
           <button
             type="button"
-            onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-gray-light hover:text-brand-ink transition-colors"
+            onClick={() =>
+              setShowPassword((value) => !value)
+            }
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-brand-gray-light transition hover:text-brand-ink"
             tabIndex={-1}
           >
-            {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </button>
         </div>
+
         {errors.password && (
-          <p className="text-xs text-red-600 mt-1.5">{errors.password.message}</p>
+          <p className="mt-1.5 text-xs text-red-600">
+            {errors.password.message}
+          </p>
         )}
       </div>
 
-      <div className="flex items-center">
+      {/* Remember */}
+      <label className="flex cursor-pointer items-center gap-2.5">
         <input
           id="remember"
           type="checkbox"
-          className="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/40"
+          className="h-4 w-4 rounded border-brand-border text-brand-primary accent-orange-500 focus:ring-brand-primary/20"
         />
-        <label htmlFor="remember" className="ml-2 text-sm text-brand-gray">
-          Remember me
-        </label>
-      </div>
 
+        <span className="text-xs text-brand-gray">
+          Keep me signed in
+        </span>
+      </label>
+
+      {/* Error */}
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3.5 py-2.5">
-          {error}
-        </p>
+        <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+
+          <p className="text-xs leading-5 text-red-700">
+            {error}
+          </p>
+        </div>
       )}
 
+      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-brand-primary hover:bg-brand-primary-dark active:scale-[0.98]
-                   text-white font-semibold text-sm py-3 rounded-lg
-                   shadow-sm shadow-orange-500/20
-                   transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+        className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-brand-ink text-sm font-bold text-white shadow-lg shadow-brand-ink/10 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#25201b] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
       >
-        {loading ? "Signing in..." : "Sign In"}
+        <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+        <span className="relative">
+          {loading ? "Signing in..." : "Continue to workspace"}
+        </span>
+
+        {!loading && (
+          <ArrowRight className="relative h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+        )}
       </button>
     </form>
   );

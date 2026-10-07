@@ -1,28 +1,56 @@
 @theme {
-  /* Primary Orange */
-  --color-brand-primary: #F97316;        /* Main orange */
-  --color-brand-primary-light: #FB923C;   /* Light orange */
-  --color-brand-primary-dark: #EA580C;    /* Hover / pressed */
+  /* =========================================================
+     BRAND
+  ========================================================= */
 
-  /* Soft Orange */
-  --color-brand-primary-soft: #FFF7ED;    /* Very subtle orange background */
-  --color-brand-primary-muted: #FFEDD5;   /* Badges / selected states */
+  --color-brand-primary: #f97316;
+  --color-brand-primary-light: #fb923c;
+  --color-brand-primary-dark: #ea580c;
 
-  /* Text */
-  --color-brand-ink: #1C1917;             /* Main text */
-  --color-brand-gray: #78716C;            /* Secondary text */
-  --color-brand-gray-light: #A8A29E;      /* Muted text */
+  --color-brand-primary-soft: #fff7ed;
+  --color-brand-primary-muted: #ffedd5;
 
-  /* Backgrounds */
-  --color-brand-white: #FFFFFF;           /* Cards / surfaces */
-  --color-brand-offwhite: #FFFCF9;        /* Main page background */
-  --color-brand-surface: #FFF7ED;         /* Warm surface */
+  /* =========================================================
+     TEXT
+  ========================================================= */
 
-  /* Borders */
-  --color-brand-border: #F5E6D8;          /* Soft warm border */
-  --color-brand-border-light: #FAF3ED;    /* Very subtle border */
+  --color-brand-ink: #171411;
+  --color-brand-gray: #6f6861;
+  --color-brand-gray-light: #a8a29e;
 
-  /* Accent */
-  --color-brand-orange-pale: #FFE4CC;     /* Highlight */
-  --color-brand-orange-tint: #FFF1E6;     /* Hover background */
+  /* =========================================================
+     SURFACES
+  ========================================================= */
+
+  --color-brand-white: #ffffff;
+  --color-brand-offwhite: #faf9f7;
+  --color-brand-surface: #f7f5f2;
+
+  /* =========================================================
+     BORDERS
+  ========================================================= */
+
+  --color-brand-border: #ebe6df;
+  --color-brand-border-light: #f2eee9;
+
+  /* =========================================================
+     ACCENTS
+  ========================================================= */
+
+  --color-brand-orange-pale: #ffe4cc;
+  --color-brand-orange-tint: #fff4e8;
+
+  /* =========================================================
+     SHADOWS
+  ========================================================= */
+
+  --shadow-brand-sm:
+    0 1px 2px rgba(23, 20, 17, 0.04),
+    0 4px 12px rgba(23, 20, 17, 0.04);
+
+  --shadow-brand-md:
+    0 8px 30px rgba(23, 20, 17, 0.07);
+
+  --shadow-brand-lg:
+    0 20px 60px rgba(23, 20, 17, 0.10);
 }

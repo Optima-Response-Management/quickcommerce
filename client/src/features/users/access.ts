@@ -1,36 +1,100 @@
 import type { Role } from "./types";
 
-export type Feature = "dashboard" | "data_grid" | "upload_data" | "manage_users";
-export type GrantableFeature = Exclude<Feature, "manage_users">;
+export type Feature =
+  | "dashboard"
+  | "data_grid"
+  | "upload_data"
+  | "manage_users"
+  | "manage_locations";
+
+export type GrantableFeature = Feature;
 
 export const FEATURE_LABELS: Record<Feature, string> = {
   dashboard: "Dashboard",
   data_grid: "Data Grid",
   upload_data: "Upload Data",
-  manage_users: "Manage Users",
+  manage_users: "User Management",
+  manage_locations: "Location Management",
 };
 
-export const FEATURE_DESCRIPTIONS: Record<GrantableFeature, string> = {
-  dashboard: "View processed insights and metrics",
-  data_grid: "View the campaign and city data grids",
-  upload_data: "Upload and process Excel files",
+export const FEATURE_DESCRIPTIONS: Record<Feature, string> = {
+  dashboard: "View campaign insights and performance metrics",
+  data_grid: "Browse and analyze campaign records",
+  upload_data: "Upload and process campaign files",
+  manage_users: "Create users and manage user access",
+  manage_locations: "Create and manage platform locations",
 };
 
-// The features a super admin can tick or untick per person
-export const GRANTABLE_FEATURES: GrantableFeature[] = ["dashboard", "data_grid", "upload_data"];
+/**
+ * Features that can be assigned to users.
+ */
+export const GRANTABLE_FEATURES: GrantableFeature[] = [
+  "dashboard",
+  "data_grid",
+  "upload_data",
+  "manage_users",
+  "manage_locations",
+];
 
-export const ALL_FEATURES: Feature[] = [...GRANTABLE_FEATURES, "manage_users"];
+/**
+ * All available application features.
+ *
+ * Used by ManageAccessModal and permission UI.
+ */
+export const ALL_FEATURES: Feature[] = [
+  "dashboard",
+  "data_grid",
+  "upload_data",
+  "manage_users",
+  "manage_locations",
+];
 
-// Defaults pre-ticked when a role is picked; the creator can change them per person
 export const ROLE_ACCESS: Record<Role, Feature[]> = {
-  super_admin: ["dashboard", "data_grid", "upload_data", "manage_users"],
-  admin: ["dashboard", "data_grid", "upload_data"],
-  user: ["dashboard"],
+  super_admin: [
+    "dashboard",
+    "data_grid",
+    "upload_data",
+    "manage_users",
+    "manage_locations",
+  ],
+
+  admin: [
+    "dashboard",
+    "data_grid",
+    "upload_data",
+  ],
+
+  user: [
+    "dashboard",
+  ],
 };
 
-export const defaultFeatures = (role: Role): GrantableFeature[] =>
-  GRANTABLE_FEATURES.filter((f) => ROLE_ACCESS[role].includes(f));
+export const defaultFeatures = (
+  role: Role,
+): GrantableFeature[] => {
+  return GRANTABLE_FEATURES.filter((feature) =>
+    ROLE_ACCESS[role].includes(feature),
+  );
+};
 
-// Checks the person's own features (set when they were created or edited)
-export const canAccess = (user: { features?: Feature[] } | null | undefined, feature: Feature): boolean =>
-  !!user?.features?.includes(feature);
+export const canAccess = (
+  user:
+    | {
+        features?: Feature[];
+        role?: Role;
+      }
+    | null
+    | undefined,
+  feature: Feature,
+): boolean => {
+  if (!user) {
+    return false;
+  }
+
+  // Super admin has unrestricted access.
+  if (user.role === "super_admin") {
+    return true;
+  }
+
+  return Boolean(user.features?.includes(feature));
+};

@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import {
-  ChevronUp,
   ChevronDown,
+  ChevronUp,
   ChevronsUpDown,
+  Search,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 
 export interface Column<T> {
@@ -21,7 +24,7 @@ interface TableProps<T> {
 type SortDirection = "asc" | "desc" | null;
 
 export default function Table<
-  T extends Record<string, any>
+  T extends Record<string, any>,
 >({
   data,
   columns,
@@ -38,107 +41,95 @@ export default function Table<
 
   const [search, setSearch] = useState("");
 
-  /* =========================================================
-     SEARCH
-  ========================================================= */
-
   const filteredData = useMemo(() => {
     if (!search.trim()) {
       return data;
     }
 
-    const q = search.toLowerCase().trim();
+    const query = search
+      .toLowerCase()
+      .trim();
 
     return data.filter((row) =>
-      columns.some((col) =>
-        String(row[col.key] ?? "")
+      columns.some((column) =>
+        String(row[column.key] ?? "")
           .toLowerCase()
-          .includes(q)
-      )
+          .includes(query),
+      ),
     );
   }, [data, search, columns]);
-
-  /* =========================================================
-     SORT
-  ========================================================= */
 
   const sortedData = useMemo(() => {
     if (!sortKey || !sortDir) {
       return filteredData;
     }
 
-    return [...filteredData].sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+    return [...filteredData].sort(
+      (a, b) => {
+        const aValue = a[sortKey];
+        const bValue = b[sortKey];
 
-      /*
-       * Numeric sorting
-       */
-      if (
-        typeof aVal === "number" &&
-        typeof bVal === "number"
-      ) {
+        if (
+          typeof aValue === "number" &&
+          typeof bValue === "number"
+        ) {
+          return sortDir === "asc"
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+
+        const aString = String(
+          aValue ?? "",
+        );
+
+        const bString = String(
+          bValue ?? "",
+        );
+
         return sortDir === "asc"
-          ? aVal - bVal
-          : bVal - aVal;
-      }
-
-      /*
-       * String sorting
-       */
-      const aString = String(aVal ?? "");
-      const bString = String(bVal ?? "");
-
-      return sortDir === "asc"
-        ? aString.localeCompare(bString)
-        : bString.localeCompare(aString);
-    });
+          ? aString.localeCompare(bString)
+          : bString.localeCompare(aString);
+      },
+    );
   }, [
     filteredData,
     sortKey,
     sortDir,
   ]);
 
-  /* =========================================================
-     PAGINATION
-  ========================================================= */
-
   const totalPages = Math.max(
     1,
-    Math.ceil(sortedData.length / pageSize)
+    Math.ceil(
+      sortedData.length / pageSize,
+    ),
   );
 
-  /*
-   * Make sure current page is always valid.
-   *
-   * Example:
-   * Page 3 -> search reduces results to 1 page.
-   */
   const currentPage = Math.min(
     page,
-    totalPages
+    totalPages,
   );
 
-  const paginatedData = sortedData.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedData =
+    sortedData.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize,
+    );
 
   const startRow =
     sortedData.length === 0
       ? 0
-      : (currentPage - 1) * pageSize + 1;
+      : (currentPage - 1) *
+          pageSize +
+        1;
 
   const endRow = Math.min(
     currentPage * pageSize,
-    sortedData.length
+    sortedData.length,
   );
 
-  /* =========================================================
-     SORT HANDLER
-  ========================================================= */
-
-  const handleSort = (key: keyof T) => {
+  const handleSort = (
+    key: keyof T,
+  ) => {
     if (sortKey !== key) {
       setSortKey(key);
       setSortDir("asc");
@@ -152,228 +143,241 @@ export default function Table<
     setPage(1);
   };
 
-  /* =========================================================
-     SORT ICON
-  ========================================================= */
-
-  const SortIcon = ({
-    colKey,
-  }: {
-    colKey: keyof T;
-  }) => {
-    if (sortKey !== colKey) {
-      return (
-        <ChevronsUpDown
-          className="h-3.5 w-3.5 text-gray-300"
-        />
-      );
-    }
-
-    return sortDir === "asc" ? (
-      <ChevronUp
-        className="h-3.5 w-3.5 text-brand-primary"
-      />
-    ) : (
-      <ChevronDown
-        className="h-3.5 w-3.5 text-brand-primary"
-      />
-    );
-  };
-
-  /* =========================================================
-     PAGE NUMBERS
-  ========================================================= */
-
   const pageNumbers = useMemo(() => {
-    const range: number[] = [];
+    const pages: number[] = [];
 
     const start = Math.max(
       1,
-      currentPage - 2
+      currentPage - 2,
     );
 
     const end = Math.min(
       totalPages,
-      start + 4
+      start + 4,
     );
 
-    for (let i = start; i <= end; i++) {
-      range.push(i);
+    for (
+      let i = start;
+      i <= end;
+      i++
+    ) {
+      pages.push(i);
     }
 
-    return range;
+    return pages;
   }, [
     currentPage,
     totalPages,
   ]);
 
-  /* =========================================================
-     RENDER
-  ========================================================= */
+  const SortIcon = ({
+    columnKey,
+  }: {
+    columnKey: keyof T;
+  }) => {
+    if (sortKey !== columnKey) {
+      return (
+        <ChevronsUpDown className="h-3.5 w-3.5 text-brand-gray-light/60" />
+      );
+    }
+
+    return sortDir === "asc" ? (
+      <ChevronUp className="h-3.5 w-3.5 text-brand-primary" />
+    ) : (
+      <ChevronDown className="h-3.5 w-3.5 text-brand-primary" />
+    );
+  };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-brand-border bg-white">
-      {/* =====================================================
-          TABLE HEADER
-      ===================================================== */}
+    <div className="overflow-hidden rounded-2xl border border-brand-border bg-white shadow-brand-sm">
+      {/* Header */}
+      <div className="flex flex-col gap-4 border-b border-brand-border-light p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary-soft text-brand-primary">
+            <SlidersHorizontal className="h-4 w-4" />
+          </div>
 
-      <div className="flex items-center justify-between border-b border-brand-border-light px-5 py-4">
-        {title && (
-          <h3 className="text-sm font-semibold text-brand-ink">
-            {title}
-          </h3>
-        )}
+          <div>
+            {title && (
+              <h3 className="text-sm font-bold text-brand-ink">
+                {title}
+              </h3>
+            )}
 
-        <div className="ml-auto flex items-center gap-2">
-          <label
-            htmlFor="table-search"
-            className="text-sm text-brand-gray"
-          >
-            Search:
-          </label>
+            <p className="mt-1 text-xs text-brand-gray">
+              {sortedData.length.toLocaleString()}{" "}
+              records
+              {search && " matching your search"}
+            </p>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full sm:w-[280px]">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-gray-light" />
 
           <input
-            id="table-search"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+            onChange={(event) => {
+              setSearch(event.target.value);
               setPage(1);
             }}
-            placeholder="Search..."
-            className="w-48 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/40"
+            placeholder="Search records..."
+            className="h-10 w-full rounded-xl border border-brand-border bg-brand-surface pl-10 pr-10 text-xs font-medium text-brand-ink outline-none transition focus:border-brand-primary focus:bg-white focus:ring-4 focus:ring-brand-primary/10"
           />
+
+          {search && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setPage(1);
+              }}
+              className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-brand-gray-light transition hover:bg-brand-border hover:text-brand-ink"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* =====================================================
-          SCROLLABLE TABLE AREA
-          
-          IMPORTANT:
-          Only this area scrolls vertically.
-      ===================================================== */}
-
-      <div className="max-h-[60vh] overflow-auto overscroll-contain">
-        <table className="w-full text-sm">
-          {/* =================================================
-              TABLE HEADER
-          ================================================= */}
-
+      {/* Table */}
+      <div className="max-h-[62vh] overflow-auto">
+        <table className="w-full min-w-max text-sm">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-brand-surface text-left text-xs uppercase tracking-wide text-brand-gray">
-              {columns.map((col) => (
-                <th
-                  key={String(col.key)}
-                  onClick={() =>
-                    handleSort(col.key)
-                  }
-                  className="cursor-pointer select-none whitespace-nowrap px-5 py-3 font-medium transition-colors hover:text-brand-ink"
-                >
-                  <div className="flex items-center gap-1.5">
-                    {col.label}
+            <tr className="border-b border-brand-border bg-[#fbfaf8] text-left">
+              {columns.map(
+                (column) => (
+                  <th
+                    key={String(
+                      column.key,
+                    )}
+                    onClick={() =>
+                      handleSort(
+                        column.key,
+                      )
+                    }
+                    className="cursor-pointer select-none whitespace-nowrap px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-gray transition hover:bg-brand-primary-soft hover:text-brand-ink"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      {column.label}
 
-                    <SortIcon
-                      colKey={col.key}
-                    />
-                  </div>
-                </th>
-              ))}
+                      <SortIcon
+                        columnKey={
+                          column.key
+                        }
+                      />
+                    </div>
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
 
-          {/* =================================================
-              TABLE BODY
-          ================================================= */}
-
           <tbody>
-            {paginatedData.length === 0 ? (
+            {paginatedData.length ===
+            0 ? (
               <tr>
                 <td
-                  colSpan={columns.length}
-                  className="px-5 py-10 text-center text-brand-gray"
+                  colSpan={
+                    columns.length
+                  }
+                  className="px-6 py-16 text-center"
                 >
-                  No matching records found
+                  <div className="mx-auto max-w-xs">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-surface text-brand-gray-light">
+                      <Search className="h-5 w-5" />
+                    </div>
+
+                    <p className="text-sm font-bold text-brand-ink">
+                      No records found
+                    </p>
+
+                    <p className="mt-1 text-xs leading-5 text-brand-gray">
+                      Try adjusting your
+                      filters or search
+                      terms.
+                    </p>
+                  </div>
                 </td>
               </tr>
             ) : (
               paginatedData.map(
                 (row, index) => (
                   <tr
-                    key={
-                      String(
-                        row.id ??
-                          row._id ??
-                          `${currentPage}-${index}`
-                      )
-                    }
-                    className="border-t border-brand-border-light transition-colors hover:bg-brand-surface"
+                    key={String(
+                      row.id ??
+                        row._id ??
+                        `${currentPage}-${index}`,
+                    )}
+                    className="group border-b border-brand-border-light transition-colors last:border-b-0 hover:bg-orange-50/30"
                   >
-                    {columns.map((col) => (
-                      <td
-                        key={String(col.key)}
-                        className="whitespace-nowrap px-5 py-3 text-brand-gray"
-                      >
-                        {col.render
-                          ? col.render(row)
-                          : String(
-                              row[col.key] ??
-                                "—"
-                            )}
-                      </td>
-                    ))}
+                    {columns.map(
+                      (column) => (
+                        <td
+                          key={String(
+                            column.key,
+                          )}
+                          className="whitespace-nowrap px-5 py-3.5 text-brand-gray"
+                        >
+                          {column.render
+                            ? column.render(
+                                row,
+                              )
+                            : String(
+                                row[
+                                  column.key
+                                ] ??
+                                  "—",
+                              )}
+                        </td>
+                      ),
+                    )}
                   </tr>
-                )
+                ),
               )
             )}
           </tbody>
         </table>
       </div>
 
-      {/* =====================================================
-          TABLE PAGINATION
-      ===================================================== */}
-
+      {/* Footer */}
       {sortedData.length > 0 && (
-        <div className="flex flex-col gap-3 border-t border-brand-border-light bg-white px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Result count */}
-
+        <div className="flex flex-col gap-3 border-t border-brand-border-light bg-[#fdfcfb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-brand-gray">
             Showing{" "}
-            <span className="font-semibold text-brand-ink">
+            <span className="font-bold text-brand-ink">
               {startRow}
             </span>{" "}
             –{" "}
-            <span className="font-semibold text-brand-ink">
+            <span className="font-bold text-brand-ink">
               {endRow}
             </span>{" "}
             of{" "}
-            <span className="font-semibold text-brand-ink">
+            <span className="font-bold text-brand-ink">
               {sortedData.length}
             </span>
           </p>
 
-          {/* Pagination */}
-
           {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              {/* Previous */}
-
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
+                disabled={
+                  currentPage === 1
+                }
                 onClick={() =>
-                  setPage((current) =>
+                  setPage((value) =>
                     Math.max(
                       1,
-                      current - 1
-                    )
+                      value - 1,
+                    ),
                   )
                 }
-                disabled={currentPage === 1}
-                className="rounded-md border border-brand-border px-3 py-1.5 text-xs font-semibold text-brand-gray transition-colors hover:bg-brand-primary-soft hover:text-brand-primary-dark disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-xl border border-brand-border bg-white px-3 py-2 text-xs font-semibold text-brand-gray transition hover:bg-brand-primary-soft hover:text-brand-primary-dark disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
               </button>
-
-              {/* Page numbers */}
 
               {pageNumbers.map(
                 (pageNumber) => (
@@ -381,40 +385,38 @@ export default function Table<
                     key={pageNumber}
                     type="button"
                     onClick={() =>
-                      setPage(pageNumber)
+                      setPage(
+                        pageNumber,
+                      )
                     }
-                    className={`
-                      flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-xs font-semibold transition-colors
-                      ${
-                        pageNumber ===
-                        currentPage
-                          ? "bg-brand-ink text-white"
-                          : "border border-brand-border bg-white text-brand-gray hover:bg-brand-primary-soft hover:text-brand-primary-dark"
-                      }
-                    `}
+                    className={[
+                      "flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-bold transition",
+                      pageNumber ===
+                      currentPage
+                        ? "bg-brand-ink text-white shadow-sm"
+                        : "border border-brand-border bg-white text-brand-gray hover:bg-brand-primary-soft hover:text-brand-primary-dark",
+                    ].join(" ")}
                   >
                     {pageNumber}
                   </button>
-                )
+                ),
               )}
-
-              {/* Next */}
 
               <button
                 type="button"
-                onClick={() =>
-                  setPage((current) =>
-                    Math.min(
-                      totalPages,
-                      current + 1
-                    )
-                  )
-                }
                 disabled={
                   currentPage ===
                   totalPages
                 }
-                className="rounded-md border border-brand-border px-3 py-1.5 text-xs font-semibold text-brand-gray transition-colors hover:bg-brand-primary-soft hover:text-brand-primary-dark disabled:cursor-not-allowed disabled:opacity-40"
+                onClick={() =>
+                  setPage((value) =>
+                    Math.min(
+                      totalPages,
+                      value + 1,
+                    ),
+                  )
+                }
+                className="rounded-xl border border-brand-border bg-white px-3 py-2 text-xs font-semibold text-brand-gray transition hover:bg-brand-primary-soft hover:text-brand-primary-dark disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>
