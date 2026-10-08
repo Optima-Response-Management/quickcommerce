@@ -1,5 +1,4 @@
 import { NavLink } from "react-router";
-
 import {
   BarChart3,
   ChevronRight,
@@ -40,7 +39,6 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
     feature: "dashboard",
   },
-
   {
     to: "/admin/grid",
     label: "Data Grid",
@@ -48,7 +46,6 @@ const navItems: NavItem[] = [
     icon: Table2,
     feature: "data_grid",
   },
-
   {
     to: "/admin/upload",
     label: "Upload Data",
@@ -56,7 +53,6 @@ const navItems: NavItem[] = [
     icon: Upload,
     feature: "upload_data",
   },
-
   {
     to: "/admin/file-history",
     label: "File History",
@@ -64,7 +60,6 @@ const navItems: NavItem[] = [
     icon: FileClock,
     feature: "upload_data",
   },
-
   {
     to: "/admin/users",
     label: "Users",
@@ -88,25 +83,20 @@ export default function Sidebar() {
     },
   ] = useLogoutMutation();
 
-  /*
-   * ----------------------------------------------------------
-   * ACCESSIBLE NAVIGATION
-   * ----------------------------------------------------------
-   */
+  // ----------------------------------------------------------
+  // ACCESSIBLE NAVIGATION
+  // ----------------------------------------------------------
 
-  const links = navItems.filter(
-    (item) =>
-      canAccess(
-        user,
-        item.feature,
-      ),
+  const links = navItems.filter((item) =>
+    canAccess(
+      user,
+      item.feature,
+    ),
   );
 
-  /*
-   * ----------------------------------------------------------
-   * LOGOUT
-   * ----------------------------------------------------------
-   */
+  // ----------------------------------------------------------
+  // LOGOUT
+  // ----------------------------------------------------------
 
   const handleLogout = async () => {
     try {
@@ -116,11 +106,9 @@ export default function Sidebar() {
     }
   };
 
-  /*
-   * ----------------------------------------------------------
-   * USER INITIAL
-   * ----------------------------------------------------------
-   */
+  // ----------------------------------------------------------
+  // USER INITIAL
+  // ----------------------------------------------------------
 
   const initials =
     user?.email
@@ -140,18 +128,15 @@ export default function Sidebar() {
         flex-col
         overflow-hidden
         border-r
-        border-[#2b2520]
-        bg-[#171411]
-        text-white
+        border-brand-border
+        bg-brand-white
+        text-brand-ink
         lg:flex
       "
-      style={{
-        backgroundColor: "#171411",
-      }}
     >
-      {/* =====================================================
-          BRAND
-      ====================================================== */}
+      {/* ===================================================== */}
+      {/* BRAND */}
+      {/* ===================================================== */}
 
       <div
         className="
@@ -160,13 +145,15 @@ export default function Sidebar() {
           shrink-0
           overflow-hidden
           border-b
-          border-[#2b2520]
+          border-brand-border
+          bg-brand-white
           px-5
         "
       >
-        {/* Glow */}
+        {/* Orange glow */}
 
         <div
+          aria-hidden="true"
           className="
             pointer-events-none
             absolute
@@ -175,10 +162,12 @@ export default function Sidebar() {
             h-40
             w-40
             rounded-full
-            bg-orange-500/10
+            bg-brand-primary-soft
             blur-3xl
           "
         />
+
+        {/* Brand content */}
 
         <div
           className="
@@ -200,11 +189,8 @@ export default function Sidebar() {
               items-center
               justify-center
               rounded-xl
-              bg-gradient-to-br
-              from-orange-400
-              to-orange-600
-              shadow-lg
-              shadow-orange-950/30
+              bg-brand-primary
+              shadow-brand-sm
             "
           >
             <Zap
@@ -214,6 +200,7 @@ export default function Sidebar() {
                 fill-white
                 text-white
               "
+              aria-hidden="true"
             />
           </div>
 
@@ -225,7 +212,7 @@ export default function Sidebar() {
                 text-[15px]
                 font-bold
                 tracking-tight
-                text-white
+                text-brand-ink
               "
             >
               Campaign Hub
@@ -244,7 +231,7 @@ export default function Sidebar() {
                   h-1.5
                   w-1.5
                   rounded-full
-                  bg-emerald-400
+                  bg-emerald-500
                 "
               />
 
@@ -254,7 +241,7 @@ export default function Sidebar() {
                   font-semibold
                   uppercase
                   tracking-[0.18em]
-                  text-white/35
+                  text-brand-gray-light
                 "
               >
                 Intelligence
@@ -264,9 +251,9 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* =====================================================
-          NAVIGATION
-      ====================================================== */}
+      {/* ===================================================== */}
+      {/* NAVIGATION */}
+      {/* ===================================================== */}
 
       <nav
         className="
@@ -284,7 +271,7 @@ export default function Sidebar() {
               font-bold
               uppercase
               tracking-[0.2em]
-              text-white/25
+              text-brand-gray-light
             "
           >
             Workspace
@@ -302,9 +289,7 @@ export default function Sidebar() {
               <NavLink
                 key={to}
                 to={to}
-                className={({
-                  isActive,
-                }) =>
+                className={({ isActive }) =>
                   [
                     "group",
                     "relative",
@@ -316,16 +301,26 @@ export default function Sidebar() {
                     "py-3",
                     "transition-all",
                     "duration-200",
+                    "border",
+                    "border-transparent",
 
                     isActive
-                      ? "bg-white text-brand-ink shadow-lg shadow-black/10"
-                      : "text-white/55 hover:bg-white/[0.06] hover:text-white",
+                      ? [
+                          "bg-brand-primary-soft",
+                          "border-brand-primary-muted",
+                          "text-brand-ink",
+                          "shadow-brand-sm",
+                        ].join(" ")
+                      : [
+                          "text-brand-gray",
+                          "hover:border-brand-border",
+                          "hover:bg-brand-surface",
+                          "hover:text-brand-ink",
+                        ].join(" "),
                   ].join(" ")
                 }
               >
-                {({
-                  isActive,
-                }) => (
+                {({ isActive }) => (
                   <>
                     {/* Active indicator */}
 
@@ -339,7 +334,7 @@ export default function Sidebar() {
                           w-[3px]
                           -translate-y-1/2
                           rounded-r-full
-                          bg-orange-500
+                          bg-brand-primary
                         "
                       />
                     )}
@@ -359,8 +354,17 @@ export default function Sidebar() {
                         "duration-200",
 
                         isActive
-                          ? "bg-orange-50 text-orange-600"
-                          : "bg-white/[0.045] text-white/45 group-hover:bg-white/[0.08] group-hover:text-white",
+                          ? [
+                              "bg-brand-primary",
+                              "text-white",
+                              "shadow-brand-sm",
+                            ].join(" ")
+                          : [
+                              "bg-brand-surface",
+                              "text-brand-gray",
+                              "group-hover:bg-brand-primary-muted",
+                              "group-hover:text-brand-primary-dark",
+                            ].join(" "),
                       ].join(" ")}
                     >
                       <Icon
@@ -368,6 +372,7 @@ export default function Sidebar() {
                           h-[18px]
                           w-[18px]
                         "
+                        aria-hidden="true"
                       />
                     </div>
 
@@ -382,7 +387,7 @@ export default function Sidebar() {
 
                           isActive
                             ? "text-brand-ink"
-                            : "text-white/75 group-hover:text-white",
+                            : "text-brand-ink/75 group-hover:text-brand-ink",
                         ].join(" ")}
                       >
                         {label}
@@ -396,7 +401,7 @@ export default function Sidebar() {
 
                           isActive
                             ? "text-brand-gray"
-                            : "text-white/25 group-hover:text-white/40",
+                            : "text-brand-gray-light group-hover:text-brand-gray",
                         ].join(" ")}
                       >
                         {description}
@@ -414,9 +419,15 @@ export default function Sidebar() {
                         "duration-200",
 
                         isActive
-                          ? "translate-x-0 text-orange-500"
-                          : "-translate-x-1 text-white/0 group-hover:translate-x-0 group-hover:text-white/25",
+                          ? "translate-x-0 text-brand-primary"
+                          : [
+                              "-translate-x-1",
+                              "text-transparent",
+                              "group-hover:translate-x-0",
+                              "group-hover:text-brand-gray-light",
+                            ].join(" "),
                       ].join(" ")}
+                      aria-hidden="true"
                     />
                   </>
                 )}
@@ -424,17 +435,17 @@ export default function Sidebar() {
             ),
           )}
 
-          {/* -------------------------------------------------
-              EMPTY ACCESS FALLBACK
-          -------------------------------------------------- */}
+          {/* ------------------------------------------------- */}
+          {/* EMPTY ACCESS FALLBACK */}
+          {/* ------------------------------------------------- */}
 
           {links.length === 0 && (
             <div
               className="
                 rounded-2xl
                 border
-                border-white/[0.07]
-                bg-white/[0.025]
+                border-brand-border
+                bg-brand-surface
                 px-4
                 py-5
                 text-center
@@ -444,7 +455,7 @@ export default function Sidebar() {
                 className="
                   text-xs
                   font-semibold
-                  text-white/60
+                  text-brand-gray
                 "
               >
                 No navigation available
@@ -455,7 +466,7 @@ export default function Sidebar() {
                   mt-1
                   text-[10px]
                   leading-5
-                  text-white/25
+                  text-brand-gray-light
                 "
               >
                 Your account does not have
@@ -466,15 +477,16 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* =====================================================
-          USER / LOGOUT
-      ====================================================== */}
+      {/* ===================================================== */}
+      {/* USER / LOGOUT */}
+      {/* ===================================================== */}
 
       <div
         className="
           shrink-0
           border-t
-          border-[#2b2520]
+          border-brand-border
+          bg-brand-white
           p-3
         "
       >
@@ -485,8 +497,8 @@ export default function Sidebar() {
             mb-2
             rounded-2xl
             border
-            border-white/[0.07]
-            bg-white/[0.035]
+            border-brand-border
+            bg-brand-surface
             p-3
           "
         >
@@ -508,12 +520,11 @@ export default function Sidebar() {
                 items-center
                 justify-center
                 rounded-xl
-                bg-gradient-to-br
-                from-orange-400
-                to-orange-600
+                bg-brand-primary
                 text-xs
                 font-bold
                 text-white
+                shadow-brand-sm
               "
             >
               {initials}
@@ -527,11 +538,10 @@ export default function Sidebar() {
                   truncate
                   text-xs
                   font-semibold
-                  text-white
+                  text-brand-ink
                 "
               >
-                {user?.email ??
-                  "User"}
+                {user?.email ?? "User"}
               </p>
 
               <p
@@ -540,7 +550,7 @@ export default function Sidebar() {
                   truncate
                   text-[10px]
                   capitalize
-                  text-white/30
+                  text-brand-gray
                 "
               >
                 {user?.role?.replace(
@@ -569,10 +579,10 @@ export default function Sidebar() {
             py-3
             text-sm
             font-medium
-            text-white/40
+            text-brand-gray
             transition-all
-            hover:bg-red-500/10
-            hover:text-red-300
+            hover:bg-red-50
+            hover:text-red-600
             disabled:cursor-not-allowed
             disabled:opacity-50
           "
@@ -585,9 +595,9 @@ export default function Sidebar() {
               items-center
               justify-center
               rounded-lg
-              bg-white/[0.04]
+              bg-brand-surface
               transition
-              group-hover:bg-red-500/10
+              group-hover:bg-red-50
             "
           >
             <LogOut
@@ -595,6 +605,7 @@ export default function Sidebar() {
                 h-4
                 w-4
               "
+              aria-hidden="true"
             />
           </div>
 
@@ -618,7 +629,7 @@ export default function Sidebar() {
             font-semibold
             uppercase
             tracking-[0.18em]
-            text-white/15
+            text-brand-gray-light
           "
         >
           <BarChart3
@@ -626,6 +637,7 @@ export default function Sidebar() {
               h-3
               w-3
             "
+            aria-hidden="true"
           />
 
           Campaign Intelligence

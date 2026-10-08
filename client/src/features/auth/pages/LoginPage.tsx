@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
 import {
@@ -12,7 +13,6 @@ import LoginForm from "../components/LoginForm";
 import { useLoginMutation } from "../authApi";
 import { setCredentials } from "../authSlice";
 import type { LoginFormValues } from "../authSchema";
-import { useState } from "react";
 
 const benefits = [
   "Unified campaign visibility",
@@ -56,137 +56,231 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#faf9f7]">
-      {/* Background decoration */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="animate-orb absolute -left-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-orange-300/10 blur-3xl" />
+    <main className="min-h-screen bg-brand-white">
+      <div className="grid min-h-screen lg:grid-cols-[55%_45%]">
+        {/* ================================================================== */}
+        {/* LEFT - BRAND PANEL                                                 */}
+        {/* ================================================================== */}
 
-        <div
-          className="animate-orb absolute -bottom-40 -right-40 h-[36rem] w-[36rem] rounded-full bg-orange-400/10 blur-3xl"
-          style={{ animationDelay: "-3s" }}
-        />
+        <section className="relative hidden min-h-screen overflow-hidden bg-brand-primary text-white lg:flex lg:flex-col lg:justify-between">
+          {/* Background decoration */}
 
-        <div className="absolute inset-0 opacity-[0.025] [background-image:linear-gradient(#171411_1px,transparent_1px),linear-gradient(90deg,#171411_1px,transparent_1px)] [background-size:48px_48px]" />
-      </div>
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden"
+          >
+            {/* Top right glow */}
 
-      <div className="relative grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
-        {/* Brand panel */}
-        <section className="relative hidden overflow-hidden bg-[#171411] p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
-          <div className="absolute inset-0">
-            <div className="absolute -left-24 top-20 h-80 w-80 rounded-full bg-orange-500/15 blur-3xl" />
-            <div className="absolute bottom-0 right-0 h-[30rem] w-[30rem] rounded-full bg-orange-600/10 blur-3xl" />
+            <div className="absolute -right-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-brand-primary-light/35" />
+
+            {/* Bottom left glow */}
+
+            <div className="absolute -bottom-40 -left-40 h-[36rem] w-[36rem] rounded-full bg-brand-primary-dark/35" />
+
+            {/* Center glow */}
+
+            <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10 blur-3xl" />
+
+            {/* Grid */}
+
+            <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,0.6)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.6)_1px,transparent_1px)] [background-size:48px_48px]" />
           </div>
 
-          <div className="relative">
+          {/* Brand header */}
+
+          <div className="relative z-10 p-10 xl:p-14">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 shadow-xl shadow-orange-950/30">
-                <Zap className="h-5 w-5 fill-white" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand-primary shadow-lg">
+                <Zap
+                  className="h-5 w-5 fill-current"
+                  aria-hidden="true"
+                />
               </div>
 
               <div>
-                <p className="text-sm font-bold">
+                <p className="text-sm font-bold text-white">
                   Campaign Hub
                 </p>
 
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/35">
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/60">
                   Intelligence platform
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="relative max-w-xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-orange-300">
-              <Sparkles className="h-3 w-3" />
-              Built for better decisions
-            </div>
+          {/* Main brand content */}
 
-            <h1 className="text-5xl font-bold leading-[1.05] tracking-[-0.04em] xl:text-6xl">
-              Turn campaign
-              <span className="block text-orange-400">
-                data into clarity.
-              </span>
-            </h1>
+          <div className="relative z-10 px-10 pb-10 xl:px-14 xl:pb-14">
+            <div className="max-w-xl">
+              {/* Badge */}
 
-            <p className="mt-6 max-w-lg text-sm leading-7 text-white/45 xl:text-base">
-              One workspace for campaign imports,
-              performance analysis, platform visibility,
-              and the insights your team needs to move
-              faster.
-            </p>
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-white">
+                <Sparkles
+                  className="h-3 w-3"
+                  aria-hidden="true"
+                />
 
-            <div className="mt-9 space-y-3">
-              {benefits.map((benefit) => (
-                <div
-                  key={benefit}
-                  className="flex items-center gap-3 text-sm text-white/70"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-orange-400" />
-                  {benefit}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-12 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur">
-                <BarChart3 className="mb-5 h-5 w-5 text-orange-400" />
-                <p className="text-2xl font-bold">
-                  360°
-                </p>
-                <p className="mt-1 text-[11px] text-white/35">
-                  Campaign visibility
-                </p>
+                Built for better decisions
               </div>
 
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur">
-                <ArrowUpRight className="mb-5 h-5 w-5 text-orange-400" />
-                <p className="text-2xl font-bold">
-                  One
-                </p>
-                <p className="mt-1 text-[11px] text-white/35">
-                  Unified workspace
-                </p>
+              {/* Heading */}
+
+              <h1 className="text-5xl font-bold leading-[1.04] tracking-[-0.045em] xl:text-6xl">
+                Turn campaign
+                <span className="block text-white/80">
+                  data into clarity.
+                </span>
+              </h1>
+
+              {/* Description */}
+
+              <p className="mt-6 max-w-lg text-sm leading-7 text-white/75 xl:text-base">
+                One workspace for campaign imports,
+                performance analysis, platform visibility,
+                and the insights your team needs to move
+                faster.
+              </p>
+
+              {/* Benefits */}
+
+              <div className="mt-9 space-y-3.5">
+                {benefits.map((benefit) => (
+                  <div
+                    key={benefit}
+                    className="flex items-center gap-3 text-sm font-medium text-white/90"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15">
+                      <CheckCircle2
+                        className="h-4 w-4 text-white"
+                        aria-hidden="true"
+                      />
+                    </span>
+
+                    <span>{benefit}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Stats */}
+
+              <div className="mt-12 grid max-w-md grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                  <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+                    <BarChart3
+                      className="h-5 w-5 text-white"
+                      aria-hidden="true"
+                    />
+                  </div>
+
+                  <p className="text-2xl font-bold tracking-tight">
+                    360°
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-medium text-white/60">
+                    Campaign visibility
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+                  <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+                    <ArrowUpRight
+                      className="h-5 w-5 text-white"
+                      aria-hidden="true"
+                    />
+                  </div>
+
+                  <p className="text-2xl font-bold tracking-tight">
+                    One
+                  </p>
+
+                  <p className="mt-1 text-[11px] font-medium text-white/60">
+                    Unified workspace
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <p className="relative text-[11px] text-white/20">
-            © {new Date().getFullYear()} Campaign Hub
-          </p>
+          {/* Copyright */}
+
+          <div className="relative z-10 px-10 pb-8 xl:px-14">
+            <p className="text-[11px] font-medium text-white/50">
+              © {new Date().getFullYear()} Campaign Hub
+            </p>
+          </div>
         </section>
 
-        {/* Login */}
-        <section className="relative flex items-center justify-center px-6 py-12 sm:px-10">
-          <div className="w-full max-w-[420px]">
-            <div className="mb-8 lg:hidden">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-lg">
-                <Zap className="h-5 w-5 fill-white" />
-              </div>
+        {/* ================================================================== */}
+        {/* RIGHT - LOGIN PANEL                                                */}
+        {/* ================================================================== */}
 
-              <p className="text-sm font-bold text-brand-ink">
-                Campaign Hub
-              </p>
+        <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-white px-6 py-12 sm:px-10 lg:px-14 xl:px-20">
+          {/* Background decoration */}
+
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden"
+          >
+            <div className="absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-primary-soft blur-3xl" />
+
+            <div className="absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-brand-primary-muted/40 blur-3xl" />
+
+            <div className="absolute inset-0 opacity-[0.018] [background-image:linear-gradient(#171411_1px,transparent_1px),linear-gradient(90deg,#171411_1px,transparent_1px)] [background-size:48px_48px]" />
+          </div>
+
+          <div className="relative z-10 w-full max-w-[440px]">
+            {/* Mobile branding */}
+
+            <div className="mb-10 lg:hidden">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-primary text-white shadow-brand-sm">
+                  <Zap
+                    className="h-5 w-5 fill-current"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                <div>
+                  <p className="text-sm font-bold text-brand-ink">
+                    Campaign Hub
+                  </p>
+
+                  <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-brand-gray-light">
+                    Intelligence platform
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="mb-9">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-primary">
-                Welcome back
-              </p>
+            {/* Heading */}
 
-              <h2 className="text-3xl font-bold tracking-[-0.03em] text-brand-ink sm:text-4xl">
+            <div className="mb-8">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-primary-muted bg-brand-primary-soft px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-brand-primary-dark">
+                <Sparkles
+                  className="h-3 w-3"
+                  aria-hidden="true"
+                />
+
+                Welcome back
+              </div>
+
+              <h2 className="text-3xl font-bold leading-tight tracking-[-0.035em] text-brand-ink sm:text-4xl">
                 Sign in to your
-                <span className="block">
+                <span className="block text-brand-primary">
                   workspace.
                 </span>
               </h2>
 
-              <p className="mt-3 max-w-sm text-sm leading-6 text-brand-gray">
+              <p className="mt-4 max-w-md text-sm leading-6 text-brand-gray">
                 Access your campaign data, reports, and
                 performance insights from one place.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-brand-border bg-white p-6 shadow-brand-md sm:p-8">
+            {/* Login form */}
+
+            <div className="rounded-3xl border border-brand-border bg-brand-white p-6 shadow-brand-md sm:p-8">
               <LoginForm
                 onSubmit={handleLogin}
                 loading={isLoading}
@@ -194,18 +288,26 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Support */}
+
             <p className="mt-7 text-center text-xs text-brand-gray-light">
               Having trouble signing in?{" "}
               <a
                 href="#"
-                className="font-semibold text-brand-primary transition hover:text-brand-primary-dark"
+                className="font-semibold text-brand-primary transition-colors hover:text-brand-primary-dark"
               >
                 Contact support
               </a>
             </p>
+
+            {/* Mobile copyright */}
+
+            <p className="mt-8 text-center text-[11px] text-brand-gray-light lg:hidden">
+              © {new Date().getFullYear()} Campaign Hub
+            </p>
           </div>
         </section>
       </div>
-    </div>
+    </main>
   );
 }
