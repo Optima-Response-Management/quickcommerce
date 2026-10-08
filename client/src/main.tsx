@@ -7,16 +7,24 @@ import { store } from "./app/store";
 import { router } from "./app/router";
 
 import AuthBootstrap from "./features/auth/components/AuthBootstrap";
+import AppLoading from "./components/ui/AppLoading";
 
 import "./index.css";
 
-createRoot(
-  document.getElementById("root")!,
-).render(
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element #root was not found.");
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <Provider store={store}>
       <AuthBootstrap>
-        <RouterProvider router={router} />
+        <RouterProvider
+          router={router}
+          fallbackElement={<AppLoading />}
+        />
       </AuthBootstrap>
     </Provider>
   </StrictMode>,

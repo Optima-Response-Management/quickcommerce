@@ -1,7 +1,4 @@
-import {
-  createBrowserRouter,
-  Navigate,
-} from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 
 import LoginPage from "../features/auth/pages/LoginPage";
 
@@ -9,208 +6,216 @@ import ProtectedRoute from "../routes/ProtectedRoute";
 import RoleRoute from "../routes/RoleRoute";
 
 import ProtectedLayout from "../components/layout/ProtectedLayout";
+import LazyPage from "../components/layout/LazyPage";
 
-import DashboardPage from "../features/campaigns/pages/DashboardPage";
+import {
+  DashboardSkeleton,
+  DataGridSkeleton,
+  ExcelViewerSkeleton,
+  FileHistorySkeleton,
+  UploadSkeleton,
+  UsersSkeleton,
+} from "../components/ui/Skeleton";
 
-import UploadPage from "../features/campaigns/pages/UploadPage";
+import {
+  DashboardPage,
+  UploadPage,
+  UploadHistoryPage,
+  ExcelViewerPage,
+  DataGridPage,
+  UsersPage,
+} from "./lazyPages";
 
-import UploadHistoryPage from "../features/campaigns/pages/UploadHistoryPage";
+export const router = createBrowserRouter([
+  /* ------------------------------------------------------------------------ */
+  /* Login                                                                    */
+  /* ------------------------------------------------------------------------ */
 
-import DataGridPage from "../features/campaigns/pages/DataGridPage";
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
 
-import UsersPage from "../features/users/pages/UsersPage";
+  /* ------------------------------------------------------------------------ */
+  /* Unauthorized                                                             */
+  /* ------------------------------------------------------------------------ */
 
-import ExcelViewerPage from "../features/campaigns/pages/ExcelViewerPage";
+  {
+    path: "/unauthorized",
+    element: (
+      <div className="flex min-h-screen items-center justify-center bg-brand-surface p-10">
+        <div className="w-full max-w-md rounded-2xl border border-brand-border bg-white p-8 text-center shadow-brand-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-100">
+            <span className="text-xl font-bold text-orange-600">
+              !
+            </span>
+          </div>
 
-export const router =
-  createBrowserRouter([
-    /*
-     * ========================================================
-     * PUBLIC
-     * ========================================================
-     */
+          <h1 className="mt-5 text-lg font-bold text-brand-ink">
+            Access denied
+          </h1>
 
-    {
-      path: "/login",
+          <p className="mt-2 text-sm leading-6 text-brand-gray">
+            You don't have access to this page.
+          </p>
 
-      element:
-        <LoginPage />,
-    },
-
-    {
-      path: "/unauthorized",
-
-      element: (
-        <div className="p-10 text-brand-ink">
-          You don't have access
-          to this page.
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = "/dashboard";
+            }}
+            className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-orange-600"
+          >
+            Go to Dashboard
+          </button>
         </div>
-      ),
-    },
+      </div>
+    ),
+  },
 
-    /*
-     * ========================================================
-     * PROTECTED
-     * ========================================================
-     */
+  /* ------------------------------------------------------------------------ */
+  /* Protected Application                                                    */
+  /* ------------------------------------------------------------------------ */
 
-    {
-      element:
-        <ProtectedRoute />,
+  {
+    element: <ProtectedRoute />,
 
-      children: [
-        {
-          element:
-            <ProtectedLayout />,
+    children: [
+      {
+        element: <ProtectedLayout />,
 
-          children: [
-            /*
-             * DASHBOARD
-             */
+        children: [
+          /* ------------------------------------------------------------------ */
+          /* Dashboard                                                          */
+          /* ------------------------------------------------------------------ */
 
-            {
-              element:
-                <RoleRoute
-                  feature="dashboard"
-                />,
+          {
+            element: <RoleRoute feature="dashboard" />,
 
-              children: [
-                {
-                  path: "/dashboard",
+            children: [
+              {
+                path: "/dashboard",
 
-                  element:
-                    <DashboardPage />,
-                },
-              ],
-            },
+                element: (
+                  <LazyPage fallback={<DashboardSkeleton />}>
+                    <DashboardPage />
+                  </LazyPage>
+                ),
+              },
+            ],
+          },
 
-            /*
-             * UPLOAD
-             */
+          /* ------------------------------------------------------------------ */
+          /* Upload Data                                                        */
+          /* ------------------------------------------------------------------ */
 
-            {
-              element:
-                <RoleRoute
-                  feature="upload_data"
-                />,
+          {
+            element: <RoleRoute feature="upload_data" />,
 
-              children: [
-                {
-                  path:
-                    "/admin/upload",
+            children: [
+              {
+                path: "/admin/upload",
 
-                  element:
-                    <UploadPage />,
-                },
-              ],
-            },
+                element: (
+                  <LazyPage fallback={<UploadSkeleton />}>
+                    <UploadPage />
+                  </LazyPage>
+                ),
+              },
+            ],
+          },
 
-            /*
-             * FILE HISTORY
-             */
+          /* ------------------------------------------------------------------ */
+          /* File History                                                       */
+          /* ------------------------------------------------------------------ */
 
-           /*
- * ========================================================
- * FILE HISTORY
- * ========================================================
- */
+          {
+            element: <RoleRoute feature="upload_data" />,
 
-{
-  element:
-    <RoleRoute
-      feature="upload_data"
-    />,
+            children: [
+              {
+                path: "/admin/file-history",
 
-  children: [
-    {
-      path:
-        "/admin/file-history",
+                element: (
+                  <LazyPage fallback={<FileHistorySkeleton />}>
+                    <UploadHistoryPage />
+                  </LazyPage>
+                ),
+              },
 
-      element:
-        <UploadHistoryPage />,
-    },
+              {
+                path: "/admin/file-history/:id",
 
-    {
-      path:
-        "/admin/file-history/:id",
+                element: (
+                  <LazyPage fallback={<ExcelViewerSkeleton />}>
+                    <ExcelViewerPage />
+                  </LazyPage>
+                ),
+              },
+            ],
+          },
 
-      element:
-        <ExcelViewerPage />,
-    },
-  ],
-},            /*
-             * DATA GRID
-             */
+          /* ------------------------------------------------------------------ */
+          /* Data Grid                                                          */
+          /* ------------------------------------------------------------------ */
 
-            {
-              element:
-                <RoleRoute
-                  feature="data_grid"
-                />,
+          {
+            element: <RoleRoute feature="data_grid" />,
 
-              children: [
-                {
-                  path:
-                    "/admin/grid",
+            children: [
+              {
+                path: "/admin/grid",
 
-                  element:
-                    <DataGridPage />,
-                },
-              ],
-            },
+                element: (
+                  <LazyPage fallback={<DataGridSkeleton />}>
+                    <DataGridPage />
+                  </LazyPage>
+                ),
+              },
+            ],
+          },
 
-            /*
-             * USERS
-             */
+          /* ------------------------------------------------------------------ */
+          /* Users                                                              */
+          /* ------------------------------------------------------------------ */
 
-            {
-              element:
-                <RoleRoute
-                  feature="manage_users"
-                />,
+          {
+            element: <RoleRoute feature="manage_users" />,
 
-              children: [
-                {
-                  path:
-                    "/admin/users",
+            children: [
+              {
+                path: "/admin/users",
 
-                  element:
-                    <UsersPage />,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
+                element: (
+                  <LazyPage fallback={<UsersSkeleton />}>
+                    <UsersPage />
+                  </LazyPage>
+                ),
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 
-    /*
-     * ROOT
-     */
+  /* ------------------------------------------------------------------------ */
+  /* Root                                                                     */
+  /* ------------------------------------------------------------------------ */
 
-    {
-      path: "/",
+  {
+    path: "/",
 
-      element: (
-        <Navigate
-          to="/dashboard"
-          replace
-        />
-      ),
-    },
+    element: <Navigate to="/dashboard" replace />,
+  },
 
-    /*
-     * CATCH ALL
-     */
+  /* ------------------------------------------------------------------------ */
+  /* Unknown Routes                                                           */
+  /* ------------------------------------------------------------------------ */
 
-    {
-      path: "*",
+  {
+    path: "*",
 
-      element: (
-        <Navigate
-          to="/dashboard"
-          replace
-        />
-      ),
-    },
-  ]);
+    element: <Navigate to="/dashboard" replace />,
+  },
+]);
