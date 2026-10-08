@@ -20,6 +20,8 @@ import DataGridPage from "../features/campaigns/pages/DataGridPage";
 
 import UsersPage from "../features/users/pages/UsersPage";
 
+import ExcelViewerPage from "../features/campaigns/pages/ExcelViewerPage";
+
 export const router =
   createBrowserRouter([
     /*
@@ -107,24 +109,36 @@ export const router =
              * FILE HISTORY
              */
 
-            {
-              element:
-                <RoleRoute
-                  feature="upload_data"
-                />,
+           /*
+ * ========================================================
+ * FILE HISTORY
+ * ========================================================
+ */
 
-              children: [
-                {
-                  path:
-                    "/admin/file-history",
+{
+  element:
+    <RoleRoute
+      feature="upload_data"
+    />,
 
-                  element:
-                    <UploadHistoryPage />,
-                },
-              ],
-            },
+  children: [
+    {
+      path:
+        "/admin/file-history",
 
-            /*
+      element:
+        <UploadHistoryPage />,
+    },
+
+    {
+      path:
+        "/admin/file-history/:id",
+
+      element:
+        <ExcelViewerPage />,
+    },
+  ],
+},            /*
              * DATA GRID
              */
 
