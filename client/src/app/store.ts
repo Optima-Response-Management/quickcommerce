@@ -1,19 +1,34 @@
-import { configureStore } from "@reduxjs/toolkit";
+import {
+  configureStore,
+} from "@reduxjs/toolkit";
 
 import authReducer from "../features/auth/authSlice";
 
-import { authApi } from "../features/auth/authApi";
+import {
+  authApi,
+} from "../features/auth/authApi";
 
-import { dashboardApi } from "../features/campaigns/dashboardApi";
+import {
+  dashboardApi,
+} from "../features/campaigns/dashboardApi";
 
-import { uploadApi } from "../features/campaigns/uploadApi";
+import {
+  uploadApi,
+} from "../features/campaigns/uploadApi";
 
-import { usersApi } from "../features/users/usersApi";
+import {
+  uploadHistoryApi,
+} from "../features/campaigns/uploadHistoryApi";
+
+import {
+  usersApi,
+} from "../features/users/usersApi";
 
 export const store =
   configureStore({
     reducer: {
-      auth: authReducer,
+      auth:
+        authReducer,
 
       [authApi.reducerPath]:
         authApi.reducer,
@@ -24,21 +39,33 @@ export const store =
       [uploadApi.reducerPath]:
         uploadApi.reducer,
 
+      [uploadHistoryApi.reducerPath]:
+        uploadHistoryApi.reducer,
+
       [usersApi.reducerPath]:
         usersApi.reducer,
     },
 
-    middleware: (getDefaultMiddleware) =>
+    middleware: (
+      getDefaultMiddleware,
+    ) =>
       getDefaultMiddleware().concat(
         authApi.middleware,
+
         dashboardApi.middleware,
+
         uploadApi.middleware,
+
+        uploadHistoryApi.middleware,
+
         usersApi.middleware,
       ),
   });
 
 export type RootState =
-  ReturnType<typeof store.getState>;
+  ReturnType<
+    typeof store.getState
+  >;
 
 export type AppDispatch =
   typeof store.dispatch;
