@@ -1,4 +1,8 @@
-import { useMemo, useState } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
+
 import {
   BarChart3,
   Building2,
@@ -14,73 +18,84 @@ import {
 } from "lucide-react";
 
 import FilterBar from "../components/FilterBar";
+
 import Table, {
   type Column,
 } from "../../../components/common/Table";
+
 import { mockCityData } from "../mockData";
+
 import {
   dateOptions,
   type FilterOption,
 } from "../filterOptions";
-import type { DateFilterValue } from "../dateUtils";
-import type { CityRow } from "../types";
+
+import type {
+  DateFilterValue,
+} from "../dateUtils";
+
+import type {
+  CityRow,
+} from "../types";
+
 import {
   useGetCampaignsQuery,
   useGetPlatformsQuery,
   type CampaignGridRow,
 } from "../dashboardApi";
-import { useGridFilterOptions } from "../useGridFilterOptions";
+
+import {
+  useGridFilterOptions,
+} from "../useGridFilterOptions";
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+interface FilterValues {
+  platform: string;
+  brand: string;
+  subBrand: string;
+  product: string;
+  from: string;
+  to: string;
+}
 
 interface AppliedFilters {
   platform: string;
-  market: string;
-  city: string;
   brand: string;
+  subBrand: string;
   product: string;
   date: DateFilterValue;
 }
 
 type FilterKey =
   | "platform"
-  | "market"
-  | "city"
   | "brand"
+  | "subBrand"
   | "product";
 
-type ChipKey = FilterKey | "date";
+type ChipKey =
+  | FilterKey
+  | "date";
 
-/*
- * Removing a parent filter also clears all
- * filters that depend on it.
- */
-const DEPENDENTS: Record<
-  FilterKey,
-  FilterKey[]
-> = {
-  platform: [
-    "market",
-    "city",
-    "brand",
-    "product",
-  ],
-  market: [
-    "city",
-    "brand",
-    "product",
-  ],
-  city: [
-    "brand",
-    "product",
-  ],
-  brand: [],
-  product: [],
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const DEFAULT_FILTERS: FilterValues = {
+  platform: "all",
+  brand: "all",
+  subBrand: "all",
+  product: "all",
+  from: "",
+  to: "",
 };
 
 const INITIAL_FILTERS: AppliedFilters = {
   platform: "all",
-  market: "all",
-  city: "all",
   brand: "all",
+  subBrand: "all",
   product: "all",
   date: {
     preset: "all",
@@ -89,16 +104,42 @@ const INITIAL_FILTERS: AppliedFilters = {
 
 const PAGE_SIZE = 20;
 
-/*
+/**
  * City-wise API is not enabled yet.
  */
 const CITY_WISE_ENABLED = false;
 
 /* =========================================================
+   DEPENDENCIES
+========================================================= */
+
+const DEPENDENTS: Record<
+  FilterKey,
+  FilterKey[]
+> = {
+  platform: [
+    "brand",
+    "subBrand",
+    "product",
+  ],
+
+  brand: [
+    "subBrand",
+    "product",
+  ],
+
+  subBrand: [],
+
+  product: [],
+};
+
+/* =========================================================
    HELPERS
 ========================================================= */
 
-const platformBadge = (name: string) => (
+const platformBadge = (
+  name: string,
+) => (
   <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-primary/10 bg-brand-primary-soft px-2.5 py-1 text-xs font-semibold text-brand-primary-dark">
     <span className="h-1.5 w-1.5 rounded-full bg-brand-primary" />
     {name}
@@ -113,69 +154,65 @@ const withAll = (
     value: "all",
     label,
   },
-  ...items.map((value) => ({
-    value,
-    label: value,
-  })),
+
+  ...items.map(
+    (value) => ({
+      value,
+      label: value,
+    }),
+  ),
 ];
 
+/* =========================================================
+   PAGE
+========================================================= */
+
 export default function DataGridPage() {
-  /* =========================================================
+  /* =======================================================
      TAB
-  ========================================================= */
+  ======================================================= */
 
   const [tab, setTab] = useState<
     "campaign" | "city"
   >("campaign");
 
-  /* =========================================================
-     DRAFT FILTER STATE
-     
-     These are the values currently shown in the
-     filter controls.
-  ========================================================= */
+  /* =======================================================
+     FILTER STATE
 
-  const [platform, setPlatform] =
-    useState("all");
+     IMPORTANT:
+     State and City have been completely removed.
+  ======================================================= */
 
-  const [market, setMarket] =
-    useState("all");
+  const [
+    filters,
+    setFilters,
+  ] = useState<FilterValues>(
+    DEFAULT_FILTERS,
+  );
 
-  const [city, setCity] =
-    useState("all");
-
-  const [brand, setBrand] =
-    useState("all");
-
-  const [product, setProduct] =
-    useState("all");
-
-  const [date, setDate] =
-    useState<DateFilterValue>({
-      preset: "all",
-    });
-
-  /* =========================================================
+  /* =======================================================
      APPLIED FILTER STATE
-     
-     These are the values actually used by the
-     campaign API.
-  ========================================================= */
+  ======================================================= */
 
-  const [applied, setApplied] =
-    useState<AppliedFilters>(
-      INITIAL_FILTERS,
-    );
+  const [
+    applied,
+    setApplied,
+  ] = useState<AppliedFilters>(
+    INITIAL_FILTERS,
+  );
 
-  /* =========================================================
+  /* =======================================================
      SERVER PAGINATION
-  ========================================================= */
+  ======================================================= */
 
-  const [page, setPage] = useState(1);
+  const [
+    page,
+    setPage,
+  ] = useState(1);
 
-  /* =========================================================
+  /* =======================================================
      PLATFORM / FILTER OPTIONS
-  ========================================================= */
+  ======================================================= */
 
   const {
     data: platforms = [],
@@ -183,89 +220,134 @@ export default function DataGridPage() {
 
   const filterLists =
     useGridFilterOptions(
-      platform,
-      market,
-      city,
-      brand,
-      product,
+      filters.platform,
+      "all",
+      "all",
+      filters.brand,
+      filters.product,
     );
+
+  /* =======================================================
+     FILTER OPTIONS
+  ======================================================= */
 
   const platformOptions: FilterOption[] = [
     {
       value: "all",
       label: "All Platforms",
     },
-    ...platforms.map((item) => ({
-      value: item.slug,
-      label: item.name,
-    })),
+
+    ...platforms.map(
+      (item) => ({
+        value: item.slug,
+        label: item.name,
+      }),
+    ),
   ];
 
-  const stateOptions = withAll(
-    "All States",
-    filterLists.states,
-  );
+  const brandOptions =
+    withAll(
+      "All Brands",
+      filterLists.brands ?? [],
+    );
 
-  const cityOptions = withAll(
-    "All Cities",
-    filterLists.cities,
-  );
+  const subBrandOptions =
+    withAll(
+      "All Sub Brands",
+      filterLists.subBrands ?? [],
+    );
 
-  const brandOptions = withAll(
-    "All Brands",
-    filterLists.brands,
-  );
+  const productOptions =
+    withAll(
+      "All Products",
+      filterLists.products ?? [],
+    );
 
-  const productOptions = withAll(
-    "All Products",
-    filterLists.products,
-  );
+  /*
+   * Keep the filter options object separate so the
+   * FilterBar receives exactly the shape it expects.
+   */
+  const filterOptions = {
+    platforms: platformOptions.map(
+      (option) => option.value,
+    ).filter(
+      (value) => value !== "all",
+    ),
 
-  /* =========================================================
-     DEPENDENT FILTER HANDLERS
-  ========================================================= */
+    brands: brandOptions.map(
+      (option) => option.value,
+    ).filter(
+      (value) => value !== "all",
+    ),
 
-  const handlePlatformChange = (
-    value: string,
-  ) => {
-    setPlatform(value);
+    subBrands: subBrandOptions.map(
+      (option) => option.value,
+    ).filter(
+      (value) => value !== "all",
+    ),
 
-    setMarket("all");
-    setCity("all");
-    setBrand("all");
-    setProduct("all");
+    products: productOptions.map(
+      (option) => option.value,
+    ).filter(
+      (value) => value !== "all",
+    ),
   };
 
-  const handleStateChange = (
-    value: string,
+  /* =======================================================
+     FILTER HANDLERS
+  ======================================================= */
+
+  const handleFilterChange = (
+    nextFilters: FilterValues,
   ) => {
-    setMarket(value);
-
-    setCity("all");
-    setBrand("all");
-    setProduct("all");
-  };
-
-  const handleCityChange = (
-    value: string,
-  ) => {
-    setCity(value);
-
-    setBrand("all");
-    setProduct("all");
+    setFilters(nextFilters);
   };
 
   const handleBrandChange = (
     value: string,
   ) => {
-    setBrand(value);
-
-    setProduct("all");
+    setFilters(
+      (previous) => ({
+        ...previous,
+        brand: value,
+        subBrand: "all",
+        product: "all",
+      }),
+    );
   };
 
-  /* =========================================================
+  const handleApplyFilters = () => {
+    setPage(1);
+
+    setApplied({
+      platform: filters.platform,
+      brand: filters.brand,
+      subBrand: filters.subBrand,
+      product: filters.product,
+      date: {
+        preset:
+          filters.from || filters.to
+            ? "custom"
+            : "all",
+        from:
+          filters.from || undefined,
+        to:
+          filters.to || undefined,
+      },
+    });
+  };
+
+  const handleClearFilters = () => {
+    setFilters(DEFAULT_FILTERS);
+
+    setApplied(INITIAL_FILTERS);
+
+    setPage(1);
+  };
+
+  /* =======================================================
      CAMPAIGN API
-  ========================================================= */
+  ======================================================= */
 
   const {
     data: campaignResponse,
@@ -282,19 +364,14 @@ export default function DataGridPage() {
         ? applied.platform
         : undefined,
 
-    state:
-      applied.market !== "all"
-        ? applied.market
-        : undefined,
-
-    city:
-      applied.city !== "all"
-        ? applied.city
-        : undefined,
-
     brand:
       applied.brand !== "all"
         ? applied.brand
+        : undefined,
+
+    subBrand:
+      applied.subBrand !== "all"
+        ? applied.subBrand
         : undefined,
 
     product:
@@ -322,59 +399,9 @@ export default function DataGridPage() {
   const filteredCampaigns =
     campaigns;
 
-  /* =========================================================
-     APPLY FILTERS
-  ========================================================= */
-
-  const handleApplyFilters = () => {
-    setPage(1);
-
-    setApplied({
-      platform,
-      market,
-      city,
-      brand,
-      product,
-      date,
-    });
-  };
-
-  /* =========================================================
-     CLEAR FILTERS
-  ========================================================= */
-
-  const handleClearFilters = () => {
-    setPlatform("all");
-    setMarket("all");
-    setCity("all");
-    setBrand("all");
-    setProduct("all");
-
-    setDate({
-      preset: "all",
-    });
-
-    setApplied(
-      INITIAL_FILTERS,
-    );
-
-    setPage(1);
-  };
-
-  /* =========================================================
-     TAB CHANGE
-  ========================================================= */
-
-  const handleTabChange = (
-    nextTab: "campaign" | "city",
-  ) => {
-    setTab(nextTab);
-    setPage(1);
-  };
-
-  /* =========================================================
+  /* =======================================================
      REMOVE ACTIVE FILTER CHIP
-  ========================================================= */
+  ======================================================= */
 
   const removeFilter = (
     key: ChipKey,
@@ -382,16 +409,22 @@ export default function DataGridPage() {
     setPage(1);
 
     if (key === "date") {
-      setDate({
-        preset: "all",
-      });
+      setFilters(
+        (previous) => ({
+          ...previous,
+          from: "",
+          to: "",
+        }),
+      );
 
-      setApplied((previous) => ({
-        ...previous,
-        date: {
-          preset: "all",
-        },
-      }));
+      setApplied(
+        (previous) => ({
+          ...previous,
+          date: {
+            preset: "all",
+          },
+        }),
+      );
 
       return;
     }
@@ -401,40 +434,42 @@ export default function DataGridPage() {
       ...DEPENDENTS[key],
     ];
 
-    const setters: Record<
-      FilterKey,
-      (value: string) => void
-    > = {
-      platform: setPlatform,
-      market: setMarket,
-      city: setCity,
-      brand: setBrand,
-      product: setProduct,
-    };
+    setFilters(
+      (previous) => {
+        const next = {
+          ...previous,
+        };
 
-    keys.forEach((filterKey) => {
-      setters[filterKey]("all");
-    });
+        keys.forEach(
+          (filterKey) => {
+            next[filterKey] = "all";
+          },
+        );
 
-    setApplied((previous) => {
-      const next = {
-        ...previous,
-      };
+        return next;
+      },
+    );
 
-      keys.forEach((filterKey) => {
-        next[filterKey] = "all";
-      });
+    setApplied(
+      (previous) => {
+        const next = {
+          ...previous,
+        };
 
-      return next;
-    });
+        keys.forEach(
+          (filterKey) => {
+            next[filterKey] = "all";
+          },
+        );
+
+        return next;
+      },
+    );
   };
 
-  /* =========================================================
+  /* =======================================================
      CITY DATA
-     
-     This remains mock data until the City API
-     is enabled.
-  ========================================================= */
+  ======================================================= */
 
   const filteredCityData =
     useMemo(() => {
@@ -447,15 +482,6 @@ export default function DataGridPage() {
               row.platform,
             ).toLowerCase() !==
               applied.platform.toLowerCase()
-          ) {
-            return false;
-          }
-
-          if (
-            applied.market !==
-              "all" &&
-            row.market !==
-              applied.market
           ) {
             return false;
           }
@@ -483,15 +509,18 @@ export default function DataGridPage() {
       );
     }, [applied]);
 
-  /* =========================================================
+  /* =======================================================
      CAMPAIGN TABLE COLUMNS
-  ========================================================= */
+  ======================================================= */
 
-  const campaignColumns: Column<CampaignGridRow>[] =
+  const campaignColumns:
+    Column<CampaignGridRow>[] =
     [
       {
         key: "campaignName",
+
         label: "Campaign",
+
         render: (row) => (
           <div className="flex min-w-[250px] items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-soft text-brand-primary-dark transition-transform duration-200 group-hover:scale-105">
@@ -513,8 +542,34 @@ export default function DataGridPage() {
       },
 
       {
+        key: "brandName",
+
+        label: "Brand",
+
+        render: (row) => (
+          <span className="font-semibold text-brand-ink">
+            {row.brandName || "—"}
+          </span>
+        ),
+      },
+
+      {
+        key: "subBrandName",
+
+        label: "Sub Brand",
+
+        render: (row) => (
+          <span className="text-brand-gray">
+            {row.subBrandName || "—"}
+          </span>
+        ),
+      },
+
+      {
         key: "budget",
+
         label: "Budget",
+
         render: (row) => (
           <span className="font-medium text-brand-ink">
             ₹
@@ -527,7 +582,9 @@ export default function DataGridPage() {
 
       {
         key: "spend",
+
         label: "Spend",
+
         render: (row) => (
           <span className="font-medium text-brand-ink">
             ₹
@@ -540,7 +597,9 @@ export default function DataGridPage() {
 
       {
         key: "revenue",
+
         label: "Revenue",
+
         render: (row) => (
           <span className="font-semibold text-emerald-600">
             ₹
@@ -553,7 +612,9 @@ export default function DataGridPage() {
 
       {
         key: "orders",
+
         label: "Orders",
+
         render: (row) => (
           <span className="font-medium text-brand-ink">
             {Number(
@@ -565,26 +626,30 @@ export default function DataGridPage() {
 
       {
         key: "date",
+
         label: "Date",
+
         render: (row) => (
           <div className="flex items-center gap-2 text-xs text-brand-gray">
             <CalendarDays className="h-3.5 w-3.5 text-brand-gray-light" />
-
             {row.date}
           </div>
         ),
       },
     ];
 
-  /* =========================================================
+  /* =======================================================
      CITY TABLE COLUMNS
-  ========================================================= */
+  ======================================================= */
 
-  const cityColumns: Column<CityRow>[] =
+  const cityColumns:
+    Column<CityRow>[] =
     [
       {
         key: "platform",
+
         label: "Platform",
+
         render: (row) =>
           platformBadge(
             row.platform,
@@ -593,7 +658,9 @@ export default function DataGridPage() {
 
       {
         key: "brandName",
+
         label: "Brand",
+
         render: (row) => (
           <span className="font-semibold text-brand-ink">
             {row.brandName}
@@ -603,7 +670,9 @@ export default function DataGridPage() {
 
       {
         key: "product",
+
         label: "Product",
+
         render: (row) => (
           <span className="text-brand-gray">
             {row.product}
@@ -613,7 +682,9 @@ export default function DataGridPage() {
 
       {
         key: "market",
+
         label: "Market",
+
         render: (row) => (
           <span className="inline-flex items-center rounded-lg bg-brand-surface px-2.5 py-1 text-xs font-medium text-brand-gray">
             {row.market}
@@ -623,7 +694,9 @@ export default function DataGridPage() {
 
       {
         key: "city",
+
         label: "City",
+
         render: (row) => (
           <div className="flex items-center gap-2">
             <Building2 className="h-3.5 w-3.5 text-brand-gray-light" />
@@ -637,7 +710,9 @@ export default function DataGridPage() {
 
       {
         key: "spend",
+
         label: "Spend",
+
         render: (row) => (
           <span className="font-medium text-brand-ink">
             {row.spend
@@ -649,7 +724,9 @@ export default function DataGridPage() {
 
       {
         key: "revenue",
+
         label: "Revenue",
+
         render: (row) => (
           <span className="font-semibold text-emerald-600">
             ₹
@@ -660,7 +737,9 @@ export default function DataGridPage() {
 
       {
         key: "orders",
+
         label: "Orders",
+
         render: (row) => (
           <span className="font-medium text-brand-ink">
             {row.orders.toLocaleString()}
@@ -670,12 +749,13 @@ export default function DataGridPage() {
 
       {
         key: "roas",
+
         label: "ROAS",
+
         render: (row) =>
           row.roas ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
               <TrendingUp className="h-3.5 w-3.5" />
-
               {row.roas}x
             </span>
           ) : (
@@ -687,20 +767,21 @@ export default function DataGridPage() {
 
       {
         key: "date",
+
         label: "Date",
+
         render: (row) => (
           <div className="flex items-center gap-2 text-xs text-brand-gray">
             <CalendarDays className="h-3.5 w-3.5 text-brand-gray-light" />
-
             {row.date}
           </div>
         ),
       },
     ];
 
-  /* =========================================================
+  /* =======================================================
      ACTIVE FILTER LABELS
-  ========================================================= */
+  ======================================================= */
 
   const platformLabel =
     platforms.find(
@@ -742,42 +823,35 @@ export default function DataGridPage() {
   const activeChips = [
     applied.platform !==
       "all" && {
-      key: "platform",
+      key: "platform" as const,
       label: "Platform",
       value: platformLabel,
     },
 
-    applied.market !==
-      "all" && {
-      key: "market",
-      label: "State",
-      value: applied.market,
-    },
-
-    applied.city !==
-      "all" && {
-      key: "city",
-      label: "City",
-      value: applied.city,
-    },
-
-    applied.product !==
-      "all" && {
-      key: "product",
-      label: "Product",
-      value: applied.product,
-    },
-
     applied.brand !==
       "all" && {
-      key: "brand",
+      key: "brand" as const,
       label: "Brand",
       value: applied.brand,
     },
 
+    applied.subBrand !==
+      "all" && {
+      key: "subBrand" as const,
+      label: "Sub Brand",
+      value: applied.subBrand,
+    },
+
+    applied.product !==
+      "all" && {
+      key: "product" as const,
+      label: "Product",
+      value: applied.product,
+    },
+
     applied.date.preset !==
       "all" && {
-      key: "date",
+      key: "date" as const,
       label: "Date",
       value: dateLabel,
     },
@@ -792,9 +866,9 @@ export default function DataGridPage() {
   const activeFilterCount =
     activeChips.length;
 
-  /* =========================================================
+  /* =======================================================
      CURRENT DATA
-  ========================================================= */
+  ======================================================= */
 
   const currentData =
     tab === "campaign"
@@ -807,13 +881,14 @@ export default function DataGridPage() {
       : filteredCityData.length;
 
   const platformTitle =
-    applied.platform === "all"
+    applied.platform ===
+    "all"
       ? "All Platforms"
       : platformLabel;
 
-  /* =========================================================
-     SERVER PAGINATION
-  ========================================================= */
+  /* =======================================================
+     PAGINATION
+  ======================================================= */
 
   const canGoPrevious =
     page > 1;
@@ -821,19 +896,16 @@ export default function DataGridPage() {
   const canGoNext =
     page < totalPages;
 
-  const goToPreviousPage =
-    () => {
-      if (
-        !canGoPrevious
-      ) {
-        return;
-      }
+  const goToPreviousPage = () => {
+    if (!canGoPrevious) {
+      return;
+    }
 
-      setPage(
-        (current) =>
-          current - 1,
-      );
-    };
+    setPage(
+      (current) =>
+        current - 1,
+    );
+  };
 
   const goToNextPage = () => {
     if (!canGoNext) {
@@ -851,8 +923,7 @@ export default function DataGridPage() {
   ) => {
     if (
       nextPage < 1 ||
-      nextPage >
-        totalPages ||
+      nextPage > totalPages ||
       nextPage === page
     ) {
       return;
@@ -863,11 +934,9 @@ export default function DataGridPage() {
 
   const pageNumbers =
     useMemo(() => {
-      const pages: number[] =
-        [];
+      const pages: number[] = [];
 
-      const maxVisiblePages =
-        5;
+      const maxVisiblePages = 5;
 
       if (
         totalPages <=
@@ -922,18 +991,17 @@ export default function DataGridPage() {
       totalPages,
     ]);
 
-  /* =========================================================
+  /* =======================================================
      RENDER
-  ========================================================= */
+  ======================================================= */
 
   return (
     <div className="page-enter min-h-full pb-10">
-      {/* =====================================================
+      {/* ===================================================
           PAGE HEADER
-      ====================================================== */}
+      ==================================================== */}
 
       <section className="relative mb-7 overflow-hidden rounded-3xl border border-brand-border bg-white p-6 shadow-brand-sm sm:p-7">
-        {/* Decorative background */}
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-orange-200/25 blur-3xl" />
 
         <div className="pointer-events-none absolute bottom-0 right-1/4 h-32 w-32 rounded-full bg-orange-100/20 blur-3xl" />
@@ -942,7 +1010,6 @@ export default function DataGridPage() {
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-primary/10 bg-brand-primary-soft px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-primary-dark">
               <span className="h-1.5 w-1.5 animate-soft-pulse rounded-full bg-brand-primary" />
-
               Data workspace
             </div>
 
@@ -953,8 +1020,8 @@ export default function DataGridPage() {
             <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-gray">
               Explore, filter and review
               campaign records across
-              platforms, markets, brands
-              and products.
+              platforms, brands and
+              products.
             </p>
           </div>
 
@@ -963,9 +1030,7 @@ export default function DataGridPage() {
             onClick={() =>
               refetch()
             }
-            disabled={
-              isFetching
-            }
+            disabled={isFetching}
             className="group inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-brand-border bg-white px-4 text-xs font-bold text-brand-ink shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-primary/20 hover:bg-brand-surface hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
             <RefreshCw
@@ -984,9 +1049,9 @@ export default function DataGridPage() {
         </div>
       </section>
 
-      {/* =====================================================
+      {/* ===================================================
           VIEW SWITCHER
-      ====================================================== */}
+      ==================================================== */}
 
       <div className="mb-5">
         <div className="inline-flex rounded-2xl border border-brand-border bg-white p-1.5 shadow-brand-sm">
@@ -1009,18 +1074,16 @@ export default function DataGridPage() {
                 type="button"
                 disabled={disabled}
                 onClick={() => {
-                  if (
-                    disabled
-                  ) {
+                  if (disabled) {
                     return;
                   }
 
-                  handleTabChange(
-                    type,
-                  );
+                  setTab(type);
+                  setPage(1);
                 }}
                 className={[
                   "flex h-10 items-center gap-2 rounded-xl px-5 text-xs font-bold transition-all duration-200",
+
                   disabled
                     ? "cursor-not-allowed text-brand-gray-light"
                     : active
@@ -1051,12 +1114,11 @@ export default function DataGridPage() {
         </div>
       </div>
 
-      {/* =====================================================
+      {/* ===================================================
           FILTER PANEL
-      ====================================================== */}
+      ==================================================== */}
 
       <section className="mb-6 overflow-hidden rounded-2xl border border-brand-border bg-white shadow-brand-sm">
-        {/* Filter heading */}
         <div className="border-b border-brand-border-light bg-[#fdfcfb] px-5 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -1073,9 +1135,7 @@ export default function DataGridPage() {
                   {activeFilterCount >
                     0 && (
                     <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand-primary px-1.5 py-0.5 text-[10px] font-bold text-white">
-                      {
-                        activeFilterCount
-                      }
+                      {activeFilterCount}
                     </span>
                   )}
                 </div>
@@ -1105,61 +1165,27 @@ export default function DataGridPage() {
           </div>
         </div>
 
-        {/* Filter controls */}
         <div className="p-5">
           <FilterBar
-            platformOptions={
-              platformOptions
+            filters={filters}
+            options={filterOptions}
+            onChange={
+              handleFilterChange
             }
-            dateOptions={
-              dateOptions
-            }
-            marketOptions={
-              stateOptions
-            }
-            cityOptions={
-              cityOptions
-            }
-            brandOptions={
-              brandOptions
-            }
-            productOptions={
-              productOptions
-            }
-            platform={platform}
-            date={date}
-            market={market}
-            city={city}
-            brand={brand}
-            product={product}
-            onPlatformChange={
-              handlePlatformChange
-            }
-            onDateChange={
-              setDate
-            }
-            onMarketChange={
-              handleStateChange
-            }
-            onCityChange={
-              handleCityChange
-            }
-            onBrandChange={
-              handleBrandChange
-            }
-            onProductChange={
-              setProduct
+            onReset={
+              handleClearFilters
             }
             onApply={
               handleApplyFilters
             }
-            onClear={
-              handleClearFilters
-            }
+            isLoading={isLoading}
           />
         </div>
 
-        {/* Active filter chips */}
+        {/* =================================================
+            ACTIVE FILTER CHIPS
+        ================================================== */}
+
         {activeChips.length >
           0 && (
           <div className="flex flex-wrap items-center gap-2 border-t border-brand-border bg-brand-offwhite px-5 py-3.5">
@@ -1206,9 +1232,9 @@ export default function DataGridPage() {
         )}
       </section>
 
-      {/* =====================================================
+      {/* ===================================================
           ERROR
-      ====================================================== */}
+      ==================================================== */}
 
       {tab === "campaign" &&
         isError && (
@@ -1247,20 +1273,20 @@ export default function DataGridPage() {
           </section>
         )}
 
-      {/* =====================================================
+      {/* ===================================================
           DATA SECTION
-      ====================================================== */}
+      ==================================================== */}
 
       <section className="overflow-hidden rounded-2xl border border-brand-border bg-white shadow-brand-sm">
-        {/* Data header */}
+        {/* DATA HEADER */}
+
         <div className="border-b border-brand-border-light px-5 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-bold text-brand-ink">
                   {platformTitle}{" "}
-                  {tab ===
-                  "campaign"
+                  {tab === "campaign"
                     ? "Campaign Report"
                     : "City Report"}
                 </h2>
@@ -1277,9 +1303,8 @@ export default function DataGridPage() {
               </div>
 
               <p className="mt-1 text-xs text-brand-gray">
-                {tab ===
-                "campaign"
-                  ? "Campaign name, budget, spend, revenue and date"
+                {tab === "campaign"
+                  ? "Campaign, brand, sub brand, budget, spend, revenue and date"
                   : "City level performance"}
               </p>
             </div>
@@ -1298,9 +1323,7 @@ export default function DataGridPage() {
           </div>
         </div>
 
-        {/* ===================================================
-            DATA CONTENT
-        ==================================================== */}
+        {/* DATA CONTENT */}
 
         <div
           className={
@@ -1311,9 +1334,7 @@ export default function DataGridPage() {
               : "transition-opacity"
           }
         >
-          {/* =================================================
-              CAMPAIGN
-          ================================================== */}
+          {/* CAMPAIGN */}
 
           {tab ===
             "campaign" && (
@@ -1349,7 +1370,7 @@ export default function DataGridPage() {
                     ),
                   )}
                 </div>
-              ) : currentData.length ===
+              ) : filteredCampaigns.length ===
                 0 ? (
                 <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
                   <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-surface text-brand-gray-light">
@@ -1399,9 +1420,7 @@ export default function DataGridPage() {
             </>
           )}
 
-          {/* =================================================
-              CITY
-          ================================================== */}
+          {/* CITY */}
 
           {tab === "city" && (
             <>
@@ -1439,17 +1458,12 @@ export default function DataGridPage() {
           )}
         </div>
 
-        {/* ===================================================
-            SERVER PAGINATION
-        ==================================================== */}
+        {/* SERVER PAGINATION */}
 
-        {tab ===
-          "campaign" &&
+        {tab === "campaign" &&
           !isLoading &&
-          totalCampaigns >
-            0 && (
+          totalCampaigns > 0 && (
             <div className="flex flex-col gap-4 border-t border-brand-border bg-[#fdfcfb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              {/* Result range */}
               <div className="text-xs text-brand-gray">
                 Showing{" "}
                 <span className="font-bold text-brand-ink">
@@ -1477,7 +1491,6 @@ export default function DataGridPage() {
                 {" campaigns"}
               </div>
 
-              {/* Pagination */}
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
@@ -1495,15 +1508,12 @@ export default function DataGridPage() {
                 </button>
 
                 {page > 3 &&
-                  totalPages >
-                    5 && (
+                  totalPages > 5 && (
                     <>
                       <button
                         type="button"
                         onClick={() =>
-                          goToPage(
-                            1,
-                          )
+                          goToPage(1)
                         }
                         className="flex h-9 min-w-9 items-center justify-center rounded-xl border border-brand-border bg-white px-2 text-xs font-bold text-brand-gray transition hover:bg-brand-primary-soft hover:text-brand-primary-dark"
                       >
@@ -1517,9 +1527,7 @@ export default function DataGridPage() {
                   )}
 
                 {pageNumbers.map(
-                  (
-                    pageNumber,
-                  ) => (
+                  (pageNumber) => (
                     <button
                       key={
                         pageNumber
@@ -1535,26 +1543,21 @@ export default function DataGridPage() {
                       }
                       className={[
                         "flex h-9 min-w-9 items-center justify-center rounded-xl px-2 text-xs font-bold transition-all",
+
                         pageNumber ===
                         page
                           ? "bg-brand-ink text-white shadow-sm"
                           : "border border-brand-border bg-white text-brand-gray hover:bg-brand-primary-soft hover:text-brand-primary-dark",
-                      ].join(
-                        " ",
-                      )}
+                      ].join(" ")}
                     >
-                      {
-                        pageNumber
-                      }
+                      {pageNumber}
                     </button>
                   ),
                 )}
 
                 {page <
-                  totalPages -
-                    2 &&
-                  totalPages >
-                    5 && (
+                  totalPages - 2 &&
+                  totalPages > 5 && (
                     <>
                       <span className="px-1 text-xs text-brand-gray-light">
                         ...
@@ -1569,9 +1572,7 @@ export default function DataGridPage() {
                         }
                         className="flex h-9 min-w-9 items-center justify-center rounded-xl border border-brand-border bg-white px-2 text-xs font-bold text-brand-gray transition hover:bg-brand-primary-soft hover:text-brand-primary-dark"
                       >
-                        {
-                          totalPages
-                        }
+                        {totalPages}
                       </button>
                     </>
                   )}

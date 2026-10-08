@@ -1,8 +1,11 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  createApi,
+  fetchBaseQuery,
+} from "@reduxjs/toolkit/query/react";
 
-/* =========================================================
-   PLATFORM
-========================================================= */
+// =========================================================
+// PLATFORM
+// =========================================================
 
 export interface Platform {
   id: string;
@@ -10,9 +13,9 @@ export interface Platform {
   slug: string;
 }
 
-/* =========================================================
-   DASHBOARD SUMMARY
-========================================================= */
+// =========================================================
+// DASHBOARD SUMMARY
+// =========================================================
 
 export interface DashboardSummary {
   totals: {
@@ -46,31 +49,44 @@ export interface DashboardSummary {
   }[];
 }
 
-/* =========================================================
-   CAMPAIGN GRID ROW
-========================================================= */
+// =========================================================
+// CAMPAIGN GRID ROW
+// =========================================================
 
 export interface CampaignGridRow {
   id: string;
+
   campaignName: string;
+
   platform: string;
+
+  brandName: string;
+
+  subBrandName: string;
+
   budget: number;
+
   spend: number;
+
   revenue: number;
+
   orders: number;
+
+  roas: number;
 
   date: string;
 }
 
-/* =========================================================
-   RAW CAMPAIGN
-========================================================= */
+// =========================================================
+// RAW CAMPAIGN
+// =========================================================
 
-type RawCampaign = Record<string, any>;
+type RawCampaign =
+  Record<string, any>;
 
-/* =========================================================
-   CAMPAIGN PAGINATION
-========================================================= */
+// =========================================================
+// PAGINATION
+// =========================================================
 
 export interface CampaignPagination {
   page: number;
@@ -79,44 +95,66 @@ export interface CampaignPagination {
   totalPages: number;
 }
 
-/* =========================================================
-   CAMPAIGN API RESPONSE
-========================================================= */
+// =========================================================
+// CAMPAIGN RESPONSE
+// =========================================================
 
 export interface CampaignsResponse {
   campaigns: CampaignGridRow[];
+
   pagination: CampaignPagination;
 }
 
-/* =========================================================
-   CAMPAIGN QUERY PARAMS
-========================================================= */
+// =========================================================
+// CAMPAIGN QUERY
+// =========================================================
 
 export interface CampaignQueryParams {
   page?: number;
+
   limit?: number;
 
   platform?: string;
+
   from?: string;
+
   to?: string;
 
   brand?: string;
+
+  subBrand?: string;
+
   search?: string;
 
   sortBy?: string;
+
   sortOrder?: "asc" | "desc";
 }
 
-/* =========================================================
-   CONVERT RAW CAMPAIGN -> GRID ROW
-========================================================= */
+// =========================================================
+// FILTER OPTIONS
+// =========================================================
+
+export interface CampaignFilterOptions {
+  brands: string[];
+
+  subBrands: string[];
+}
+
+// =========================================================
+// RAW -> GRID
+// =========================================================
 
 function toGridRow(
   r: RawCampaign,
-  i: number
+  i: number,
 ): CampaignGridRow {
   return {
-    id: String(r.id ?? r._id ?? i),
+    id: String(
+      r.id ??
+        r._id ??
+        i,
+    ),
 
     campaignName:
       r.CampaignName ??
@@ -124,245 +162,435 @@ function toGridRow(
       r.name ??
       "",
 
-    platform: r.platform ?? "",
+    platform:
+      r.platform ?? "",
+
+    brandName:
+      r.BrandName ??
+      r.brandName ??
+      "",
+
+    subBrandName:
+      r.SubBrandName ??
+      r.subBrandName ??
+      "",
 
     budget: Number(
       r.Budget ??
-      r.budget ??
-      0
+        r.budget ??
+        0,
     ),
 
     spend: Number(
       r.Spend ??
-      r.spend ??
-      0
+        r.spend ??
+        0,
     ),
 
     revenue: Number(
       r.Revenue ??
-      r.revenue ??
-      0
+        r.revenue ??
+        0,
     ),
-    orders: Number(r.Orders ?? r.orders ?? 0),
+
+    orders: Number(
+      r.Orders ??
+        r.orders ??
+        0,
+    ),
+
+    roas: Number(
+      r.Roas ??
+        r.roas ??
+        0,
+    ),
 
     date: String(
       r.reportDate ??
-      r.date ??
-      ""
+        r.date ??
+        "",
     ).slice(0, 10),
   };
 }
 
-/* =========================================================
-   SUMMARY ARGS
-========================================================= */
+// =========================================================
+// SUMMARY ARGS
+// =========================================================
 
 interface SummaryArgs {
   platforms: string[];
+
   from?: string;
+
   to?: string;
 }
 
+// =========================================================
+// LOCATION
+// =========================================================
+
 export interface LocationItem {
   id: string;
-  platform: string; // slug, lowercase
+
+  platform: string;
+
   state: string;
+
   city: string;
-  brands: { name: string; products: string[] }[];
+
+  brands: {
+    name: string;
+    products: string[];
+  }[];
 }
-/* =========================================================
-   API
-========================================================= */
 
-export const dashboardApi = createApi({
-  reducerPath: "dashboardApi",
+// =========================================================
+// API
+// =========================================================
 
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_BASE_URL,
-    credentials: "include",
-  }),
+export const dashboardApi =
+  createApi({
+    reducerPath:
+      "dashboardApi",
 
-  endpoints: (builder) => ({
-    /* =====================================================
-       GET PLATFORMS
-    ===================================================== */
+    baseQuery:
+      fetchBaseQuery({
+        baseUrl:
+          import.meta.env
+            .VITE_API_BASE_URL,
 
-    getPlatforms: builder.query<Platform[], void>({
-      query: () => "/platforms",
-
-      transformResponse: (
-        res: {
-          data: {
-            platforms: Platform[];
-          };
-        }
-      ) => {
-        return res.data.platforms;
-      },
-    }),
-
-    /* =====================================================
-       GET DASHBOARD SUMMARY
-    ===================================================== */
-
-    getDashboardSummary: builder.query<
-      DashboardSummary,
-      SummaryArgs
-    >({
-      query: ({
-        platforms,
-        from,
-        to,
-      }) => ({
-        url: "/dashboard/summary",
-
-        params: {
-          platform: platforms.length
-            ? platforms.join(",")
-            : undefined,
-
-          from: from || undefined,
-
-          to: to || undefined,
-        },
+        credentials: "include",
       }),
 
-      transformResponse: (
-        res: {
-          data: DashboardSummary;
-        }
-      ) => {
-        return res.data;
-      },
+    endpoints: (builder) => ({
+      // =====================================================
+      // PLATFORMS
+      // =====================================================
+
+      getPlatforms:
+        builder.query<
+          Platform[],
+          void
+        >({
+          query: () =>
+            "/platforms",
+
+          transformResponse: (
+            res: {
+              data: {
+                platforms: Platform[];
+              };
+            },
+          ) =>
+            res.data
+              .platforms,
+        }),
+
+      // =====================================================
+      // DASHBOARD SUMMARY
+      // =====================================================
+
+      getDashboardSummary:
+        builder.query<
+          DashboardSummary,
+          SummaryArgs
+        >({
+          query: ({
+            platforms,
+            from,
+            to,
+          }) => ({
+            url: "/dashboard/summary",
+
+            params: {
+              platform:
+                platforms.length
+                  ? platforms.join(
+                      ",",
+                    )
+                  : undefined,
+
+              from:
+                from ||
+                undefined,
+
+              to:
+                to ||
+                undefined,
+            },
+          }),
+
+          transformResponse: (
+            res: {
+              data: DashboardSummary;
+            },
+          ) =>
+            res.data,
+        }),
+
+      // =====================================================
+      // CAMPAIGNS
+      // =====================================================
+
+      getCampaigns:
+        builder.query<
+          CampaignsResponse,
+          CampaignQueryParams
+        >({
+          query: ({
+            page = 1,
+            limit = 20,
+
+            platform,
+
+            from,
+            to,
+
+            brand,
+            subBrand,
+
+            search,
+
+            sortBy =
+              "reportDate",
+
+            sortOrder =
+              "desc",
+          }) => ({
+            url: "/campaigns",
+
+            params: {
+              page,
+
+              limit,
+
+              platform:
+                platform ||
+                undefined,
+
+              from:
+                from ||
+                undefined,
+
+              to:
+                to ||
+                undefined,
+
+              brand:
+                brand ||
+                undefined,
+
+              subBrand:
+                subBrand ||
+                undefined,
+
+              search:
+                search ||
+                undefined,
+
+              sortBy,
+
+              sortOrder,
+            },
+          }),
+
+          transformResponse: (
+            res: {
+              data: {
+                campaigns?: RawCampaign[];
+
+                items?: RawCampaign[];
+
+                rows?: RawCampaign[];
+
+                pagination?: CampaignPagination;
+              };
+            },
+          ): CampaignsResponse => {
+            const data =
+              res.data;
+
+            const list: RawCampaign[] =
+              Array.isArray(data)
+                ? data
+                : data?.campaigns ??
+                  data?.items ??
+                  data?.rows ??
+                  [];
+
+            const campaigns =
+              list.map(
+                toGridRow,
+              );
+
+            const pagination =
+              data?.pagination ??
+              {
+                page: 1,
+
+                limit:
+                  campaigns.length,
+
+                total:
+                  campaigns.length,
+
+                totalPages:
+                  campaigns.length >
+                  0
+                    ? 1
+                    : 1,
+              };
+
+            return {
+              campaigns,
+
+              pagination,
+            };
+          },
+        }),
+
+      // =====================================================
+      // CAMPAIGN FILTER OPTIONS
+      // =====================================================
+
+      getCampaignFilterOptions:
+        builder.query<
+          CampaignFilterOptions,
+          {
+            platform?: string;
+            brand?: string;
+          }
+        >({
+          query: ({
+            platform,
+            brand,
+          }) => ({
+            url:
+              "/campaigns/filter-options",
+
+            params: {
+              platform:
+                platform &&
+                platform !== "all"
+                  ? platform
+                  : undefined,
+
+              brand:
+                brand &&
+                brand !== "all"
+                  ? brand
+                  : undefined,
+            },
+          }),
+
+          transformResponse: (
+            res: {
+              data: CampaignFilterOptions;
+            },
+          ) =>
+            res.data,
+        }),
+
+      // =====================================================
+      // LOCATIONS
+      // =====================================================
+
+      getLocations:
+        builder.query<
+          LocationItem[],
+          void
+        >({
+          query: () =>
+            "/locations",
+
+          transformResponse: (
+            res: {
+              data: unknown;
+            },
+          ) => {
+            const d =
+              res.data as any;
+
+            const list =
+              Array.isArray(d)
+                ? d
+                : d?.locations ??
+                  d?.items ??
+                  d?.rows ??
+                  [];
+
+            return list
+              .filter(
+                (l: any) =>
+                  l.isActive !==
+                  false,
+              )
+              .map(
+                (
+                  l: any,
+                  i: number,
+                ) => ({
+                  id: String(
+                    l.id ??
+                      l._id ??
+                      i,
+                  ),
+
+                  platform:
+                    String(
+                      l.platform ??
+                        "",
+                    ).toLowerCase(),
+
+                  state:
+                    l.state ?? "",
+
+                  city:
+                    l.city ?? "",
+
+                  brands:
+                    Array.isArray(
+                      l.brands,
+                    )
+                      ? l.brands.map(
+                          (
+                            b: any,
+                          ) => ({
+                            name: String(
+                              b.name ??
+                                "",
+                            ),
+
+                            products:
+                              Array.isArray(
+                                b.products,
+                              )
+                                ? b.products.map(
+                                    String,
+                                  )
+                                : [],
+                          }),
+                        )
+                      : [],
+                }),
+              );
+          },
+        }),
     }),
+  });
 
-    /* =====================================================
-       GET CAMPAIGNS
-       
-       SERVER-SIDE PAGINATION
-    ===================================================== */
-
-    getCampaigns: builder.query<
-      CampaignsResponse,
-      CampaignQueryParams
-    >({
-      query: ({
-        page = 1,
-        limit = 20,
-        platform,
-        from,
-        to,
-        brand,
-        search,
-        sortBy = "reportDate",
-        sortOrder = "desc",
-      }) => ({
-        url: "/campaigns",
-
-        params: {
-          page,
-          limit,
-
-          platform: platform || undefined,
-
-          from: from || undefined,
-
-          to: to || undefined,
-
-          brand: brand || undefined,
-
-          search: search || undefined,
-
-          sortBy,
-
-          sortOrder,
-        },
-      }),
-
-      transformResponse: (
-        res: {
-          data: {
-            campaigns?: RawCampaign[];
-            items?: RawCampaign[];
-            rows?: RawCampaign[];
-
-            pagination?: CampaignPagination;
-          };
-        }
-      ): CampaignsResponse => {
-        const data = res.data;
-
-        /*
-         * Backend response:
-         *
-         * {
-         *   campaigns: [...],
-         *   pagination: {
-         *     page: 1,
-         *     limit: 20,
-         *     total: 115,
-         *     totalPages: 6
-         *   }
-         * }
-         */
-
-        const list: RawCampaign[] = Array.isArray(data)
-          ? data
-          : data?.campaigns ??
-            data?.items ??
-            data?.rows ??
-            [];
-
-        const campaigns = list.map(toGridRow);
-
-        const pagination: CampaignPagination =
-          data?.pagination ?? {
-            page: 1,
-            limit: campaigns.length,
-            total: campaigns.length,
-            totalPages: campaigns.length > 0 ? 1 : 1,
-          };
-
-        return {
-          campaigns,
-          pagination,
-        };
-      },
-    }),
-    getLocations: builder.query<LocationItem[], void>({
-      query: () => "/locations",
-      transformResponse: (res: { data: unknown }) => {
-        const d = res.data as any;
-        const list: Record<string, any>[] = Array.isArray(d)
-          ? d
-          : d?.locations ?? d?.items ?? d?.rows ?? [];
-        return list
-          .filter((l) => l.isActive !== false)
-          .map((l, i) => ({
-            id: String(l.id ?? l._id ?? i),
-            platform: String(l.platform ?? "").toLowerCase(),
-            state: l.state ?? "",
-            city: l.city ?? "",
-            brands: Array.isArray(l.brands)
-              ? l.brands.map((b: any) => ({
-                  name: String(b.name ?? ""),
-                  products: Array.isArray(b.products) ? b.products.map(String) : [],
-                }))
-              : [],
-          }));
-      },
-    }),
-  }),
-  
-});
-
-/* =========================================================
-   HOOKS
-========================================================= */
+// =========================================================
+// HOOKS
+// =========================================================
 
 export const {
   useGetPlatformsQuery,
+
   useGetDashboardSummaryQuery,
+
   useGetCampaignsQuery,
-  useGetLocationsQuery
+
+  useGetCampaignFilterOptionsQuery,
+
+  useGetLocationsQuery,
 } = dashboardApi;

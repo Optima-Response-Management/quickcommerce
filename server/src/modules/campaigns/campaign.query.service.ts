@@ -1,32 +1,38 @@
-import { HydratedDocument, FilterQuery } from "mongoose";
-import { IUser } from "../users/user.model";
-import { Campaign, ICampaign } from "./campaign.model";
-import { ListCampaignsQuery } from "./campaign.schema";
-import { detectPlatformsInFileName } from "./campaign.formats";
+import {
+  HydratedDocument,
+  FilterQuery,
+} from "mongoose";
 
-/* ============================================================
-   CONSTANTS
-============================================================ */
+import { IUser } from "../users/user.model";
+
+import {
+  Campaign,
+  ICampaign,
+} from "./campaign.model";
+
+import {
+  ListCampaignsQuery,
+} from "./campaign.schema";
+
+import {
+  detectPlatformsInFileName,
+} from "./campaign.formats";
 
 const MAX_PAGE_LIMIT = 100;
 
-/*
- * Only select fields that the campaign grid actually needs.
- *
- * This reduces:
- * - MongoDB document transfer
- * - Node.js memory usage
- * - serialization cost
- * - API response size
- */
 const CAMPAIGN_GRID_PROJECTION = {
   _id: 1,
   uploadId: 1,
   platform: 1,
   reportDate: 1,
   market: 1,
+
   CampaignName: 1,
+
   BrandName: 1,
+
+  SubBrandName: 1,
+
   Budget: 1,
   Spend: 1,
   Revenue: 1,
@@ -34,56 +40,42 @@ const CAMPAIGN_GRID_PROJECTION = {
   Roas: 1,
 } as const;
 
-/* ============================================================
-   HELPERS
-============================================================ */
-
-/**
- * Escape user-provided text before using it inside MongoDB regex.
- *
- * This prevents characters such as:
- * . * + ? ^ $ ( ) [ ] { } |
- * from changing the intended regex.
- */
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function escapeRegex(
+  value: string,
+): string {
+  return value.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&",
+  );
 }
 
-/**
- * Returns the platforms the current user is allowed to access.
- *
- * null = unrestricted access.
- */
 function allowedPlatformSlugs(
-  user: HydratedDocument<IUser>
+  user: HydratedDocument<IUser>,
 ): string[] | null {
   if (
-    user.role === "super_admin" ||
-    user.platformAccess === "all"
+    user.role ===
+      "super_admin" ||
+    user.platformAccess ===
+      "all"
   ) {
     return null;
   }
 
-  const platforms = user.platforms.flatMap((name) =>
-    detectPlatformsInFileName(name)
-  );
+  const platforms =
+    user.platforms.flatMap(
+      (name) =>
+        detectPlatformsInFileName(
+          name,
+        ),
+    );
 
-  return [...new Set(platforms)];
+  return [
+    ...new Set(platforms),
+  ];
 }
 
-/**
- * Normalizes the platform query parameter.
- *
- * Example:
- *
- * "swiggy,zepto, swiggy"
- *
- * becomes:
- *
- * ["swiggy", "zepto"]
- */
 function parsePlatforms(
-  platform?: string
+  platform?: string,
 ): string[] | null {
   if (!platform) {
     return null;
@@ -93,30 +85,35 @@ function parsePlatforms(
     ...new Set(
       platform
         .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean)
+        .map((value) =>
+          value.trim(),
+        )
+        .filter(Boolean),
     ),
   ];
 
-  return platforms.length > 0 ? platforms : null;
+  return platforms.length > 0
+    ? platforms
+    : null;
 }
 
-/**
- * Makes sure pagination values are safe even if this service
- * gets called without schema validation somewhere else.
- */
 function normalizePagination(
   page: number,
-  limit: number
+  limit: number,
 ) {
   const safePage =
-    Number.isFinite(page) && page >= 1
+    Number.isFinite(page) &&
+    page >= 1
       ? Math.floor(page)
       : 1;
 
   const safeLimit =
-    Number.isFinite(limit) && limit >= 1
-      ? Math.min(Math.floor(limit), MAX_PAGE_LIMIT)
+    Number.isFinite(limit) &&
+    limit >= 1
+      ? Math.min(
+          Math.floor(limit),
+          MAX_PAGE_LIMIT,
+        )
       : 20;
 
   return {
@@ -125,21 +122,16 @@ function normalizePagination(
   };
 }
 
-/* ============================================================
-   SERVICE
-============================================================ */
-
 export async function listCampaigns(
   query: ListCampaignsQuery,
-  user: HydratedDocument<IUser>
+  user: HydratedDocument<IUser>,
 ) {
-  /* ==========================================================
-     PAGINATION
-  ========================================================== */
-
-  const { page, limit } = normalizePagination(
+  const {
+    page,
+    limit,
+  } = normalizePagination(
     query.page,
-    query.limit
+    query.limit,
   );
 
   const {
@@ -147,56 +139,49 @@ export async function listCampaigns(
     from,
     to,
     brand,
+    subBrand,
     search,
     sortBy,
     sortOrder,
   } = query;
 
-  /* ==========================================================
-     FILTER
-  ========================================================== */
+  const filter: FilterQuery<ICampaign> =
+    {};
 
-  const filter: FilterQuery<ICampaign> = {};
+  // ==========================================================
+  // PLATFORM
+  // ==========================================================
 
-  /* ==========================================================
-     PLATFORM + USER ACCESS
-  ========================================================== */
-
-  const requestedPlatforms = parsePlatforms(platform);
+  const requestedPlatforms =
+    parsePlatforms(platform);
 
   const allowedPlatforms =
     allowedPlatformSlugs(user);
 
   let effectivePlatforms:
     | string[]
-    | null = requestedPlatforms;
+    | null =
+    requestedPlatforms;
 
-  /*
-   * super_admin / platformAccess=all
-   *
-   * -> requested platform filter is respected
-   *
-   * restricted user
-   *
-   * -> intersection of requested + allowed platforms
-   */
-  if (allowedPlatforms !== null) {
+  if (
+    allowedPlatforms !== null
+  ) {
     if (requestedPlatforms) {
       effectivePlatforms =
-        requestedPlatforms.filter((requested) =>
-          allowedPlatforms.includes(requested)
+        requestedPlatforms.filter(
+          (requested) =>
+            allowedPlatforms.includes(
+              requested,
+            ),
         );
 
-      /*
-       * User requested platforms that they are not allowed
-       * to access.
-       *
-       * Return no records rather than accidentally exposing
-       * another platform.
-       */
-      if (effectivePlatforms.length === 0) {
+      if (
+        effectivePlatforms.length ===
+        0
+      ) {
         return {
           campaigns: [],
+
           pagination: {
             page,
             limit,
@@ -206,14 +191,16 @@ export async function listCampaigns(
         };
       }
     } else {
-      effectivePlatforms = allowedPlatforms;
+      effectivePlatforms =
+        allowedPlatforms;
 
-      /*
-       * User has no assigned platforms.
-       */
-      if (effectivePlatforms.length === 0) {
+      if (
+        effectivePlatforms.length ===
+        0
+      ) {
         return {
           campaigns: [],
+
           pagination: {
             page,
             limit,
@@ -231,25 +218,31 @@ export async function listCampaigns(
     };
   }
 
-  /* ==========================================================
-     DATE FILTER
-  ========================================================== */
+  // ==========================================================
+  // DATE
+  // ==========================================================
 
   if (from || to) {
     filter.reportDate = {
-      ...(from ? { $gte: from } : {}),
-      ...(to ? { $lte: to } : {}),
+      ...(from
+        ? { $gte: from }
+        : {}),
+
+      ...(to
+        ? { $lte: to }
+        : {}),
     };
   }
 
-  /* ==========================================================
-     BRAND FILTER
-  ========================================================== */
+  // ==========================================================
+  // BRAND
+  // ==========================================================
 
   if (brand?.trim()) {
-    const escapedBrand = escapeRegex(
-      brand.trim()
-    );
+    const escapedBrand =
+      escapeRegex(
+        brand.trim(),
+      );
 
     filter.BrandName = {
       $regex: `^${escapedBrand}$`,
@@ -257,14 +250,31 @@ export async function listCampaigns(
     };
   }
 
-  /* ==========================================================
-     CAMPAIGN SEARCH
-  ========================================================== */
+  // ==========================================================
+  // SUB BRAND
+  // ==========================================================
+
+  if (subBrand?.trim()) {
+    const escapedSubBrand =
+      escapeRegex(
+        subBrand.trim(),
+      );
+
+    filter.SubBrandName = {
+      $regex: `^${escapedSubBrand}$`,
+      $options: "i",
+    };
+  }
+
+  // ==========================================================
+  // SEARCH
+  // ==========================================================
 
   if (search?.trim()) {
-    const escapedSearch = escapeRegex(
-      search.trim()
-    );
+    const escapedSearch =
+      escapeRegex(
+        search.trim(),
+      );
 
     filter.CampaignName = {
       $regex: escapedSearch,
@@ -272,84 +282,109 @@ export async function listCampaigns(
     };
   }
 
-  /* ==========================================================
-     SORT
-  ========================================================== */
+  // ==========================================================
+  // SORT
+  // ==========================================================
 
   const sortDirection: 1 | -1 =
-    sortOrder === "asc" ? 1 : -1;
+    sortOrder === "asc"
+      ? 1
+      : -1;
 
-  /*
-   * _id is used as a deterministic tie-breaker.
-   *
-   * Without this, two records having the same sort value
-   * could move between pages between requests.
-   */
   const sort = {
-    [sortBy]: sortDirection,
+    [sortBy]:
+      sortDirection,
+
     _id: 1,
-  } as Record<string, 1 | -1>;
+  } as Record<
+    string,
+    1 | -1
+  >;
 
-  /* ==========================================================
-     PAGINATION
-  ========================================================== */
+  // ==========================================================
+  // PAGINATION
+  // ==========================================================
 
-  const skip = (page - 1) * limit;
+  const skip =
+    (page - 1) * limit;
 
-  /* ==========================================================
-     DATABASE QUERIES
-  ========================================================== */
+  // ==========================================================
+  // DATABASE
+  // ==========================================================
 
-  const [docs, total] = await Promise.all([
-    Campaign.find(filter)
-      .select(CAMPAIGN_GRID_PROJECTION)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean(),
+  const [docs, total] =
+    await Promise.all([
+      Campaign.find(filter)
+        .select(
+          CAMPAIGN_GRID_PROJECTION,
+        )
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
 
-    Campaign.countDocuments(filter),
-  ]);
-
-  /* ==========================================================
-     TOTAL PAGES
-  ========================================================== */
+      Campaign.countDocuments(
+        filter,
+      ),
+    ]);
 
   const totalPages = Math.max(
     1,
-    Math.ceil(total / limit)
+    Math.ceil(
+      total / limit,
+    ),
   );
 
-  /* ==========================================================
-     RESPONSE
-  ========================================================== */
+  // ==========================================================
+  // RESPONSE
+  // ==========================================================
 
   return {
-    campaigns: docs.map((doc) => ({
-      id: String(doc._id),
+    campaigns: docs.map(
+      (doc) => ({
+        id: String(
+          doc._id,
+        ),
 
-      uploadId: String(doc.uploadId),
+        uploadId: String(
+          doc.uploadId,
+        ),
 
-      platform: doc.platform,
+        platform:
+          doc.platform,
 
-      reportDate: doc.reportDate,
+        reportDate:
+          doc.reportDate,
 
-      market: doc.market,
+        market:
+          doc.market,
 
-      CampaignName: doc.CampaignName,
+        CampaignName:
+          doc.CampaignName,
 
-      BrandName: doc.BrandName,
+        BrandName:
+          doc.BrandName,
 
-      Budget: doc.Budget,
+        SubBrandName:
+          doc.SubBrandName ??
+          "",
 
-      Spend: doc.Spend,
+        Budget:
+          doc.Budget,
 
-      Revenue: doc.Revenue,
+        Spend:
+          doc.Spend,
 
-      Orders: doc.Orders,
+        Revenue:
+          doc.Revenue,
 
-      Roas: doc.Roas,
-    })),
+        Orders:
+          doc.Orders,
+
+        Roas:
+          doc.Roas,
+      }),
+    ),
 
     pagination: {
       page,
@@ -357,5 +392,123 @@ export async function listCampaigns(
       total,
       totalPages,
     },
+  };
+}
+
+// ============================================================
+// CAMPAIGN FILTER OPTIONS
+//
+// IMPORTANT:
+// These options come from Campaign documents,
+// NOT the Locations collection.
+// ============================================================
+
+export async function getCampaignFilterOptions(
+  user: HydratedDocument<IUser>,
+  params: {
+    platform?: string;
+    brand?: string;
+  },
+) {
+  const filter: FilterQuery<ICampaign> =
+    {};
+
+  const allowedPlatforms =
+    allowedPlatformSlugs(user);
+
+  const requestedPlatforms =
+    parsePlatforms(
+      params.platform,
+    );
+
+  let effectivePlatforms:
+    | string[]
+    | null =
+    requestedPlatforms;
+
+  if (
+    allowedPlatforms !== null
+  ) {
+    if (requestedPlatforms) {
+      effectivePlatforms =
+        requestedPlatforms.filter(
+          (requested) =>
+            allowedPlatforms.includes(
+              requested,
+            ),
+        );
+    } else {
+      effectivePlatforms =
+        allowedPlatforms;
+    }
+  }
+
+  if (
+    effectivePlatforms !== null
+  ) {
+    filter.platform = {
+      $in: effectivePlatforms,
+    };
+  }
+
+  if (params.brand?.trim()) {
+    filter.BrandName = {
+      $regex: `^${escapeRegex(
+        params.brand.trim(),
+      )}$`,
+      $options: "i",
+    };
+  }
+
+  const rows =
+    await Campaign.find(filter)
+      .select({
+        BrandName: 1,
+        SubBrandName: 1,
+      })
+      .lean();
+
+  const brands =
+    new Set<string>();
+
+  const subBrands =
+    new Set<string>();
+
+  for (const row of rows) {
+    const brandName =
+      String(
+        row.BrandName ?? "",
+      ).trim();
+
+    const subBrandName =
+      String(
+        row.SubBrandName ?? "",
+      ).trim();
+
+    if (brandName) {
+      brands.add(
+        brandName,
+      );
+    }
+
+    if (subBrandName) {
+      subBrands.add(
+        subBrandName,
+      );
+    }
+  }
+
+  return {
+    brands: [
+      ...brands,
+    ].sort((a, b) =>
+      a.localeCompare(b),
+    ),
+
+    subBrands: [
+      ...subBrands,
+    ].sort((a, b) =>
+      a.localeCompare(b),
+    ),
   };
 }
