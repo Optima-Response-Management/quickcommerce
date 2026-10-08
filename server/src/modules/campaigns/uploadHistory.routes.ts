@@ -27,48 +27,61 @@ import {
 const router =
   Router();
 
-// Mounted at:
-// /api/uploads
-
-// ------------------------------------------------------------
-// LIST
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * LIST UPLOADS
+ * ============================================================
+ */
 
 router.get(
   "/",
   authenticate,
-  requireFeature("upload_data"),
-  validateQuery(
-    listUploadsSchema
+  requireFeature(
+    "upload_data",
   ),
-  listUploadsController
+  validateQuery(
+    listUploadsSchema,
+  ),
+  listUploadsController,
 );
 
-// ------------------------------------------------------------
-// FILE
-//
-// IMPORTANT:
-// This route MUST appear before /:id
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * GET FILE
+ *
+ * IMPORTANT:
+ * Keep this BEFORE /:id
+ * ============================================================
+ */
 
 router.get(
   "/:id/file",
   authenticate,
-  requireFeature("upload_data"),
-  getUploadedFileController
+  requireFeature(
+    "upload_data",
+  ),
+  getUploadedFileController,
 );
 
-// ------------------------------------------------------------
-// DELETE
-//
-// Super Admin only.
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * DELETE UPLOAD
+ *
+ * manage_users is intentionally
+ * required here.
+ *
+ * This prevents normal upload users
+ * from deleting campaign history.
+ * ============================================================
+ */
 
 router.delete(
   "/:id",
   authenticate,
-  requireFeature("manage_users"),
-  deleteUploadController
+  requireFeature(
+    "manage_users",
+  ),
+  deleteUploadController,
 );
 
 export default router;

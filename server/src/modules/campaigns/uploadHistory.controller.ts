@@ -3,8 +3,13 @@ import {
   Response,
 } from "express";
 
-import { ApiResponse } from "../../utils/ApiResponse";
-import { asyncHandler } from "../../utils/asyncHandler";
+import {
+  ApiResponse,
+} from "../../utils/ApiResponse";
+
+import {
+  asyncHandler,
+} from "../../utils/asyncHandler";
 
 import {
   ListUploadsQuery,
@@ -16,15 +21,17 @@ import {
   listUploads,
 } from "./uploadHistory.service";
 
-// ------------------------------------------------------------
-// LIST UPLOAD HISTORY
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * LIST
+ * ============================================================
+ */
 
 export const listUploadsController =
   asyncHandler(
     async (
       req: Request,
-      res: Response
+      res: Response,
     ) => {
       const query =
         res.locals
@@ -33,7 +40,7 @@ export const listUploadsController =
       const result =
         await listUploads(
           query,
-          req.user!
+          req.user!,
         );
 
       res
@@ -41,93 +48,96 @@ export const listUploadsController =
         .json(
           new ApiResponse(
             "Uploads fetched",
-            result
-          )
+            result,
+          ),
         );
-    }
+    },
   );
 
-// ------------------------------------------------------------
-// GET FILE
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * GET FILE
+ * ============================================================
+ */
 
 export const getUploadedFileController =
   asyncHandler(
     async (
       req: Request,
-      res: Response
+      res: Response,
     ) => {
       const result =
         await getUploadedFile(
           String(
-            req.params.id
-          )
+            req.params.id,
+          ),
         );
 
       res.setHeader(
         "Content-Type",
-        result.mimeType
+        result.mimeType,
       );
 
       res.setHeader(
         "Content-Disposition",
         `attachment; filename*=UTF-8''${encodeURIComponent(
-          result.fileName
-        )}`
+          result.fileName,
+        )}`,
       );
 
       res.setHeader(
         "Content-Length",
         String(
-          result.buffer.length
-        )
+          result.buffer.length,
+        ),
       );
 
       res.setHeader(
         "Cache-Control",
-        "private, no-store"
+        "private, no-store",
       );
 
-      // Let the frontend know whether
-      // this was the original physical file
-      // or a generated fallback.
       res.setHeader(
         "X-File-Source",
         result.isOriginal
           ? "original"
-          : "generated"
+          : "generated",
       );
 
       res
         .status(200)
-        .send(result.buffer);
-    }
+        .send(
+          result.buffer,
+        );
+    },
   );
 
-// ------------------------------------------------------------
-// DELETE
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * DELETE
+ * ============================================================
+ */
 
 export const deleteUploadController =
   asyncHandler(
     async (
       req: Request,
-      res: Response
+      res: Response,
     ) => {
       const result =
         await deleteUpload(
           String(
-            req.params.id
-          )
+            req.params.id,
+          ),
         );
 
       res
         .status(200)
         .json(
           new ApiResponse(
-            "Upload deleted",
-            result
-          )
+            "Upload deleted successfully",
+            result,
+          ),
         );
-    }
+    },
   );

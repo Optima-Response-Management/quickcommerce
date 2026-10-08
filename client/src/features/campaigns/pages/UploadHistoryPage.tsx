@@ -1,59 +1,64 @@
 import {
-  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
   useState,
 } from "react";
+
+import {
+  AlertTriangle,
+  Download,
+  Eye,
+  FileSpreadsheet,
+  Loader2,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import {
   useNavigate,
 } from "react-router";
 
 import {
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Eye,
-  FileSpreadsheet,
-  Loader2,
-  Search,
-  X,
-} from "lucide-react";
-
-import * as XLSX from "xlsx";
-
-import {
-  useListUploadsQuery,
+  useDeleteUploadMutation,
+  useLazyListUploadsQuery,
+  type UploadHistoryItem,
 } from "../uploadHistoryApi";
 
-type SheetData = {
-  name: string;
-  rows: string[][];
-};
+/*
+ * ============================================================
+ * CONSTANTS
+ * ============================================================
+ */
+
+const PAGE_SIZE = 20;
 
 const apiBaseUrl = String(
-  import.meta.env.VITE_API_BASE_URL ?? "",
+  import.meta.env
+    .VITE_API_BASE_URL ?? "",
 ).replace(/\/$/, "");
 
-const MAX_PREVIEW_ROWS = 500;
-
-const MAX_CELL_LENGTH = 180;
-
-// ------------------------------------------------------------
-// FETCH FILE
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * FETCH FILE
+ * ============================================================
+ */
 
 async function fetchFile(
   id: string,
 ): Promise<Blob> {
-  const response = await fetch(
-    `${apiBaseUrl}/uploads/${id}/file`,
-    {
-      credentials: "include",
-    },
-  );
+  const response =
+    await fetch(
+      `${apiBaseUrl}/uploads/${id}/file`,
+      {
+        credentials:
+          "include",
+      },
+    );
 
   if (!response.ok) {
     let message =
-      "Unable to load file";
+      "Unable to load file.";
 
     try {
       const contentType =
@@ -85,145 +90,431 @@ async function fetchFile(
       // Keep default message.
     }
 
-    throw new Error(message);
+    throw new Error(
+      message,
+    );
   }
 
   return response.blob();
 }
 
-// ------------------------------------------------------------
-// READ WORKBOOK
-// ------------------------------------------------------------
-
-async function readWorkbook(
-  blob: Blob,
-): Promise<SheetData[]> {
-  const buffer =
-    await blob.arrayBuffer();
-
-  const workbook =
-    XLSX.read(buffer, {
-      type: "array",
-      cellDates: true,
-    });
-
-  return workbook.SheetNames.map(
-    (name) => {
-      const worksheet =
-        workbook.Sheets[name];
-
-      const rows =
-        XLSX.utils.sheet_to_json<
-          unknown[]
-        >(worksheet, {
-          header: 1,
-          defval: "",
-          raw: false,
-        });
-
-      return {
-        name,
-        rows: rows.map((row) =>
-          row.map((cell) =>
-            String(cell ?? ""),
-          ),
-        ),
-      };
-    },
-  );
-}
-
-// ------------------------------------------------------------
-// DOWNLOAD
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * DOWNLOAD
+ * ============================================================
+ */
 
 function downloadBlob(
   blob: Blob,
   fileName: string,
 ) {
   const url =
-    URL.createObjectURL(blob);
+    URL.createObjectURL(
+      blob,
+    );
 
   const anchor =
-    document.createElement("a");
+    document.createElement(
+      "a",
+    );
 
   anchor.href = url;
-  anchor.download = fileName;
 
-  document.body.appendChild(anchor);
+  anchor.download =
+    fileName;
+
+  document.body.appendChild(
+    anchor,
+  );
 
   anchor.click();
 
   anchor.remove();
 
   setTimeout(() => {
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(
+      url,
+    );
   }, 100);
 }
 
-// ------------------------------------------------------------
-// CELL DISPLAY
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * SKELETON
+ * ============================================================
+ */
 
-function formatCellValue(
-  value: string,
-): string {
-  if (!value) {
-    return "";
-  }
-
-  if (
-    value.length >
-    MAX_CELL_LENGTH
-  ) {
-    return `${value.slice(
-      0,
-      MAX_CELL_LENGTH,
-    )}…`;
-  }
-
-  return value;
+function Skeleton({
+  className = "",
+}: {
+  className?: string;
+}) {
+  return (
+    <div
+      className={[
+        "animate-pulse",
+        "rounded-md",
+        "bg-slate-200",
+        className,
+      ].join(" ")}
+    />
+  );
 }
 
-// ------------------------------------------------------------
-// PAGE
-// ------------------------------------------------------------
+/*
+ * ============================================================
+ * INITIAL SKELETON
+ * ============================================================
+ */
+
+function FileHistorySkeleton() {
+  return (
+    <div
+      className="
+        overflow-hidden
+        rounded-2xl
+        border
+        border-brand-border
+        bg-white
+        shadow-brand-sm
+      "
+    >
+      {/* Header */}
+
+      <div
+        className="
+          border-b
+          border-brand-border
+          bg-brand-surface
+          px-5
+          py-4
+        "
+      >
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+          "
+        >
+          <Skeleton
+            className="
+              h-4
+              w-28
+            "
+          />
+
+          <Skeleton
+            className="
+              h-4
+              w-20
+            "
+          />
+        </div>
+      </div>
+
+      {/* Rows */}
+
+      <div
+        className="
+          divide-y
+          divide-brand-border
+        "
+      >
+        {Array.from({
+          length: 8,
+        }).map(
+          (_, index) => (
+            <div
+              key={index}
+              className="
+                flex
+                items-center
+                gap-5
+                px-5
+                py-4
+              "
+            >
+              <div
+                className="
+                  flex
+                  min-w-[280px]
+                  flex-1
+                  items-center
+                  gap-3
+                "
+              >
+                <Skeleton
+                  className="
+                    h-10
+                    w-10
+                    rounded-xl
+                  "
+                />
+
+                <div
+                  className="
+                    space-y-2
+                  "
+                >
+                  <Skeleton
+                    className="
+                      h-3.5
+                      w-44
+                    "
+                  />
+
+                  <Skeleton
+                    className="
+                      h-3
+                      w-20
+                    "
+                  />
+                </div>
+              </div>
+
+              <Skeleton
+                className="
+                  hidden
+                  h-3.5
+                  w-20
+                  md:block
+                "
+              />
+
+              <Skeleton
+                className="
+                  hidden
+                  h-3.5
+                  w-24
+                  lg:block
+                "
+              />
+
+              <Skeleton
+                className="
+                  hidden
+                  h-3.5
+                  w-12
+                  xl:block
+                "
+              />
+
+              <div
+                className="
+                  flex
+                  gap-2
+                "
+              >
+                <Skeleton
+                  className="
+                    h-8
+                    w-16
+                    rounded-xl
+                  "
+                />
+
+                <Skeleton
+                  className="
+                    h-8
+                    w-24
+                    rounded-xl
+                  "
+                />
+
+                <Skeleton
+                  className="
+                    h-8
+                    w-9
+                    rounded-xl
+                  "
+                />
+              </div>
+            </div>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+/*
+ * ============================================================
+ * LOADING MORE SKELETON
+ * ============================================================
+ */
+
+function LoadingMoreSkeleton() {
+  return (
+    <div
+      className="
+        mt-2
+        divide-y
+        divide-brand-border
+        overflow-hidden
+        rounded-xl
+        border
+        border-brand-border
+        bg-white
+      "
+    >
+      {Array.from({
+        length: 3,
+      }).map(
+        (_, index) => (
+          <div
+            key={index}
+            className="
+              flex
+              items-center
+              gap-5
+              px-5
+              py-4
+            "
+          >
+            <div
+              className="
+                flex
+                flex-1
+                items-center
+                gap-3
+              "
+            >
+              <Skeleton
+                className="
+                  h-9
+                  w-9
+                  rounded-xl
+                "
+              />
+
+              <div
+                className="
+                  space-y-2
+                "
+              >
+                <Skeleton
+                  className="
+                    h-3
+                    w-48
+                  "
+                />
+
+                <Skeleton
+                  className="
+                    h-2.5
+                    w-24
+                  "
+                />
+              </div>
+            </div>
+
+            <Skeleton
+              className="
+                hidden
+                h-3
+                w-20
+                md:block
+              "
+            />
+
+            <Skeleton
+              className="
+                hidden
+                h-3
+                w-24
+                lg:block
+              "
+            />
+
+            <Skeleton
+              className="
+                hidden
+                h-3
+                w-10
+                xl:block
+              "
+            />
+
+            <Skeleton
+              className="
+                h-8
+                w-24
+                rounded-xl
+              "
+            />
+          </div>
+        ),
+      )}
+    </div>
+  );
+}
+
+/*
+ * ============================================================
+ * PAGE
+ * ============================================================
+ */
 
 export default function UploadHistoryPage() {
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = useListUploadsQuery({
-    page: 1,
-    limit: 50,
-  });
   const navigate =
-  useNavigate();
-  // ----------------------------------------------------------
-  // VIEWER
-  // ----------------------------------------------------------
+    useNavigate();
+
+  /*
+   * ----------------------------------------------------------
+   * API
+   * ----------------------------------------------------------
+   */
 
   const [
-    viewer,
-    setViewer,
-  ] = useState<{
-    fileName: string;
-    sheets: SheetData[];
-  } | null>(null);
+    triggerListUploads,
+    {
+      isFetching,
+    },
+  ] =
+    useLazyListUploadsQuery();
 
   const [
-    activeSheet,
-    setActiveSheet,
-  ] = useState("");
+    deleteUpload,
+    {
+      isLoading:
+        isDeleting,
+    },
+  ] =
+    useDeleteUploadMutation();
+
+  /*
+   * ----------------------------------------------------------
+   * STATE
+   * ----------------------------------------------------------
+   */
 
   const [
-    loadingFileId,
-    setLoadingFileId,
-  ] = useState<string | null>(
-    null,
-  );
+    uploads,
+    setUploads,
+  ] = useState<
+    UploadHistoryItem[]
+  >([]);
+
+  const [
+    page,
+    setPage,
+  ] = useState(1);
+
+  const [
+    totalPages,
+    setTotalPages,
+  ] = useState(1);
+
+  const [
+    total,
+    setTotal,
+  ] = useState(0);
+
+  const [
+    initialLoading,
+    setInitialLoading,
+  ] = useState(true);
 
   const [
     error,
@@ -231,92 +522,235 @@ export default function UploadHistoryPage() {
   ] = useState("");
 
   const [
-    sheetSearch,
-    setSheetSearch,
-  ] = useState("");
+    loadingFileId,
+    setLoadingFileId,
+  ] = useState<
+    string | null
+  >(null);
 
-  // ----------------------------------------------------------
-  // CURRENT SHEET
-  // ----------------------------------------------------------
+  const [
+    deleteTarget,
+    setDeleteTarget,
+  ] = useState<{
+    id: string;
+    fileName: string;
+  } | null>(null);
 
-  const currentSheet =
-    useMemo(
-      () =>
-        viewer?.sheets.find(
-          (sheet) =>
-            sheet.name ===
-            activeSheet,
-        ),
+  /*
+   * ----------------------------------------------------------
+   * REFS
+   * ----------------------------------------------------------
+   */
+
+  const loadMoreRef =
+    useRef<HTMLDivElement | null>(
+      null,
+    );
+
+  const loadingRef =
+    useRef(false);
+
+  const pageRef =
+    useRef(1);
+
+  const totalPagesRef =
+    useRef(1);
+
+  /*
+   * ----------------------------------------------------------
+   * LOAD PAGE
+   * ----------------------------------------------------------
+   */
+
+  const loadPage =
+    useCallback(
+      async (
+        nextPage: number,
+        replace = false,
+      ) => {
+        if (
+          loadingRef.current
+        ) {
+          return;
+        }
+
+        if (
+          !replace &&
+          nextPage >
+            totalPagesRef.current
+        ) {
+          return;
+        }
+
+        loadingRef.current =
+          true;
+
+        setError("");
+
+        try {
+          const result =
+            await triggerListUploads(
+              {
+                page: nextPage,
+
+                limit:
+                  PAGE_SIZE,
+              },
+              true,
+            ).unwrap();
+
+          setUploads(
+            (
+              previous,
+            ) => {
+              if (replace) {
+                return result.uploads;
+              }
+
+              const existingIds =
+                new Set(
+                  previous.map(
+                    (item) =>
+                      item.id,
+                  ),
+                );
+
+              const newItems =
+                result.uploads.filter(
+                  (item) =>
+                    !existingIds.has(
+                      item.id,
+                    ),
+                );
+
+              return [
+                ...previous,
+                ...newItems,
+              ];
+            },
+          );
+
+          pageRef.current =
+            nextPage;
+
+          totalPagesRef.current =
+            result.pagination
+              .totalPages;
+
+          setPage(
+            nextPage,
+          );
+
+          setTotalPages(
+            result.pagination
+              .totalPages,
+          );
+
+          setTotal(
+            result.pagination
+              .total,
+          );
+        } catch (err) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load upload history.",
+          );
+        } finally {
+          loadingRef.current =
+            false;
+
+          setInitialLoading(
+            false,
+          );
+        }
+      },
       [
-        viewer,
-        activeSheet,
+        triggerListUploads,
       ],
     );
 
-  // ----------------------------------------------------------
-  // FILTERED ROWS
-  // ----------------------------------------------------------
+  /*
+   * ----------------------------------------------------------
+   * INITIAL LOAD
+   * ----------------------------------------------------------
+   */
 
-  const filteredRows =
-    useMemo(() => {
-      if (
-        !currentSheet
-      ) {
-        return [];
-      }
+  useEffect(() => {
+    void loadPage(
+      1,
+      true,
+    );
+  }, [loadPage]);
 
-      const rows =
-        currentSheet.rows;
+  /*
+   * ----------------------------------------------------------
+   * INFINITE SCROLL
+   * ----------------------------------------------------------
+   */
 
-      if (
-        !sheetSearch.trim()
-      ) {
-        return rows.slice(
-          0,
-          MAX_PREVIEW_ROWS,
-        );
-      }
+  useEffect(() => {
+    const element =
+      loadMoreRef.current;
 
-      const query =
-        sheetSearch
-          .trim()
-          .toLowerCase();
+    if (!element) {
+      return;
+    }
 
-      return rows
-        .filter((row) =>
-          row.some((cell) =>
-            String(cell)
-              .toLowerCase()
-              .includes(query),
-          ),
-        )
-        .slice(
-          0,
-          MAX_PREVIEW_ROWS,
-        );
-    }, [
-      currentSheet,
-      sheetSearch,
-    ]);
+    const observer =
+      new IntersectionObserver(
+        (entries) => {
+          const entry =
+            entries[0];
 
-  // ----------------------------------------------------------
-  // COLUMN COUNT
-  // ----------------------------------------------------------
+          if (
+            !entry?.isIntersecting
+          ) {
+            return;
+          }
 
-  const columnCount =
-    currentSheet
-      ? Math.max(
-          0,
-          ...currentSheet.rows.map(
-            (row) =>
-              row.length,
-          ),
-        )
-      : 0;
+          if (
+            loadingRef.current
+          ) {
+            return;
+          }
 
-  // ----------------------------------------------------------
-  // OPEN FILE
-  // ----------------------------------------------------------
+          const nextPage =
+            pageRef.current +
+            1;
+
+          if (
+            nextPage >
+            totalPagesRef.current
+          ) {
+            return;
+          }
+
+          void loadPage(
+            nextPage,
+            false,
+          );
+        },
+        {
+          rootMargin:
+            "400px 0px",
+        },
+      );
+
+    observer.observe(
+      element,
+    );
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [loadPage]);
+
+  /*
+   * ----------------------------------------------------------
+   * OPEN
+   * ----------------------------------------------------------
+   */
 
   const openFile = (
     id: string,
@@ -326,54 +760,123 @@ export default function UploadHistoryPage() {
     );
   };
 
-  // ----------------------------------------------------------
-  // DOWNLOAD FILE
-  // ----------------------------------------------------------
+  /*
+   * ----------------------------------------------------------
+   * DOWNLOAD
+   * ----------------------------------------------------------
+   */
 
-  const downloadFile = async (
-    id: string,
-    fileName: string,
-  ) => {
-    setLoadingFileId(id);
-    setError("");
-
-    try {
-      const blob =
-        await fetchFile(id);
-
-      downloadBlob(
-        blob,
-        fileName,
+  const downloadFile =
+    async (
+      id: string,
+      fileName: string,
+    ) => {
+      setLoadingFileId(
+        id,
       );
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to download file",
-      );
-    } finally {
-      setLoadingFileId(null);
-    }
-  };
 
-  // ----------------------------------------------------------
-  // CLOSE VIEWER
-  // ----------------------------------------------------------
+      setError("");
 
-  const closeViewer = () => {
-    setViewer(null);
-    setActiveSheet("");
-    setSheetSearch("");
-  };
+      try {
+        const blob =
+          await fetchFile(id);
 
-  // ----------------------------------------------------------
-  // RENDER
-  // ----------------------------------------------------------
+        downloadBlob(
+          blob,
+          fileName,
+        );
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to download file.",
+        );
+      } finally {
+        setLoadingFileId(
+          null,
+        );
+      }
+    };
+
+  /*
+   * ----------------------------------------------------------
+   * DELETE
+   * ----------------------------------------------------------
+   */
+
+  const handleDelete =
+    async () => {
+      if (!deleteTarget) {
+        return;
+      }
+
+      try {
+        setError("");
+
+        await deleteUpload(
+          deleteTarget.id,
+        ).unwrap();
+
+        /*
+         * Close dialog immediately.
+         */
+
+        setDeleteTarget(
+          null,
+        );
+
+        /*
+         * Rebuild the list from
+         * page 1 so pagination
+         * remains correct.
+         */
+
+        setUploads([]);
+
+        setPage(1);
+
+        setTotalPages(1);
+
+        pageRef.current =
+          1;
+
+        totalPagesRef.current =
+          1;
+
+        setInitialLoading(
+          true,
+        );
+
+        await loadPage(
+          1,
+          true,
+        );
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to delete upload.",
+        );
+      }
+    };
+
+  /*
+   * ----------------------------------------------------------
+   * RENDER
+   * ----------------------------------------------------------
+   */
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] space-y-6">
+    <div
+      className="
+        mx-auto
+        w-full
+        max-w-[1500px]
+        space-y-6
+      "
+    >
       {/* =====================================================
-          PAGE HEADER
+          HEADER
       ====================================================== */}
 
       <section
@@ -388,8 +891,6 @@ export default function UploadHistoryPage() {
           shadow-brand-sm
         "
       >
-        {/* Decorative glow */}
-
         <div
           className="
             pointer-events-none
@@ -404,90 +905,100 @@ export default function UploadHistoryPage() {
           "
         />
 
-        <div className="relative">
-          <div
-            className="
-              mb-3
-              inline-flex
-              items-center
-              gap-2
-              rounded-full
-              border
-              border-brand-primary/10
-              bg-brand-primary-soft
-              px-3
-              py-1.5
-              text-[10px]
-              font-bold
-              uppercase
-              tracking-[0.16em]
-              text-brand-primary-dark
-            "
-          >
-            <FileSpreadsheet
-              className="h-3.5 w-3.5"
-            />
-
-            Data management
-          </div>
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1
-                className="
-                  text-2xl
-                  font-bold
-                  tracking-tight
-                  text-brand-ink
-                "
-              >
-                File History
-              </h1>
-
-              <p
-                className="
-                  mt-1
-                  max-w-2xl
-                  text-sm
-                  leading-6
-                  text-brand-gray
-                "
-              >
-                View and download uploaded
-                campaign files and inspect
-                their spreadsheet data.
-              </p>
-            </div>
-
+        <div
+          className="
+            relative
+            flex
+            flex-col
+            gap-4
+            sm:flex-row
+            sm:items-end
+            sm:justify-between
+          "
+        >
+          <div>
             <div
               className="
+                mb-3
                 inline-flex
-                w-fit
                 items-center
                 gap-2
-                rounded-xl
+                rounded-full
                 border
-                border-brand-border
-                bg-brand-surface
+                border-brand-primary/10
+                bg-brand-primary-soft
                 px-3
-                py-2
-                text-xs
-                font-semibold
-                text-brand-gray
+                py-1.5
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-[0.16em]
+                text-brand-primary-dark
               "
             >
               <FileSpreadsheet
                 className="
-                  h-4
-                  w-4
-                  text-orange-500
+                  h-3.5
+                  w-3.5
                 "
               />
 
-              {data?.pagination?.total ??
-                0}{" "}
-              files
+              Data management
             </div>
+
+            <h1
+              className="
+                text-2xl
+                font-bold
+                tracking-tight
+                text-brand-ink
+              "
+            >
+              File History
+            </h1>
+
+            <p
+              className="
+                mt-1
+                max-w-2xl
+                text-sm
+                leading-6
+                text-brand-gray
+              "
+            >
+              View, download and
+              manage uploaded
+              campaign files.
+            </p>
+          </div>
+
+          <div
+            className="
+              inline-flex
+              w-fit
+              items-center
+              gap-2
+              rounded-xl
+              border
+              border-brand-border
+              bg-brand-surface
+              px-3
+              py-2
+              text-xs
+              font-semibold
+              text-brand-gray
+            "
+          >
+            <FileSpreadsheet
+              className="
+                h-4
+                w-4
+                text-orange-500
+              "
+            />
+
+            {total.toLocaleString()}{" "}
+            files
           </div>
         </div>
       </section>
@@ -513,7 +1024,9 @@ export default function UploadHistoryPage() {
             text-red-700
           "
         >
-          <span>{error}</span>
+          <span>
+            {error}
+          </span>
 
           <button
             type="button"
@@ -535,333 +1048,466 @@ export default function UploadHistoryPage() {
       )}
 
       {/* =====================================================
-          FILE TABLE
+          INITIAL SKELETON
       ====================================================== */}
 
-      <section
-        className="
-          overflow-hidden
-          rounded-2xl
-          border
-          border-brand-border
-          bg-white
-          shadow-brand-sm
-        "
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead
+      {initialLoading ? (
+        <FileHistorySkeleton />
+      ) : (
+        <>
+          {/* =================================================
+              EMPTY
+          ================================================== */}
+
+          {uploads.length ===
+            0 && (
+            <div
               className="
-                border-b
+                rounded-2xl
+                border
                 border-brand-border
-                bg-brand-surface
+                bg-white
+                px-6
+                py-16
+                text-center
+                shadow-brand-sm
               "
             >
-              <tr>
-                <th className="px-5 py-3.5 font-semibold text-brand-ink">
-                  File
-                </th>
+              <div
+                className="
+                  mx-auto
+                  flex
+                  h-14
+                  w-14
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-orange-50
+                  text-orange-500
+                "
+              >
+                <FileSpreadsheet
+                  className="
+                    h-6
+                    w-6
+                  "
+                />
+              </div>
 
-                <th className="px-5 py-3.5 font-semibold text-brand-ink">
-                  Platform
-                </th>
+              <h2
+                className="
+                  mt-4
+                  text-base
+                  font-bold
+                  text-brand-ink
+                "
+              >
+                No uploaded files
+              </h2>
 
-                <th className="px-5 py-3.5 font-semibold text-brand-ink">
-                  Report date
-                </th>
+              <p
+                className="
+                  mt-1
+                  text-sm
+                  text-brand-gray
+                "
+              >
+                Uploaded campaign
+                files will appear
+                here.
+              </p>
+            </div>
+          )}
 
-                <th className="px-5 py-3.5 font-semibold text-brand-ink">
-                  Rows
-                </th>
+          {/* =================================================
+              TABLE
+          ================================================== */}
 
-                <th className="px-5 py-3.5 font-semibold text-brand-ink">
-                  Uploaded by
-                </th>
-
-                <th className="px-5 py-3.5 text-right font-semibold text-brand-ink">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-brand-border">
-              {/* Loading */}
-
-              {isLoading && (
-                <tr>
-                  <td
-                    colSpan={6}
+          {uploads.length >
+            0 && (
+            <section
+              className="
+                overflow-hidden
+                rounded-2xl
+                border
+                border-brand-border
+                bg-white
+                shadow-brand-sm
+              "
+            >
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead
                     className="
-                      px-5
-                      py-14
-                      text-center
-                      text-sm
-                      text-brand-gray
+                      border-b
+                      border-brand-border
+                      bg-brand-surface
                     "
                   >
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2
-                        className="
-                          h-4
-                          w-4
-                          animate-spin
-                        "
-                      />
+                    <tr>
+                      <th className="px-5 py-3.5 font-semibold text-brand-ink">
+                        File
+                      </th>
 
-                      Loading upload
-                      history...
-                    </div>
-                  </td>
-                </tr>
-              )}
+                      <th className="px-5 py-3.5 font-semibold text-brand-ink">
+                        Platform
+                      </th>
 
-              {/* Error */}
+                      <th className="px-5 py-3.5 font-semibold text-brand-ink">
+                        Report date
+                      </th>
 
-              {!isLoading &&
-                isError && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="
-                        px-5
-                        py-14
-                        text-center
-                        text-sm
-                        text-red-600
-                      "
-                    >
-                      Failed to load upload
-                      history.
+                      <th className="px-5 py-3.5 font-semibold text-brand-ink">
+                        Rows
+                      </th>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          refetch()
-                        }
-                        className="
-                          ml-2
-                          font-semibold
-                          underline
-                        "
-                      >
-                        Retry
-                      </button>
-                    </td>
-                  </tr>
-                )}
+                      <th className="px-5 py-3.5 font-semibold text-brand-ink">
+                        Uploaded by
+                      </th>
 
-              {/* Empty */}
+                      <th className="px-5 py-3.5 text-right font-semibold text-brand-ink">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
 
-              {!isLoading &&
-                !isError &&
-                !data?.uploads
-                  ?.length && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="
-                        px-5
-                        py-14
-                        text-center
-                        text-sm
-                        text-brand-gray
-                      "
-                    >
-                      No uploaded files
-                      found.
-                    </td>
-                  </tr>
-                )}
+                  <tbody className="divide-y divide-brand-border">
+                    {uploads.map(
+                      (
+                        upload,
+                      ) => {
+                        const busy =
+                          loadingFileId ===
+                          upload.id;
 
-              {/* Rows */}
-
-              {data?.uploads.map(
-                (upload) => {
-                  const busy =
-                    loadingFileId ===
-                    upload.id;
-
-                  return (
-                    <tr
-                      key={upload.id}
-                      className="
-                        transition-colors
-                        hover:bg-brand-surface/60
-                      "
-                    >
-                      {/* File */}
-
-                      <td className="max-w-[400px] px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="
-                              flex
-                              h-10
-                              w-10
-                              shrink-0
-                              items-center
-                              justify-center
-                              rounded-xl
-                              bg-orange-50
-                              text-orange-500
-                            "
-                          >
-                            <FileSpreadsheet
-                              className="
-                                h-5
-                                w-5
-                              "
-                            />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p
-                              className="
-                                truncate
-                                font-semibold
-                                text-brand-ink
-                              "
-                            >
-                              {upload.fileName}
-                            </p>
-
-                            <p
-                              className="
-                                mt-0.5
-                                truncate
-                                text-xs
-                                text-brand-gray
-                              "
-                            >
-                              {upload.market ??
-                                "All markets"}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Platform */}
-
-                      <td className="px-5 py-4 text-brand-gray">
-                        {upload.platformName}
-                      </td>
-
-                      {/* Date */}
-
-                      <td className="px-5 py-4 text-brand-gray">
-                        {upload.reportDate}
-                      </td>
-
-                      {/* Rows */}
-
-                      <td className="px-5 py-4 text-brand-gray">
-                        {upload.rowCount.toLocaleString()}
-                      </td>
-
-                      {/* User */}
-
-                      <td className="px-5 py-4 text-brand-gray">
-                        {upload.uploadedBy
-                          ?.name ??
-                          "Unknown"}
-                      </td>
-
-                      {/* Actions */}
-
-                      <td className="px-5 py-4">
-                        <div className="flex justify-end gap-2">
-                          {/* View */}
-
-                          <button
-  type="button"
-  onClick={() =>
-    openFile(upload.id)
-  }
-  className="
-    inline-flex
-    items-center
-    gap-1.5
-    rounded-xl
-    border
-    border-brand-border
-    bg-white
-    px-3
-    py-2
-    text-xs
-    font-semibold
-    text-brand-ink
-    shadow-sm
-    transition
-    hover:border-orange-200
-    hover:bg-orange-50
-    hover:text-orange-600
-  "
->
-  <Eye
-    size={14}
-  />
-
-  View
-</button>
-
-                          {/* Download */}
-
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() =>
-                              downloadFile(
-                                upload.id,
-                                upload.fileName,
-                              )
+                        return (
+                          <tr
+                            key={
+                              upload.id
                             }
                             className="
-                              inline-flex
-                              items-center
-                              gap-1.5
-                              rounded-xl
-                              bg-brand-ink
-                              px-3
-                              py-2
-                              text-xs
-                              font-semibold
-                              text-white
-                              shadow-sm
-                              transition
-                              hover:bg-orange-600
-                              disabled:cursor-not-allowed
-                              disabled:opacity-40
+                              transition-colors
+                              hover:bg-brand-surface/60
                             "
                           >
-                            {busy ? (
-                              <Loader2
-                                size={14}
-                                className="animate-spin"
-                              />
-                            ) : (
-                              <Download
-                                size={14}
-                              />
-                            )}
+                            {/* FILE */}
 
-                            Download
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                },
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                            <td className="max-w-[420px] px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="
+                                    flex
+                                    h-10
+                                    w-10
+                                    shrink-0
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    bg-orange-50
+                                    text-orange-500
+                                  "
+                                >
+                                  <FileSpreadsheet
+                                    className="
+                                      h-5
+                                      w-5
+                                    "
+                                  />
+                                </div>
+
+                                <div className="min-w-0">
+                                  <p
+                                    className="
+                                      truncate
+                                      font-semibold
+                                      text-brand-ink
+                                    "
+                                    title={
+                                      upload.fileName
+                                    }
+                                  >
+                                    {
+                                      upload.fileName
+                                    }
+                                  </p>
+
+                                  <p
+                                    className="
+                                      mt-0.5
+                                      truncate
+                                      text-xs
+                                      text-brand-gray
+                                    "
+                                  >
+                                    {upload.market ??
+                                      "All markets"}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* PLATFORM */}
+
+                            <td className="px-5 py-4 text-brand-gray">
+                              {
+                                upload.platformName
+                              }
+                            </td>
+
+                            {/* DATE */}
+
+                            <td className="px-5 py-4 text-brand-gray">
+                              {
+                                upload.reportDate
+                              }
+                            </td>
+
+                            {/* ROWS */}
+
+                            <td className="px-5 py-4 text-brand-gray">
+                              {upload.rowCount.toLocaleString()}
+                            </td>
+
+                            {/* USER */}
+
+                            <td className="px-5 py-4 text-brand-gray">
+                              {
+                                upload
+                                  .uploadedBy
+                                  ?.name ??
+                                "Unknown"
+                              }
+                            </td>
+
+                            {/* ACTIONS */}
+
+                            <td className="px-5 py-4">
+                              <div
+                                className="
+                                  flex
+                                  justify-end
+                                  gap-2
+                                "
+                              >
+                                {/* VIEW */}
+
+                                <button
+                                  type="button"
+                                  disabled={
+                                    busy ||
+                                    isDeleting
+                                  }
+                                  onClick={() =>
+                                    openFile(
+                                      upload.id,
+                                    )
+                                  }
+                                  className="
+                                    inline-flex
+                                    items-center
+                                    gap-1.5
+                                    rounded-xl
+                                    border
+                                    border-brand-border
+                                    bg-white
+                                    px-3
+                                    py-2
+                                    text-xs
+                                    font-semibold
+                                    text-brand-ink
+                                    shadow-sm
+                                    transition
+                                    hover:border-orange-200
+                                    hover:bg-orange-50
+                                    hover:text-orange-600
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-40
+                                  "
+                                >
+                                  <Eye
+                                    size={14}
+                                  />
+
+                                  View
+                                </button>
+
+                                {/* DOWNLOAD */}
+
+                                <button
+                                  type="button"
+                                  disabled={
+                                    busy ||
+                                    isDeleting
+                                  }
+                                  onClick={() =>
+                                    downloadFile(
+                                      upload.id,
+                                      upload.fileName,
+                                    )
+                                  }
+                                  className="
+                                    inline-flex
+                                    items-center
+                                    gap-1.5
+                                    rounded-xl
+                                    bg-brand-ink
+                                    px-3
+                                    py-2
+                                    text-xs
+                                    font-semibold
+                                    text-white
+                                    shadow-sm
+                                    transition
+                                    hover:bg-orange-600
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-40
+                                  "
+                                >
+                                  {busy ? (
+                                    <Loader2
+                                      size={14}
+                                      className="animate-spin"
+                                    />
+                                  ) : (
+                                    <Download
+                                      size={14}
+                                    />
+                                  )}
+
+                                  Download
+                                </button>
+
+                                {/* DELETE */}
+
+                                <button
+                                  type="button"
+                                  disabled={
+                                    busy ||
+                                    isDeleting
+                                  }
+                                  onClick={() =>
+                                    setDeleteTarget(
+                                      {
+                                        id: upload.id,
+                                        fileName:
+                                          upload.fileName,
+                                      },
+                                    )
+                                  }
+                                  className="
+                                    inline-flex
+                                    h-8
+                                    w-8
+                                    items-center
+                                    justify-center
+                                    rounded-xl
+                                    border
+                                    border-red-200
+                                    bg-red-50
+                                    text-red-600
+                                    transition
+                                    hover:border-red-300
+                                    hover:bg-red-100
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-40
+                                  "
+                                  title="Delete upload"
+                                  aria-label={`Delete ${upload.fileName}`}
+                                >
+                                  <Trash2
+                                    className="
+                                      h-4
+                                      w-4
+                                    "
+                                  />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      },
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* =================================================
+                  LOAD MORE
+              ================================================== */}
+
+              <div
+                ref={
+                  loadMoreRef
+                }
+                className="
+                  min-h-[20px]
+                "
+              />
+
+              {isFetching &&
+                !initialLoading && (
+                  <LoadingMoreSkeleton />
+                )}
+
+              {/* =================================================
+                  PAGINATION STATUS
+              ================================================== */}
+
+              <div
+                className="
+                  flex
+                  min-h-[52px]
+                  items-center
+                  justify-between
+                  border-t
+                  border-brand-border
+                  bg-white
+                  px-5
+                  text-xs
+                  text-brand-gray
+                "
+              >
+                <span>
+                  Showing{" "}
+                  <strong className="text-brand-ink">
+                    {uploads.length}
+                  </strong>{" "}
+                  of{" "}
+                  <strong className="text-brand-ink">
+                    {total}
+                  </strong>{" "}
+                  files
+                </span>
+
+                {page <
+                totalPages ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2
+                      className="
+                        h-3.5
+                        w-3.5
+                        animate-spin
+                      "
+                    />
+
+                    Loading more...
+                  </span>
+                ) : (
+                  <span>
+                    All files loaded
+                  </span>
+                )}
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       {/* =====================================================
-          EXCEL VIEWER
+          DELETE CONFIRMATION
       ====================================================== */}
 
-      {viewer && (
+      {deleteTarget && (
         <div
           className="
             fixed
@@ -870,819 +1516,264 @@ export default function UploadHistoryPage() {
             flex
             items-center
             justify-center
-            bg-black/65
-            p-3
+            bg-black/50
+            p-4
             backdrop-blur-[2px]
-            sm:p-5
-            lg:p-7
           "
-          onMouseDown={(event) => {
+          onMouseDown={(
+            event,
+          ) => {
             if (
               event.target ===
-              event.currentTarget
+                event.currentTarget &&
+              !isDeleting
             ) {
-              closeViewer();
+              setDeleteTarget(
+                null,
+              );
             }
           }}
         >
           <div
             className="
-              flex
-              h-[94vh]
               w-full
-              max-w-[1700px]
-              flex-col
+              max-w-[460px]
               overflow-hidden
               rounded-2xl
               border
-              border-black/10
+              border-brand-border
               bg-white
-              shadow-[0_30px_90px_rgba(0,0,0,0.35)]
+              shadow-[0_30px_90px_rgba(0,0,0,0.3)]
             "
-            onMouseDown={(event) =>
+            onMouseDown={(
+              event,
+            ) =>
               event.stopPropagation()
             }
           >
             {/* =================================================
-                VIEWER HEADER
+                DIALOG CONTENT
             ================================================== */}
 
-            <div
-              className="
-                shrink-0
-                border-b
-                border-brand-border
-                bg-white
-              "
-            >
-              {/* Top toolbar */}
-
+            <div className="p-6">
               <div
                 className="
                   flex
-                  min-h-[72px]
-                  items-center
-                  justify-between
+                  items-start
                   gap-4
-                  px-4
-                  py-3
-                  sm:px-6
                 "
               >
-                {/* File information */}
-
                 <div
                   className="
                     flex
-                    min-w-0
-                    items-center
-                    gap-3
-                  "
-                >
-                  <div
-                    className="
-                      flex
-                      h-11
-                      w-11
-                      shrink-0
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-orange-50
-                      text-orange-500
-                    "
-                  >
-                    <FileSpreadsheet
-                      className="
-                        h-5
-                        w-5
-                      "
-                    />
-                  </div>
-
-                  <div className="min-w-0">
-                    <div
-                      className="
-                        flex
-                        items-center
-                        gap-2
-                      "
-                    >
-                      <h2
-                        className="
-                          max-w-[500px]
-                          truncate
-                          text-sm
-                          font-bold
-                          text-brand-ink
-                          sm:text-base
-                        "
-                      >
-                        {viewer.fileName}
-                      </h2>
-
-                      <span
-                        className="
-                          hidden
-                          rounded-full
-                          border
-                          border-emerald-200
-                          bg-emerald-50
-                          px-2
-                          py-0.5
-                          text-[9px]
-                          font-bold
-                          uppercase
-                          tracking-wide
-                          text-emerald-600
-                          sm:inline-flex
-                        "
-                      >
-                        Preview
-                      </span>
-                    </div>
-
-                    <p
-                      className="
-                        mt-1
-                        text-[11px]
-                        text-brand-gray
-                      "
-                    >
-                      {viewer.sheets.length}{" "}
-                      {viewer.sheets.length ===
-                      1
-                        ? "worksheet"
-                        : "worksheets"}
-
-                      {currentSheet
-                        ? ` • ${currentSheet.rows.length.toLocaleString()} rows`
-                        : ""}
-
-                      {columnCount > 0
-                        ? ` • ${columnCount} columns`
-                        : ""}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Header actions */}
-
-                <div
-                  className="
-                    flex
+                    h-12
+                    w-12
                     shrink-0
                     items-center
-                    gap-2
+                    justify-center
+                    rounded-xl
+                    bg-red-50
+                    text-red-600
                   "
                 >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      closeViewer()
-                    }
+                  <AlertTriangle
                     className="
-                      inline-flex
-                      h-10
-                      w-10
-                      items-center
-                      justify-center
-                      rounded-xl
-                      border
-                      border-brand-border
-                      text-brand-gray
-                      transition
-                      hover:bg-brand-surface
-                      hover:text-brand-ink
+                      h-6
+                      w-6
                     "
-                    aria-label="Close viewer"
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <h2
+                    className="
+                      text-lg
+                      font-bold
+                      text-brand-ink
+                    "
                   >
-                    <X
-                      className="
-                        h-5
-                        w-5
-                      "
-                    />
-                  </button>
+                    Delete upload?
+                  </h2>
+
+                  <p
+                    className="
+                      mt-1.5
+                      text-sm
+                      leading-6
+                      text-brand-gray
+                    "
+                  >
+                    This action cannot be
+                    undone. The uploaded file
+                    and all campaign records
+                    associated with it will be
+                    permanently deleted.
+                  </p>
                 </div>
               </div>
 
-              {/* =================================================
-                  SHEET BAR
-              ================================================== */}
+              {/* FILE */}
 
               <div
                 className="
+                  mt-5
                   flex
-                  min-h-[52px]
                   items-center
                   gap-3
-                  border-t
-                  border-brand-border
-                  bg-[#faf9f7]
-                  px-4
-                  sm:px-6
-                "
-              >
-                {/* Sheet navigation */}
-
-                <div
-                  className="
-                    flex
-                    min-w-0
-                    flex-1
-                    items-center
-                    gap-1
-                    overflow-x-auto
-                  "
-                >
-                  {viewer.sheets.map(
-                    (sheet) => {
-                      const active =
-                        activeSheet ===
-                        sheet.name;
-
-                      return (
-                        <button
-                          key={
-                            sheet.name
-                          }
-                          type="button"
-                          onClick={() => {
-                            setActiveSheet(
-                              sheet.name,
-                            );
-                            setSheetSearch(
-                              "",
-                            );
-                          }}
-                          className={[
-                            "shrink-0",
-                            "rounded-lg",
-                            "px-3",
-                            "py-2",
-                            "text-xs",
-                            "font-semibold",
-                            "transition-all",
-
-                            active
-                              ? "bg-white text-brand-ink shadow-sm ring-1 ring-brand-border"
-                              : "text-brand-gray hover:bg-white hover:text-brand-ink",
-                          ].join(" ")}
-                        >
-                          {sheet.name}
-                        </button>
-                      );
-                    },
-                  )}
-                </div>
-
-                {/* Search */}
-
-                <div
-                  className="
-                    hidden
-                    w-[240px]
-                    shrink-0
-                    items-center
-                    gap-2
-                    rounded-lg
-                    border
-                    border-brand-border
-                    bg-white
-                    px-3
-                    sm:flex
-                  "
-                >
-                  <Search
-                    className="
-                      h-3.5
-                      w-3.5
-                      shrink-0
-                      text-brand-gray
-                    "
-                  />
-
-                  <input
-                    value={sheetSearch}
-                    onChange={(event) =>
-                      setSheetSearch(
-                        event.target.value,
-                      )
-                    }
-                    placeholder="Search this sheet..."
-                    className="
-                      h-9
-                      w-full
-                      bg-transparent
-                      text-xs
-                      text-brand-ink
-                      outline-none
-                      placeholder:text-brand-gray-light
-                    "
-                  />
-
-                  {sheetSearch && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSheetSearch(
-                          "",
-                        )
-                      }
-                      className="
-                        text-brand-gray
-                        hover:text-brand-ink
-                      "
-                    >
-                      <X
-                        className="
-                          h-3.5
-                          w-3.5
-                        "
-                      />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* =================================================
-                MOBILE SEARCH
-            ================================================== */}
-
-            <div
-              className="
-                border-b
-                border-brand-border
-                bg-white
-                px-4
-                py-2
-                sm:hidden
-              "
-            >
-              <div
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  rounded-lg
+                  rounded-xl
                   border
                   border-brand-border
                   bg-brand-surface
-                  px-3
+                  p-3
                 "
               >
-                <Search
+                <div
                   className="
-                    h-3.5
-                    w-3.5
-                    text-brand-gray
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    bg-orange-50
+                    text-orange-500
                   "
-                />
+                >
+                  <FileSpreadsheet
+                    className="
+                      h-5
+                      w-5
+                    "
+                  />
+                </div>
 
-                <input
-                  value={sheetSearch}
-                  onChange={(event) =>
-                    setSheetSearch(
-                      event.target.value,
-                    )
-                  }
-                  placeholder="Search this sheet..."
-                  className="
-                    h-9
-                    w-full
-                    bg-transparent
-                    text-xs
-                    text-brand-ink
-                    outline-none
-                  "
-                />
-
-                {sheetSearch && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSheetSearch(
-                        "",
-                      )
+                <div className="min-w-0">
+                  <p
+                    className="
+                      truncate
+                      text-sm
+                      font-semibold
+                      text-brand-ink
+                    "
+                    title={
+                      deleteTarget.fileName
                     }
                   >
-                    <X
-                      className="
-                        h-3.5
-                        w-3.5
-                        text-brand-gray
-                      "
-                    />
-                  </button>
-                )}
+                    {
+                      deleteTarget.fileName
+                    }
+                  </p>
+
+                  <p
+                    className="
+                      mt-0.5
+                      text-xs
+                      text-brand-gray
+                    "
+                  >
+                    This file will be
+                    permanently removed.
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* =================================================
-                SPREADSHEET
-            ================================================== */}
-
-            <div
-              className="
-                min-h-0
-                flex-1
-                overflow-hidden
-                bg-[#f6f7f8]
-              "
-            >
-              {currentSheet?.rows
-                .length ? (
-                <div
-                  className="
-                    h-full
-                    overflow-auto
-                  "
-                >
-                  <table
-                    className="
-                      min-w-max
-                      border-separate
-                      border-spacing-0
-                      text-[12px]
-                    "
-                  >
-                    <thead>
-                      <tr>
-                        {/* Row number header */}
-
-                        <th
-                          className="
-                            sticky
-                            left-0
-                            top-0
-                            z-30
-                            h-10
-                            min-w-[54px]
-                            border-b
-                            border-r
-                            border-brand-border
-                            bg-[#f0f1f2]
-                            px-3
-                            text-center
-                            text-[10px]
-                            font-semibold
-                            text-brand-gray
-                          "
-                        >
-                          #
-                        </th>
-
-                        {Array.from({
-                          length:
-                            columnCount,
-                        }).map(
-                          (
-                            _,
-                            columnIndex,
-                          ) => (
-                            <th
-                              key={
-                                columnIndex
-                              }
-                              className="
-                                sticky
-                                top-0
-                                z-20
-                                h-10
-                                min-w-[150px]
-                                max-w-[320px]
-                                border-b
-                                border-r
-                                border-brand-border
-                                bg-[#f0f1f2]
-                                px-4
-                                text-left
-                                text-[11px]
-                                font-bold
-                                text-brand-ink
-                              "
-                            >
-                              {currentSheet
-                                .rows[0]?.[
-                                columnIndex
-                              ] ||
-                                `Column ${
-                                  columnIndex +
-                                  1
-                                }`}
-                            </th>
-                          ),
-                        )}
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {filteredRows
-                        .slice(1)
-                        .map(
-                          (
-                            row,
-                            rowIndex,
-                          ) => {
-                            const actualRowNumber =
-                              rowIndex +
-                              2;
-
-                            return (
-                              <tr
-                                key={`${actualRowNumber}-${row.join(
-                                  "|",
-                                )}`}
-                                className="
-                                  group
-                                  hover:bg-orange-50/60
-                                "
-                              >
-                                {/* Row number */}
-
-                                <td
-                                  className="
-                                    sticky
-                                    left-0
-                                    z-10
-                                    border-b
-                                    border-r
-                                    border-brand-border
-                                    bg-[#f8f9fa]
-                                    px-3
-                                    py-2.5
-                                    text-center
-                                    text-[10px]
-                                    font-medium
-                                    text-brand-gray
-                                    group-hover:bg-orange-50
-                                  "
-                                >
-                                  {actualRowNumber}
-                                </td>
-
-                                {Array.from({
-                                  length:
-                                    columnCount,
-                                }).map(
-                                  (
-                                    _,
-                                    columnIndex,
-                                  ) => {
-                                    const value =
-                                      row[
-                                        columnIndex
-                                      ] ??
-                                      "";
-
-                                    return (
-                                      <td
-                                        key={
-                                          columnIndex
-                                        }
-                                        title={
-                                          value
-                                            .length >
-                                          MAX_CELL_LENGTH
-                                            ? value
-                                            : undefined
-                                        }
-                                        className="
-                                          min-w-[150px]
-                                          max-w-[320px]
-                                          border-b
-                                          border-r
-                                          border-brand-border
-                                          bg-white
-                                          px-4
-                                          py-2.5
-                                          align-top
-                                          text-[12px]
-                                          leading-5
-                                          text-brand-ink
-                                          group-hover:bg-orange-50/30
-                                        "
-                                      >
-                                        <span
-                                          className="
-                                            block
-                                            max-w-[320px]
-                                            truncate
-                                          "
-                                        >
-                                          {formatCellValue(
-                                            value,
-                                          )}
-                                        </span>
-                                      </td>
-                                    );
-                                  },
-                                )}
-                              </tr>
-                            );
-                          },
-                        )}
-                    </tbody>
-                  </table>
-
-                  {/* Search / preview footer */}
-
-                  <div
-                    className="
-                      flex
-                      min-h-[42px]
-                      items-center
-                      justify-between
-                      gap-4
-                      border-t
-                      border-brand-border
-                      bg-white
-                      px-4
-                      text-[11px]
-                      text-brand-gray
-                    "
-                  >
-                    <span>
-                      {sheetSearch
-                        ? `Showing ${filteredRows.length.toLocaleString()} matching rows`
-                        : `Showing ${Math.max(
-                            0,
-                            Math.min(
-                              currentSheet
-                                .rows
-                                .length -
-                                1,
-                              MAX_PREVIEW_ROWS,
-                            ),
-                          ).toLocaleString()} rows`}
-                    </span>
-
-                    {currentSheet
-                      .rows.length -
-                      1 >
-                      MAX_PREVIEW_ROWS &&
-                      !sheetSearch && (
-                        <span>
-                          Preview limited to{" "}
-                          {MAX_PREVIEW_ROWS.toLocaleString()}{" "}
-                          rows
-                        </span>
-                      )}
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className="
-                    flex
-                    h-full
-                    items-center
-                    justify-center
-                    p-10
-                  "
-                >
-                  <div
-                    className="
-                      text-center
-                    "
-                  >
-                    <div
-                      className="
-                        mx-auto
-                        flex
-                        h-14
-                        w-14
-                        items-center
-                        justify-center
-                        rounded-2xl
-                        bg-white
-                        text-brand-gray
-                        shadow-sm
-                      "
-                    >
-                      <FileSpreadsheet
-                        className="
-                          h-6
-                          w-6
-                        "
-                      />
-                    </div>
-
-                    <p
-                      className="
-                        mt-4
-                        text-sm
-                        font-semibold
-                        text-brand-ink
-                      "
-                    >
-                      This worksheet is empty
-                    </p>
-
-                    <p
-                      className="
-                        mt-1
-                        text-xs
-                        text-brand-gray
-                      "
-                    >
-                      There is no spreadsheet
-                      data to preview.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* =================================================
-                VIEWER FOOTER
+                ACTIONS
             ================================================== */}
 
             <div
               className="
                 flex
-                min-h-[48px]
-                shrink-0
-                items-center
-                justify-between
-                gap-4
+                justify-end
+                gap-2
                 border-t
                 border-brand-border
-                bg-white
-                px-4
-                sm:px-6
+                bg-brand-surface/50
+                p-4
               "
             >
-              <div
+              <button
+                type="button"
+                disabled={
+                  isDeleting
+                }
+                onClick={() =>
+                  setDeleteTarget(
+                    null,
+                  )
+                }
                 className="
-                  flex
-                  min-w-0
-                  items-center
-                  gap-3
+                  rounded-xl
+                  border
+                  border-brand-border
+                  bg-white
+                  px-4
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-brand-ink
+                  transition
+                  hover:bg-brand-surface
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
                 "
               >
-                <span
-                  className="
-                    hidden
-                    text-[10px]
-                    font-semibold
-                    uppercase
-                    tracking-wider
-                    text-brand-gray
-                    sm:inline
-                  "
-                >
-                  Spreadsheet preview
-                </span>
+                Cancel
+              </button>
 
-                <span
-                  className="
-                    h-1
-                    w-1
-                    rounded-full
-                    bg-brand-gray-light
-                  "
-                />
-
-                <span
-                  className="
-                    truncate
-                    text-[11px]
-                    text-brand-gray
-                  "
-                >
-                  {currentSheet?.name ??
-                    "Sheet"}
-                </span>
-              </div>
-
-              <div
+              <button
+                type="button"
+                disabled={
+                  isDeleting
+                }
+                onClick={
+                  handleDelete
+                }
                 className="
-                  flex
+                  inline-flex
                   items-center
                   gap-2
-                  text-[11px]
-                  text-brand-gray
+                  rounded-xl
+                  bg-red-600
+                  px-4
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-white
+                  shadow-sm
+                  transition
+                  hover:bg-red-700
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
                 "
               >
-                <span>
-                  {columnCount} columns
-                </span>
+                {isDeleting ? (
+                  <>
+                    <Loader2
+                      className="
+                        h-4
+                        w-4
+                        animate-spin
+                      "
+                    />
 
-                <span>•</span>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2
+                      className="
+                        h-4
+                        w-4
+                      "
+                    />
 
-                <span>
-                  {Math.max(
-                    0,
-                    (currentSheet
-                      ?.rows
-                      .length ??
-                      1) - 1,
-                  ).toLocaleString()}{" "}
-                  rows
-                </span>
-              </div>
+                    Delete
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

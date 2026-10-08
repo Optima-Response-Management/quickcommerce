@@ -26,6 +26,8 @@ export interface UploadHistoryItem {
 
   hasFile: boolean;
 
+  hasOriginalFile: boolean;
+
   uploadedBy: {
     id: string;
     name: string | null;
@@ -34,7 +36,7 @@ export interface UploadHistoryItem {
   uploadedAt: string | null;
 }
 
-interface UploadHistoryResponse {
+export interface UploadHistoryResponse {
   message: string;
 
   data: {
@@ -42,10 +44,41 @@ interface UploadHistoryResponse {
 
     pagination: {
       page: number;
+
       limit: number;
+
       total: number;
+
       totalPages: number;
     };
+  };
+}
+
+export interface ListUploadsParams {
+  page?: number;
+
+  limit?: number;
+
+  platform?: string;
+
+  from?: string;
+
+  to?: string;
+}
+
+export interface DeleteUploadResponse {
+  message: string;
+
+  data: {
+    id: string;
+
+    platformName: string;
+
+    reportDate: string;
+
+    fileName: string;
+
+    deletedRows: number;
   };
 }
 
@@ -79,27 +112,50 @@ export const uploadHistoryApi =
     ) => ({
       /*
        * --------------------------------------------------------
-       * LIST
+       * LIST UPLOADS
        * --------------------------------------------------------
        */
 
       listUploads:
         builder.query<
           UploadHistoryResponse["data"],
-          {
-            page?: number;
-            limit?: number;
-          }
+          ListUploadsParams
         >({
           query: ({
             page = 1,
+
             limit = 20,
+
+            platform,
+
+            from,
+
+            to,
           } = {}) => ({
             url: "/uploads",
 
             params: {
               page,
+
               limit,
+
+              ...(platform
+                ? {
+                    platform,
+                  }
+                : {}),
+
+              ...(from
+                ? {
+                    from,
+                  }
+                : {}),
+
+              ...(to
+                ? {
+                    to,
+                  }
+                : {}),
             },
           }),
 
@@ -116,16 +172,18 @@ export const uploadHistoryApi =
 
       /*
        * --------------------------------------------------------
-       * DELETE
+       * DELETE UPLOAD
        * --------------------------------------------------------
        */
 
       deleteUpload:
         builder.mutation<
-          void,
+          DeleteUploadResponse,
           string
         >({
-          query: (id) => ({
+          query: (
+            id,
+          ) => ({
             url: `/uploads/${id}`,
 
             method: "DELETE",
@@ -138,7 +196,17 @@ export const uploadHistoryApi =
     }),
   });
 
+/*
+ * ============================================================
+ * HOOKS
+ * ============================================================
+ */
+
 export const {
   useListUploadsQuery,
+
+  useLazyListUploadsQuery,
+
   useDeleteUploadMutation,
-} = uploadHistoryApi;
+} =
+  uploadHistoryApi;

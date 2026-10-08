@@ -501,16 +501,16 @@ export async function getUploadedFile(
 // ------------------------------------------------------------
 
 export async function deleteUpload(
-  id: string
+  id: string,
 ) {
   if (
     !mongoose.isValidObjectId(
-      id
+      id,
     )
   ) {
     throw new ApiError(
       404,
-      "Upload not found"
+      "Upload not found",
     );
   }
 
@@ -520,7 +520,7 @@ export async function deleteUpload(
   if (!upload) {
     throw new ApiError(
       404,
-      "Upload not found"
+      "Upload not found",
     );
   }
 
@@ -543,7 +543,7 @@ export async function deleteUpload(
             },
             {
               session,
-            }
+            },
           );
 
         deletedRows =
@@ -556,23 +556,26 @@ export async function deleteUpload(
           },
           {
             session,
-          }
+          },
         );
-      }
+      },
     );
   } finally {
     await session.endSession();
   }
 
-  // Delete physical original file
-  // after DB transaction succeeds.
+  /*
+   * Delete the physical uploaded
+   * file after the MongoDB transaction
+   * succeeds.
+   */
   await deleteUploadedFile(
-    storageKey
+    storageKey,
   );
 
   return {
     id: String(
-      upload._id
+      upload._id,
     ),
 
     platformName:
