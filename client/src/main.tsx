@@ -7,7 +7,6 @@ import { store } from "./app/store";
 import { router } from "./app/router";
 
 import AuthBootstrap from "./features/auth/components/AuthBootstrap";
-import AppLoading from "./components/ui/AppLoading";
 
 import "./index.css";
 
@@ -23,7 +22,6 @@ createRoot(rootElement).render(
       <AuthBootstrap>
         <RouterProvider
           router={router}
-          fallbackElement={<AppLoading />}
         />
       </AuthBootstrap>
     </Provider>

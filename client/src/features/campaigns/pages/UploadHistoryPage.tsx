@@ -562,113 +562,74 @@ export default function UploadHistoryPage() {
    * ----------------------------------------------------------
    */
 
-  const loadPage =
-    useCallback(
-      async (
-        nextPage: number,
-        replace = false,
-      ) => {
-        if (
-          loadingRef.current
-        ) {
-          return;
+  
+const loadPage = useCallback(
+  async (
+    nextPage: number,
+    replace = false,
+  ) => {
+    if (loadingRef.current) {
+      return;
+    }
+
+    if (
+      !replace &&
+      nextPage > totalPagesRef.current
+    ) {
+      return;
+    }
+
+    loadingRef.current = true;
+
+    try {
+      const result = await triggerListUploads(
+        {
+          page: nextPage,
+          limit: PAGE_SIZE,
+        },
+        true,
+      ).unwrap();
+
+      setError("");
+
+      setUploads((previous) => {
+        if (replace) {
+          return result.uploads;
         }
 
-        if (
-          !replace &&
-          nextPage >
-            totalPagesRef.current
-        ) {
-          return;
-        }
+        const existingIds = new Set(
+          previous.map((item) => item.id),
+        );
 
-        loadingRef.current =
-          true;
+        const newItems = result.uploads.filter(
+          (item) => !existingIds.has(item.id),
+        );
 
-        setError("");
+        return [...previous, ...newItems];
+      });
 
-        try {
-          const result =
-            await triggerListUploads(
-              {
-                page: nextPage,
+      pageRef.current = nextPage;
 
-                limit:
-                  PAGE_SIZE,
-              },
-              true,
-            ).unwrap();
+      totalPagesRef.current =
+        result.pagination.totalPages;
 
-          setUploads(
-            (
-              previous,
-            ) => {
-              if (replace) {
-                return result.uploads;
-              }
+      setPage(nextPage);
+      setTotalPages(result.pagination.totalPages);
+      setTotal(result.pagination.total);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load upload history.",
+      );
+    } finally {
+      loadingRef.current = false;
+      setInitialLoading(false);
+    }
+  },
+  [triggerListUploads],
+);
 
-              const existingIds =
-                new Set(
-                  previous.map(
-                    (item) =>
-                      item.id,
-                  ),
-                );
-
-              const newItems =
-                result.uploads.filter(
-                  (item) =>
-                    !existingIds.has(
-                      item.id,
-                    ),
-                );
-
-              return [
-                ...previous,
-                ...newItems,
-              ];
-            },
-          );
-
-          pageRef.current =
-            nextPage;
-
-          totalPagesRef.current =
-            result.pagination
-              .totalPages;
-
-          setPage(
-            nextPage,
-          );
-
-          setTotalPages(
-            result.pagination
-              .totalPages,
-          );
-
-          setTotal(
-            result.pagination
-              .total,
-          );
-        } catch (err) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load upload history.",
-          );
-        } finally {
-          loadingRef.current =
-            false;
-
-          setInitialLoading(
-            false,
-          );
-        }
-      },
-      [
-        triggerListUploads,
-      ],
-    );
 
   /*
    * ----------------------------------------------------------
@@ -677,10 +638,13 @@ export default function UploadHistoryPage() {
    */
 
   useEffect(() => {
-    void loadPage(
-      1,
-      true,
-    );
+    const timer = setTimeout(() => {
+      void loadPage(1, true);
+    }, 0);
+  
+    return () => {
+      clearTimeout(timer);
+    };
   }, [loadPage]);
 
   /*

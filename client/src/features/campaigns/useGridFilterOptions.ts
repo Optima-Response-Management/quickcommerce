@@ -20,7 +20,6 @@ export function useGridFilterOptions(
   _state: string,
   _city: string,
   brand: string,
-  _product: string,
 ) {
   const {
     data,

@@ -127,8 +127,7 @@ export default function BudgetSpendChart({ byPlatform, byDate, height = 240 }: P
             const s = SERIES.find((x) => x.name === name);
             return s ? formatValue(s, Number(v)) : String(v);
           }}
-          labelFormatter={displayLabel}
-        />
+          labelFormatter={(label) => displayLabel(String(label))}        />
       </>
     );
 

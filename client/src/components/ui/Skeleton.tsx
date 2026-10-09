@@ -1,5 +1,9 @@
+import type { CSSProperties } from "react";
+
 interface SkeletonProps {
     className?: string;
+    style?: CSSProperties;
+
   }
   
   export function Skeleton({ className = "" }: SkeletonProps) {

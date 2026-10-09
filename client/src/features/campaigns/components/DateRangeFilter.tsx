@@ -1,39 +1,9 @@
-export type DatePreset = "mtd" | "yesterday" | "last7" | "last30" | "custom";
 
-export interface DateRange {
-  preset: DatePreset;
-  from: string; // YYYY-MM-DD
-  to: string;   // YYYY-MM-DD
-}
-
-const toISO = (d: Date) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return toISO(d);
-};
-
-export function getRangeForPreset(preset: Exclude<DatePreset, "custom">): DateRange {
-  if (preset === "mtd") {
-    const now = new Date();
-    return {
-      preset,
-      from: toISO(new Date(now.getFullYear(), now.getMonth(), 1)),
-      to: toISO(now),
-    };
-  }
-
-  const yesterday = daysAgo(1);
-  if (preset === "yesterday") return { preset, from: yesterday, to: yesterday };
-  if (preset === "last7") return { preset, from: daysAgo(7), to: yesterday };
-  return { preset, from: daysAgo(30), to: yesterday };
-}
+import {
+  getRangeForPreset,
+  type DatePreset,
+  type DateRange,
+} from "./dateRangeUtils";
 
 const PRESETS: { key: DatePreset; label: string }[] = [
   { key: "mtd", label: "MTD" },
@@ -48,10 +18,17 @@ interface Props {
   onChange: (range: DateRange) => void;
 }
 
-export default function DateRangeFilter({ value, onChange }: Props) {
+export default function DateRangeFilter({
+  value,
+  onChange,
+}: Props) {
   const selectPreset = (key: DatePreset) => {
     if (key === "custom") {
-      onChange({ preset: "custom", from: value.from, to: value.to });
+      onChange({
+        preset: "custom",
+        from: value.from,
+        to: value.to,
+      });
     } else {
       onChange(getRangeForPreset(key));
     }
@@ -60,38 +37,65 @@ export default function DateRangeFilter({ value, onChange }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="inline-flex rounded-lg border border-brand-border bg-white p-1">
-        {PRESETS.map((p) => (
+        {PRESETS.map((preset) => (
           <button
-            key={p.key}
-            onClick={() => selectPreset(p.key)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-              value.preset === p.key
+            key={preset.key}
+            type="button"
+            onClick={() => selectPreset(preset.key)}
+            aria-pressed={value.preset === preset.key}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              value.preset === preset.key
                 ? "bg-brand-primary text-white"
                 : "text-brand-gray hover:bg-brand-primary-soft"
             }`}
           >
-            {p.label}
+            {preset.label}
           </button>
         ))}
       </div>
 
       {value.preset === "custom" && (
         <div className="flex items-center gap-2 text-sm">
-          <label className="text-brand-gray">From</label>
+          <label
+            htmlFor="date-range-from"
+            className="text-brand-gray"
+          >
+            From
+          </label>
+
           <input
+            id="date-range-from"
             type="date"
             value={value.from}
             max={value.to || undefined}
-            onChange={(e) => onChange({ ...value, from: e.target.value })}
-            className="border border-brand-border rounded-lg px-3 py-1.5 text-brand-ink"
+            onChange={(event) =>
+              onChange({
+                ...value,
+                from: event.target.value,
+              })
+            }
+            className="rounded-lg border border-brand-border px-3 py-1.5 text-brand-ink"
           />
-          <label className="text-brand-gray">To</label>
+
+          <label
+            htmlFor="date-range-to"
+            className="text-brand-gray"
+          >
+            To
+          </label>
+
           <input
+            id="date-range-to"
             type="date"
             value={value.to}
             min={value.from || undefined}
-            onChange={(e) => onChange({ ...value, to: e.target.value })}
-            className="border border-brand-border rounded-lg px-3 py-1.5 text-brand-ink"
+            onChange={(event) =>
+              onChange({
+                ...value,
+                to: event.target.value,
+              })
+            }
+            className="rounded-lg border border-brand-border px-3 py-1.5 text-brand-ink"
           />
         </div>
       )}

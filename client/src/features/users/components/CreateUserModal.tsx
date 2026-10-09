@@ -1,5 +1,6 @@
-import { useEffect } from "react";
 
+import { useEffect } from "react";
+import type { ReactNode } from "react";
 import {
   Check,
   ChevronRight,
@@ -10,14 +11,17 @@ import {
   X,
 } from "lucide-react";
 
-import { useForm } from "react-hook-form";
-
 import {
-  zodResolver,
-} from "@hookform/resolvers/zod";
+  useForm,
+  useWatch,
+  type SubmitHandler,
+} from "react-hook-form";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
   createUserSchema,
+  type CreateUserFormInput,
   type CreateUserFormValues,
 } from "../userSchema";
 
@@ -26,13 +30,13 @@ import {
   FEATURE_DESCRIPTIONS,
   FEATURE_LABELS,
   GRANTABLE_FEATURES,
+  type Feature,
 } from "../access";
 
 import {
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
   ROLES,
-  type PlatformAccess,
   type Role,
 } from "../types";
 
@@ -41,11 +45,7 @@ import { useGetPlatformsQuery } from "../../campaigns/dashboardApi";
 interface CreateUserModalProps {
   open: boolean;
   onClose: () => void;
-
-  onCreate: (
-    values: CreateUserFormValues,
-  ) => Promise<void>;
-
+  onCreate: (values: CreateUserFormValues) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -58,154 +58,102 @@ export default function CreateUserModal({
   onCreate,
   isSubmitting,
 }: CreateUserModalProps) {
-  const {
-    data: platforms = [],
-  } = useGetPlatformsQuery();
+  const { data: platforms = [] } = useGetPlatformsQuery();
 
   const {
+    control,
     register,
     handleSubmit,
-    watch,
     setValue,
     reset,
-    formState: {
-      errors,
+    formState: { errors },
+  } = useForm<
+    CreateUserFormInput,
+    unknown,
+    CreateUserFormValues
+  >({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "user",
+      platformAccess: "all",
+      platforms: [],
+      features: defaultFeatures("user"),
     },
-  } =
-    useForm<CreateUserFormValues>(
-      {
-        resolver:
-          zodResolver(
-            createUserSchema,
-          ),
+  });
 
-        defaultValues: {
-          name: "",
-          email: "",
-          password: "",
-          role: "user",
-          platformAccess: "all",
-          platforms: [],
-          features:
-            defaultFeatures(
-              "user",
-            ),
-        },
-      },
-    );
+  const role = useWatch({
+    control,
+    name: "role",
+  });
 
-  const role =
-    watch("role");
-
-  const platformAccess =
-    watch(
-      "platformAccess",
-    );
-
+  const platformAccess = useWatch({
+    control,
+    name: "platformAccess",
+  });
+  
   const selectedPlatforms =
-    watch("platforms");
-
+    useWatch({
+      control,
+      name: "platforms",
+    }) ?? [];
+  
   const features =
-    watch("features");
+    useWatch({
+      control,
+      name: "features",
+    }) ?? [];
 
   useEffect(() => {
     if (!open) {
       reset();
     }
-  }, [
-    open,
-    reset,
-  ]);
+  }, [open, reset]);
 
   if (!open) {
     return null;
   }
 
-  const isSuperAdmin =
-    role === "super_admin";
+  const isSuperAdmin = role === "super_admin";
 
-  const handleRoleChange =
-    (nextRole: Role) => {
-      setValue(
-        "role",
-        nextRole,
-        {
-          shouldValidate:
-            true,
-        },
-      );
+  const handleRoleChange = (nextRole: Role) => {
+    setValue("role", nextRole, {
+      shouldValidate: true,
+    });
 
-      setValue(
-        "features",
-        defaultFeatures(
-          nextRole,
-        ),
-        {
-          shouldValidate:
-            true,
-        },
-      );
-    };
+    setValue("features", defaultFeatures(nextRole), {
+      shouldValidate: true,
+    });
+  };
 
-  const toggleFeature =
-    (feature: any) => {
-      const next =
-        features.includes(
-          feature,
-        )
-          ? features.filter(
-              (item) =>
-                item !==
-                feature,
-            )
-          : [
-              ...features,
-              feature,
-            ];
+  const toggleFeature = (feature: Feature) => {
+    const currentFeatures = features;
 
-      setValue(
-        "features",
-        next,
-        {
-          shouldValidate:
-            true,
-        },
-      );
-    };
+    const nextFeatures = currentFeatures.includes(feature)
+      ? currentFeatures.filter((item) => item !== feature)
+      : [...currentFeatures, feature];
 
-  const togglePlatform =
-    (platform: string) => {
-      const next =
-        selectedPlatforms.includes(
-          platform,
-        )
-          ? selectedPlatforms.filter(
-              (item) =>
-                item !==
-                platform,
-            )
-          : [
-              ...selectedPlatforms,
-              platform,
-            ];
+    setValue("features", nextFeatures, {
+      shouldValidate: true,
+    });
+  };
 
-      setValue(
-        "platforms",
-        next,
-        {
-          shouldValidate:
-            true,
-        },
-      );
-    };
+  const togglePlatform = (platform: string) => {
+    const nextPlatforms = selectedPlatforms.includes(platform)
+      ? selectedPlatforms.filter((item) => item !== platform)
+      : [...selectedPlatforms, platform];
 
-  const submit = async (
-    values: CreateUserFormValues,
+    setValue("platforms", nextPlatforms, {
+      shouldValidate: true,
+    });
+  };
+
+  const submit: SubmitHandler<CreateUserFormValues> = async (
+    values,
   ) => {
-    await onCreate(
-      values,
-    );
-
+    await onCreate(values);
     reset();
   };
 
@@ -228,9 +176,8 @@ export default function CreateUserModal({
                 </h2>
 
                 <p className="mt-1 text-xs text-brand-gray">
-                  Create an account and
-                  define exactly what it
-                  can access.
+                  Create an account and define exactly what it can
+                  access.
                 </p>
               </div>
             </div>
@@ -238,10 +185,9 @@ export default function CreateUserModal({
             <button
               type="button"
               onClick={onClose}
-              disabled={
-                isSubmitting
-              }
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-brand-gray transition hover:bg-brand-surface"
+              disabled={isSubmitting}
+              aria-label="Close create user dialog"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-brand-gray transition hover:bg-brand-surface disabled:opacity-50"
             >
               <X className="h-4 w-4" />
             </button>
@@ -250,17 +196,12 @@ export default function CreateUserModal({
 
         {/* Form */}
         <form
-          onSubmit={handleSubmit(
-            submit,
-          )}
+          onSubmit={handleSubmit(submit)}
           className="min-h-0 flex-1 overflow-y-auto"
           noValidate
         >
           <div className="space-y-7 p-6">
-            {/* =================================================
-                IDENTITY
-            ================================================== */}
-
+            {/* Identity */}
             <section>
               <SectionHeading
                 number="01"
@@ -270,67 +211,46 @@ export default function CreateUserModal({
               />
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field
-                  label="Full name"
-                  error={
-                    errors.name
-                      ?.message
-                  }
-                >
+                <Field label="Full name" error={errors.name?.message}>
                   <input
-                    {...register(
-                      "name",
-                    )}
+                    {...register("name")}
                     placeholder="e.g. Priya Sharma"
+                    autoComplete="name"
                     className={`${inputClass} ${
-                      errors.name
-                        ? "border-red-300"
-                        : ""
+                      errors.name ? "border-red-300" : ""
                     }`}
                   />
                 </Field>
 
                 <Field
                   label="Email address"
-                  error={
-                    errors.email
-                      ?.message
-                  }
+                  error={errors.email?.message}
                 >
                   <input
                     type="email"
-                    {...register(
-                      "email",
-                    )}
+                    {...register("email")}
                     placeholder="user@company.com"
+                    autoComplete="email"
                     className={`${inputClass} ${
-                      errors.email
-                        ? "border-red-300"
-                        : ""
+                      errors.email ? "border-red-300" : ""
                     }`}
                   />
                 </Field>
 
                 <Field
                   label="Temporary password"
-                  error={
-                    errors.password
-                      ?.message
-                  }
+                  error={errors.password?.message}
                 >
                   <div className="relative">
                     <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-gray-light" />
 
                     <input
                       type="password"
-                      {...register(
-                        "password",
-                      )}
+                      {...register("password")}
                       placeholder="Minimum 6 characters"
+                      autoComplete="new-password"
                       className={`${inputClass} pl-10 ${
-                        errors.password
-                          ? "border-red-300"
-                          : ""
+                        errors.password ? "border-red-300" : ""
                       }`}
                     />
                   </div>
@@ -338,10 +258,7 @@ export default function CreateUserModal({
               </div>
             </section>
 
-            {/* =================================================
-                ROLE
-            ================================================== */}
-
+            {/* Role */}
             <section>
               <SectionHeading
                 number="02"
@@ -351,81 +268,55 @@ export default function CreateUserModal({
               />
 
               <div className="grid gap-3 md:grid-cols-3">
-                {ROLES.map(
-                  (
-                    item,
-                  ) => {
-                    const active =
-                      role ===
-                      item;
+                {ROLES.map((item) => {
+                  const active = role === item;
 
-                    return (
-                      <button
-                        key={
-                          item
-                        }
-                        type="button"
-                        onClick={() =>
-                          handleRoleChange(
-                            item,
-                          )
-                        }
-                        className={[
-                          "group relative rounded-2xl border p-4 text-left transition-all duration-200",
-                          active
-                            ? "border-brand-primary bg-brand-primary-soft shadow-sm"
-                            : "border-brand-border bg-white hover:-translate-y-0.5 hover:border-brand-primary/30 hover:bg-brand-surface",
-                        ].join(
-                          " ",
-                        )}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div
-                            className={[
-                              "flex h-9 w-9 items-center justify-center rounded-xl",
-                              active
-                                ? "bg-white text-brand-primary"
-                                : "bg-brand-surface text-brand-gray",
-                            ].join(
-                              " ",
-                            )}
-                          >
-                            <ShieldCheck className="h-4 w-4" />
-                          </div>
-
-                          {active && (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white">
-                              <Check className="h-3 w-3" />
-                            </span>
-                          )}
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => handleRoleChange(item)}
+                      aria-pressed={active}
+                      className={[
+                        "group relative rounded-2xl border p-4 text-left transition-all duration-200",
+                        active
+                          ? "border-brand-primary bg-brand-primary-soft shadow-sm"
+                          : "border-brand-border bg-white hover:-translate-y-0.5 hover:border-brand-primary/30 hover:bg-brand-surface",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={[
+                            "flex h-9 w-9 items-center justify-center rounded-xl",
+                            active
+                              ? "bg-white text-brand-primary"
+                              : "bg-brand-surface text-brand-gray",
+                          ].join(" ")}
+                        >
+                          <ShieldCheck className="h-4 w-4" />
                         </div>
 
-                        <p className="mt-4 text-sm font-bold text-brand-ink">
-                          {
-                            ROLE_LABELS[
-                              item
-                            ]
-                          }
-                        </p>
+                        {active && (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-white">
+                            <Check className="h-3 w-3" />
+                          </span>
+                        )}
+                      </div>
 
-                        <p className="mt-1 text-[11px] leading-5 text-brand-gray">
-                          {
-                            ROLE_DESCRIPTIONS[
-                              item
-                            ]
-                          }
-                        </p>
-                      </button>
-                    );
-                  },
-                )}
+                      <p className="mt-4 text-sm font-bold text-brand-ink">
+                        {ROLE_LABELS[item]}
+                      </p>
+
+                      <p className="mt-1 text-[11px] leading-5 text-brand-gray">
+                        {ROLE_DESCRIPTIONS[item]}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </section>
 
-            {/* =================================================
-                FEATURES
-            ================================================== */}
-
+            {/* Features */}
             <section>
               <SectionHeading
                 number="03"
@@ -435,101 +326,66 @@ export default function CreateUserModal({
               />
 
               <div className="grid gap-3 md:grid-cols-2">
-                {GRANTABLE_FEATURES.map(
-                  (
-                    feature,
-                  ) => {
-                    const checked =
-                      isSuperAdmin ||
-                      features.includes(
-                        feature,
-                      );
+                {GRANTABLE_FEATURES.map((feature) => {
+                  const checked =
+                    isSuperAdmin || features.includes(feature);
 
-                    return (
-                      <button
-                        key={
-                          feature
-                        }
-                        type="button"
-                        disabled={
-                          isSuperAdmin
-                        }
-                        onClick={() =>
-                          toggleFeature(
-                            feature,
-                          )
-                        }
+                  return (
+                    <button
+                      key={feature}
+                      type="button"
+                      disabled={isSuperAdmin}
+                      onClick={() => toggleFeature(feature)}
+                      aria-pressed={checked}
+                      className={[
+                        "flex items-start gap-3 rounded-2xl border p-4 text-left transition-all",
+                        isSuperAdmin
+                          ? "cursor-not-allowed border-brand-border bg-brand-surface"
+                          : checked
+                            ? "border-brand-primary/30 bg-brand-primary-soft"
+                            : "border-brand-border bg-white hover:border-brand-primary/30 hover:bg-brand-surface",
+                      ].join(" ")}
+                    >
+                      <div
                         className={[
-                          "flex items-start gap-3 rounded-2xl border p-4 text-left transition-all",
-                          isSuperAdmin
-                            ? "cursor-not-allowed border-brand-border bg-brand-surface"
-                            : checked
-                              ? "border-brand-primary/30 bg-brand-primary-soft"
-                              : "border-brand-border bg-white hover:border-brand-primary/30 hover:bg-brand-surface",
-                        ].join(
-                          " ",
-                        )}
+                          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
+                          checked
+                            ? "border-brand-primary bg-brand-primary text-white"
+                            : "border-brand-border bg-white",
+                        ].join(" ")}
                       >
-                        <div
-                          className={[
-                            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
-                            checked
-                              ? "border-brand-primary bg-brand-primary text-white"
-                              : "border-brand-border bg-white",
-                          ].join(
-                            " ",
-                          )}
-                        >
-                          {checked && (
-                            <Check className="h-3 w-3" />
-                          )}
-                        </div>
+                        {checked && <Check className="h-3 w-3" />}
+                      </div>
 
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-brand-ink">
-                            {
-                              FEATURE_LABELS[
-                                feature
-                              ]
-                            }
-                          </p>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-brand-ink">
+                          {FEATURE_LABELS[feature]}
+                        </p>
 
-                          <p className="mt-1 text-[11px] leading-5 text-brand-gray">
-                            {
-                              FEATURE_DESCRIPTIONS[
-                                feature
-                              ]
-                            }
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  },
-                )}
+                        <p className="mt-1 text-[11px] leading-5 text-brand-gray">
+                          {FEATURE_DESCRIPTIONS[feature]}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               {isSuperAdmin && (
                 <div className="mt-3 rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-xs font-medium text-purple-700">
-                  Super Admins automatically
-                  receive full feature access.
+                  Super Admins automatically receive full feature
+                  access.
                 </div>
               )}
 
-              {errors.features && (
+              {errors.features?.message && (
                 <p className="mt-2 text-xs font-semibold text-red-600">
-                  {
-                    errors
-                      .features
-                      .message
-                  }
+                  {errors.features.message}
                 </p>
               )}
             </section>
 
-            {/* =================================================
-                PLATFORMS
-            ================================================== */}
-
+            {/* Platforms */}
             <section>
               <SectionHeading
                 number="04"
@@ -540,46 +396,29 @@ export default function CreateUserModal({
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <AccessChoice
-                  active={
-                    platformAccess ===
-                    "all"
-                  }
+                  active={platformAccess === "all"}
                   title="All platforms"
                   description="User can access every available platform."
                   onClick={() =>
-                    setValue(
-                      "platformAccess",
-                      "all",
-                      {
-                        shouldValidate:
-                          true,
-                      },
-                    )
+                    setValue("platformAccess", "all", {
+                      shouldValidate: true,
+                    })
                   }
                 />
 
                 <AccessChoice
-                  active={
-                    platformAccess ===
-                    "custom"
-                  }
+                  active={platformAccess === "custom"}
                   title="Selected platforms"
                   description="Restrict access to specific platforms."
                   onClick={() =>
-                    setValue(
-                      "platformAccess",
-                      "custom",
-                      {
-                        shouldValidate:
-                          true,
-                      },
-                    )
+                    setValue("platformAccess", "custom", {
+                      shouldValidate: true,
+                    })
                   }
                 />
               </div>
 
-              {platformAccess ===
-                "custom" && (
+              {platformAccess === "custom" && (
                 <div className="mt-4 rounded-2xl border border-brand-border bg-brand-surface p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <p className="text-xs font-bold text-brand-ink">
@@ -587,78 +426,57 @@ export default function CreateUserModal({
                     </p>
 
                     <span className="text-[10px] font-semibold text-brand-gray">
-                      {
-                        selectedPlatforms.length
-                      }{" "}
-                      selected
+                      {selectedPlatforms.length} selected
                     </span>
                   </div>
 
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {platforms.map(
-                      (
-                        platform,
-                      ) => {
-                        const checked =
-                          selectedPlatforms.includes(
-                            platform.name,
-                          );
+                    {platforms.map((platform) => {
+                      const checked = selectedPlatforms.includes(
+                        platform.name,
+                      );
 
-                        return (
-                          <button
-                            key={
-                              platform.id
-                            }
-                            type="button"
-                            onClick={() =>
-                              togglePlatform(
-                                platform.name,
-                              )
-                            }
+                      return (
+                        <button
+                          key={platform.id}
+                          type="button"
+                          onClick={() =>
+                            togglePlatform(platform.name)
+                          }
+                          aria-pressed={checked}
+                          className={[
+                            "flex items-center gap-3 rounded-xl border bg-white px-3.5 py-3 text-left transition",
+                            checked
+                              ? "border-brand-primary/30 bg-brand-primary-soft"
+                              : "border-brand-border hover:border-brand-primary/20",
+                          ].join(" ")}
+                        >
+                          <span
                             className={[
-                              "flex items-center gap-3 rounded-xl border bg-white px-3.5 py-3 text-left transition",
+                              "flex h-5 w-5 items-center justify-center rounded-md border",
                               checked
-                                ? "border-brand-primary/30 bg-brand-primary-soft"
-                                : "border-brand-border hover:border-brand-primary/20",
-                            ].join(
-                              " ",
-                            )}
+                                ? "border-brand-primary bg-brand-primary text-white"
+                                : "border-brand-border",
+                            ].join(" ")}
                           >
-                            <span
-                              className={[
-                                "flex h-5 w-5 items-center justify-center rounded-md border",
-                                checked
-                                  ? "border-brand-primary bg-brand-primary text-white"
-                                  : "border-brand-border",
-                              ].join(
-                                " ",
-                              )}
-                            >
-                              {checked && (
-                                <Check className="h-3 w-3" />
-                              )}
-                            </span>
+                            {checked && (
+                              <Check className="h-3 w-3" />
+                            )}
+                          </span>
 
-                            <span className="text-xs font-semibold text-brand-ink">
-                              {
-                                platform.name
-                              }
-                            </span>
-                          </button>
-                        );
-                      },
-                    )}
+                          <span className="text-xs font-semibold text-brand-ink">
+                            {platform.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {errors.platforms && (
+              {errors.platforms?.message && (
                 <p className="mt-2 text-xs font-semibold text-red-600">
-                  {
-                    errors
-                      .platforms
-                      .message
-                  }
+                  {errors.platforms.message}
                 </p>
               )}
             </section>
@@ -674,9 +492,7 @@ export default function CreateUserModal({
               <button
                 type="button"
                 onClick={onClose}
-                disabled={
-                  isSubmitting
-                }
+                disabled={isSubmitting}
                 className="h-10 rounded-xl border border-brand-border bg-white px-4 text-xs font-bold text-brand-gray transition hover:bg-brand-surface disabled:opacity-50"
               >
                 Cancel
@@ -684,9 +500,7 @@ export default function CreateUserModal({
 
               <button
                 type="submit"
-                disabled={
-                  isSubmitting
-                }
+                disabled={isSubmitting}
                 className="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-ink px-5 text-xs font-bold text-white transition hover:bg-[#25201b] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -710,7 +524,7 @@ export default function CreateUserModal({
 }
 
 /* ============================================================
-   COMPONENTS
+   REUSABLE COMPONENTS
 ============================================================ */
 
 function SectionHeading({
@@ -754,7 +568,7 @@ function Field({
 }: {
   label: string;
   error?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div>
@@ -788,6 +602,7 @@ function AccessChoice({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={[
         "rounded-2xl border p-4 text-left transition-all",
         active

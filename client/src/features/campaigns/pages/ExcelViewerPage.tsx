@@ -1,6 +1,7 @@
 import {
     useMemo,
     useState,
+    useEffect
   } from "react";
   
   import {
@@ -257,6 +258,7 @@ import {
   // ------------------------------------------------------------
   
   export default function ExcelViewerPage() {
+
     const navigate =
       useNavigate();
   
@@ -303,82 +305,58 @@ import {
     // LOAD
     // ----------------------------------------------------------
   
-    useMemo(() => {
+   
+
+    useEffect(() => {
       if (!id) {
-        setError(
-          "Invalid upload ID.",
-        );
-  
-        setLoading(false);
-  
         return;
       }
-  
+    
       let cancelled = false;
-  
-      const loadFile =
-        async () => {
-          setLoading(true);
-          setError("");
-  
-          try {
-            const result =
-              await fetchFile(id);
-  
-            if (cancelled) {
-              return;
-            }
-  
-            const workbook =
-              await readWorkbook(
-                result.blob,
-              );
-  
-            if (
-              !workbook.length
-            ) {
-              throw new Error(
-                "The uploaded file does not contain any worksheets.",
-              );
-            }
-  
-            setFileName(
-              result.fileName,
+    
+      const loadFile = async () => {
+        try {
+          const result = await fetchFile(id);
+    
+          if (cancelled) return;
+    
+          const workbook = await readWorkbook(result.blob);
+    
+          if (!workbook.length) {
+            throw new Error(
+              "The uploaded file does not contain any worksheets.",
             );
-  
-            setSheets(
-              workbook,
-            );
-  
-            setActiveSheet(
-              workbook[0]?.name ??
-                "",
-            );
-          } catch (err) {
-            if (
-              cancelled
-            ) {
-              return;
-            }
-  
-            setError(
-              err instanceof Error
-                ? err.message
-                : "Unable to open file.",
-            );
-          } finally {
-            if (!cancelled) {
-              setLoading(false);
-            }
           }
-        };
-  
+    
+          if (cancelled) return;
+    
+          setFileName(result.fileName);
+          setSheets(workbook);
+          setActiveSheet(workbook[0]?.name ?? "");
+          setError("");
+        } catch (err: unknown) {
+          if (cancelled) return;
+    
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to open file.",
+          );
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+          }
+        }
+      };
+    
       void loadFile();
-  
+    
       return () => {
         cancelled = true;
       };
     }, [id]);
+    
+
   
     // ----------------------------------------------------------
     // CURRENT SHEET
