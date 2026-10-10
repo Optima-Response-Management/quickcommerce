@@ -1,6 +1,6 @@
 import {
   HydratedDocument,
-  FilterQuery,
+  QueryFilter,
 } from "mongoose";
 
 import { IUser } from "../users/user.model";
@@ -145,7 +145,7 @@ export async function listCampaigns(
     sortOrder,
   } = query;
 
-  const filter: FilterQuery<ICampaign> =
+  const filter: QueryFilter<ICampaign> =
     {};
 
   // ==========================================================
@@ -410,7 +410,7 @@ export async function getCampaignFilterOptions(
     brand?: string;
   },
 ) {
-  const filter: FilterQuery<ICampaign> =
+  const filter: QueryFilter<ICampaign> =
     {};
 
   const allowedPlatforms =

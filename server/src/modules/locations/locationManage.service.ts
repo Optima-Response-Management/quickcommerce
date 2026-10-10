@@ -12,7 +12,7 @@ const exactIgnoreCase = (s: string) => ({ $regex: `^${escapeRegex(s)}$`, $option
 interface LocationLike {
   _id: unknown;
   platform: string;
-  state: string;
+  state: string | null;
   city: string | null;
   isActive: boolean;
 }
@@ -21,7 +21,7 @@ const toDto = (l: LocationLike, platformName: string) => ({
   id: String(l._id),
   platform: l.platform,
   platformName,
-  state: l.state,
+  state: l.state ?? null,
   city: l.city ?? null,
   isActive: l.isActive,
 });

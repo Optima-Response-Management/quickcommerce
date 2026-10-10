@@ -1,13 +1,16 @@
+
 import { z } from "zod";
 
 export const signInSchema = z.object({
   email: z
-    .string({ required_error: "Email is required" })
+    .string()
     .trim()
     .toLowerCase()
+    .min(1, "Email is required")
     .email("Enter a valid email"),
+
   password: z
-    .string({ required_error: "Password is required" })
+    .string()
     .min(1, "Password is required")
     .max(128, "Password is too long"),
 });
