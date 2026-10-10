@@ -6,6 +6,7 @@ import routes from "./routes";
 import { errorHandler, notFound } from "./middlewares/error.middleware";
 
 const app = express();
+app.set("trust proxy", 1);
 
 const allowedOrigins = env.CLIENT_URLS.split(",").map((o) => o.trim());
 
