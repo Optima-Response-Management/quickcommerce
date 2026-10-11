@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createHashRouter, Link, Navigate } from "react-router";
 
 import LoginPage from "../features/auth/pages/LoginPage";
 
@@ -26,7 +26,7 @@ import {
   UsersPage,
 } from "./lazyPages";
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   /* ------------------------------------------------------------------------ */
   /* Login                                                                    */
   /* ------------------------------------------------------------------------ */
@@ -59,15 +59,12 @@ export const router = createBrowserRouter([
             You don't have access to this page.
           </p>
 
-          <button
-            type="button"
-            onClick={() => {
-              window.location.href = "/dashboard";
-            }}
+          <Link
+            to="/dashboard"
             className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-orange-600"
           >
             Go to Dashboard
-          </button>
+          </Link>
         </div>
       </div>
     ),
@@ -206,7 +203,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
 
-    element: <Navigate to="/dashboard" replace />,
+    element: <Navigate to="/login" replace />,
   },
 
   /* ------------------------------------------------------------------------ */
@@ -216,6 +213,6 @@ export const router = createBrowserRouter([
   {
     path: "*",
 
-    element: <Navigate to="/dashboard" replace />,
+    element: <Navigate to="/login" replace />,
   },
 ]);
