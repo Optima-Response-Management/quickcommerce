@@ -4,6 +4,7 @@ export type Feature =
   | "dashboard"
   | "data_grid"
   | "upload_data"
+  | "view_upload_history"
   | "manage_users"
   | "manage_locations";
 
@@ -13,6 +14,7 @@ export const FEATURE_LABELS: Record<Feature, string> = {
   dashboard: "Dashboard",
   data_grid: "Data Grid",
   upload_data: "Upload Data",
+  view_upload_history: "File History",
   manage_users: "User Management",
   manage_locations: "Location Management",
 };
@@ -21,42 +23,31 @@ export const FEATURE_DESCRIPTIONS: Record<Feature, string> = {
   dashboard: "View campaign insights and performance metrics",
   data_grid: "Browse and analyze campaign records",
   upload_data: "Upload and process campaign files",
+  view_upload_history: "View uploaded files and upload history",
   manage_users: "Create users and manage user access",
   manage_locations: "Create and manage platform locations",
 };
 
-/**
- * Features that can be assigned to users.
- */
 export const GRANTABLE_FEATURES: GrantableFeature[] = [
   "dashboard",
   "data_grid",
   "upload_data",
+  "view_upload_history",
   "manage_users",
   "manage_locations",
 ];
 
-/**
- * All available application features.
- *
- * Used by ManageAccessModal and permission UI.
- */
 export const ALL_FEATURES: Feature[] = [
   "dashboard",
   "data_grid",
   "upload_data",
+  "view_upload_history",
   "manage_users",
   "manage_locations",
 ];
 
 export const ROLE_ACCESS: Record<Role, Feature[]> = {
-  super_admin: [
-    "dashboard",
-    "data_grid",
-    "upload_data",
-    "manage_users",
-    "manage_locations",
-  ],
+  super_admin: [...ALL_FEATURES],
 
   admin: [
     "dashboard",
@@ -91,7 +82,6 @@ export const canAccess = (
     return false;
   }
 
-  // Super admin has unrestricted access.
   if (user.role === "super_admin") {
     return true;
   }
