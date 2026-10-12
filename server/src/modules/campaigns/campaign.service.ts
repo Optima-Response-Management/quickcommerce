@@ -185,9 +185,60 @@ export async function uploadCampaignFile(
       await mongoose.startSession();
 
     let uploadId = "";
+    let replacedStorageKeys: string[] =
+      [];
 
     await session.withTransaction(
       async () => {
+        // ------------------------------------------------------
+        // REPLACE EXISTING UPLOADS
+        // (same platform + reportDate + market)
+        // ------------------------------------------------------
+
+        const existing =
+          await Upload.find(
+            {
+              platform: slug,
+              reportDate,
+              market,
+            },
+            {
+              _id: 1,
+              storageKey: 1,
+            },
+            { session }
+          ).lean();
+
+        if (existing.length) {
+          const ids = existing.map(
+            (u) => u._id
+          );
+
+          await Campaign.deleteMany(
+            {
+              uploadId: {
+                $in: ids,
+              },
+            },
+            { session }
+          );
+
+          await Upload.deleteMany(
+            {
+              _id: { $in: ids },
+            },
+            { session }
+          );
+        }
+
+        replacedStorageKeys =
+          existing
+            .map((u) => u.storageKey)
+            .filter(
+              (k): k is string =>
+                !!k
+            );
+
         // ------------------------------------------------------
         // CREATE UPLOAD
         // ------------------------------------------------------
@@ -244,6 +295,19 @@ export async function uploadCampaignFile(
         uploadId =
           String(upload._id);
       }
+    );
+
+    // ----------------------------------------------------------
+    // DELETE OLD PHYSICAL FILES
+    // Only after the DB commit succeeded.
+    // ----------------------------------------------------------
+
+    await Promise.all(
+      replacedStorageKeys.map((key) =>
+        deleteUploadedFile(key).catch(
+          () => undefined
+        )
+      )
     );
 
     return {
