@@ -1,5 +1,6 @@
 import mongoose, {
   HydratedDocument,
+  Types,
 } from "mongoose";
 
 import { ApiError } from "../../utils/ApiError";
@@ -205,30 +206,25 @@ export async function uploadCampaignFile(
             {
               _id: 1,
               storageKey: 1,
-            },
-            { session }
-          ).lean();
+            }
+          )
+            .session(session)
+            .lean();
 
         if (existing.length) {
-          const ids = existing.map(
-            (u) => u._id
-          );
+          const ids: Types.ObjectId[] =
+            existing.map(
+              (u) =>
+                u._id as Types.ObjectId
+            );
 
-          await Campaign.deleteMany(
-            {
-              uploadId: {
-                $in: ids,
-              },
-            },
-            { session }
-          );
+          await Campaign.deleteMany({
+            uploadId: { $in: ids },
+          }).session(session);
 
-          await Upload.deleteMany(
-            {
-              _id: { $in: ids },
-            },
-            { session }
-          );
+          await Upload.deleteMany({
+            _id: { $in: ids },
+          }).session(session);
         }
 
         replacedStorageKeys =
