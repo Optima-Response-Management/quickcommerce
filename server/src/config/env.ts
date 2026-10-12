@@ -2,22 +2,22 @@ import path from "path";
 import dotenv from "dotenv";
 import { z } from "zod";
 
-const nodeEnv = process.env.NODE_ENV ?? "development";
+const nodeEnv = process.env.NODE_ENV ?? "production";
 
 dotenv.config({
-  path: path.resolve(__dirname, `../.env.${nodeEnv}`),
+  path: path.resolve(process.cwd(), `.env.${nodeEnv}`),
 });
 
 const schema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
-    .default("development"),
+    .default("production"),
 
   PORT: z.coerce.number().default(5000),
 
   CLIENT_URLS: z
     .string()
-    .default("http://localhost:5173,http://192.168.29.140:5173"),
+    .min(1, "CLIENT_URLS is required"),
 
   MONGODB_URI: z
     .string()

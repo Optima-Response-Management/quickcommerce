@@ -24,7 +24,7 @@ interface TableProps<T> {
 type SortDirection = "asc" | "desc" | null;
 
 export default function Table<
-  T extends Record<string, any>,
+  T extends object,
 >({
   data,
   columns,
@@ -304,14 +304,16 @@ export default function Table<
             ) : (
               paginatedData.map(
                 (row, index) => (
-                  <tr
-                    key={String(
-                      row.id ??
-                        row._id ??
-                        `${currentPage}-${index}`,
-                    )}
-                    className="group border-b border-brand-border-light transition-colors last:border-b-0 hover:bg-orange-50/30"
-                  >
+                 
+<tr
+  key={String(
+    (row as { id?: unknown }).id ??
+      (row as { _id?: unknown })._id ??
+      `${currentPage}-${index}`
+  )}
+  className="group border-b border-brand-border-light transition-colors last:border-b-0 hover:bg-orange-50/30"
+>
+
                     {columns.map(
                       (column) => (
                         <td

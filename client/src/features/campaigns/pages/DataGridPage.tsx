@@ -23,7 +23,6 @@ import Table, {
   type Column,
 } from "../../../components/common/Table";
 
-import { mockCityData } from "../mockData";
 
 import {
   dateOptions,
@@ -79,6 +78,19 @@ type ChipKey =
   | FilterKey
   | "date";
 
+/*
+ * Table<T> requires T extends Record<string, unknown>.
+ * Interfaces don't have an index signature, so we
+ * intersect them with Record<string, unknown>.
+ */
+type CampaignTableRow =
+  CampaignGridRow &
+    Record<string, unknown>;
+
+type CityTableRow =
+  CityRow &
+    Record<string, unknown>;
+
 /* =========================================================
    CONSTANTS
 ========================================================= */
@@ -108,6 +120,11 @@ const PAGE_SIZE = 20;
  * City-wise API is not enabled yet.
  */
 const CITY_WISE_ENABLED = false;
+
+/**
+ * Placeholder until the city-wise API is ready.
+ */
+const CITY_DATA: CityRow[] = [];
 
 /* =========================================================
    DEPENDENCIES
@@ -224,7 +241,6 @@ export default function DataGridPage() {
       "all",
       "all",
       filters.brand,
-      filters.product,
     );
 
   /* =======================================================
@@ -303,18 +319,7 @@ export default function DataGridPage() {
     setFilters(nextFilters);
   };
 
-  const handleBrandChange = (
-    value: string,
-  ) => {
-    setFilters(
-      (previous) => ({
-        ...previous,
-        brand: value,
-        subBrand: "all",
-        product: "all",
-      }),
-    );
-  };
+  
 
   const handleApplyFilters = () => {
     setPage(1);
@@ -372,11 +377,6 @@ export default function DataGridPage() {
     subBrand:
       applied.subBrand !== "all"
         ? applied.subBrand
-        : undefined,
-
-    product:
-      applied.product !== "all"
-        ? applied.product
         : undefined,
   });
 
@@ -473,8 +473,8 @@ export default function DataGridPage() {
 
   const filteredCityData =
     useMemo(() => {
-      return mockCityData.filter(
-        (row: any) => {
+      return CITY_DATA.filter(
+        (row) => {
           if (
             applied.platform !==
               "all" &&
@@ -514,7 +514,7 @@ export default function DataGridPage() {
   ======================================================= */
 
   const campaignColumns:
-    Column<CampaignGridRow>[] =
+    Column<CampaignTableRow>[] =
     [
       {
         key: "campaignName",
@@ -643,7 +643,7 @@ export default function DataGridPage() {
   ======================================================= */
 
   const cityColumns:
-    Column<CityRow>[] =
+    Column<CityTableRow>[] =
     [
       {
         key: "platform",
@@ -1404,17 +1404,13 @@ export default function DataGridPage() {
                   )}
                 </div>
               ) : (
-                <Table
+                <Table<CampaignTableRow>
                   data={
-                    filteredCampaigns as CampaignGridRow[]
+                    filteredCampaigns as CampaignTableRow[]
                   }
-                  columns={
-                    campaignColumns
-                  }
+                  columns={campaignColumns}
                   title=""
-                  pageSize={
-                    PAGE_SIZE
-                  }
+                  pageSize={PAGE_SIZE}
                 />
               )}
             </>
@@ -1443,13 +1439,11 @@ export default function DataGridPage() {
                   </p>
                 </div>
               ) : (
-                <Table
+                <Table<CityTableRow>
                   data={
-                    filteredCityData as CityRow[]
+                    filteredCityData as CityTableRow[]
                   }
-                  columns={
-                    cityColumns
-                  }
+                  columns={cityColumns}
                   title=""
                   pageSize={10}
                 />

@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import BudgetSpendChart from "../components/BudgetSpendChart";
-import DateRangeFilter, { getRangeForPreset, type DateRange } from "../components/DateRangeFilter";
+import DateRangeFilter from "../components/DateRangeFilter";
+import {
+  getRangeForPreset,
+  type DateRange,
+} from "../components/dateRangeUtils";
 import PlatformFilter from "../components/PlatformFilter";
 import { useGetDashboardSummaryQuery } from "../dashboardApi";
 
@@ -75,61 +79,61 @@ export default function AdminDashboardPage() {
       {/* Hero */}
       <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-white p-6 shadow-brand-sm sm:p-7">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-200/25 blur-3xl" />
-  
+
         <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-primary/10 bg-brand-primary-soft px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-primary-dark">
               <span className="h-1.5 w-1.5 animate-soft-pulse rounded-full bg-brand-primary" />
               Live workspace
             </div>
-  
+
             <h1 className="text-2xl font-bold tracking-[-0.03em] text-brand-ink sm:text-3xl">
               Campaign performance
             </h1>
-  
+
             <p className="mt-2 max-w-xl text-sm leading-6 text-brand-gray">
               Full visibility across your campaign ecosystem,
               spend, revenue, orders, and return on ad spend.
             </p>
           </div>
-  
+
           <div className="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3.5 py-2.5 text-xs text-brand-gray">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             Data synced
           </div>
         </div>
       </div>
-  
+
       {/* Filters */}
       <div className="rounded-2xl border border-brand-border bg-white p-4 shadow-brand-sm">
         <div className="mb-3 flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-brand-primary" />
-  
+
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-gray">
             Filters
           </p>
         </div>
-  
+
         <div className="flex flex-col gap-3">
           <PlatformFilter
             selected={platforms}
             onChange={setPlatforms}
           />
-  
+
           <DateRangeFilter
             value={range}
             onChange={setRange}
           />
         </div>
       </div>
-  
+
       {/* Error */}
       {isError && (
         <div className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-700">
           <span>
             Could not load dashboard data.
           </span>
-  
+
           <button
             onClick={() => refetch()}
             className="font-semibold underline underline-offset-2"
@@ -138,7 +142,7 @@ export default function AdminDashboardPage() {
           </button>
         </div>
       )}
-  
+
       {/* Stats */}
       <div
         className={`grid gap-4 sm:grid-cols-2 xl:grid-cols-5 ${
@@ -154,20 +158,20 @@ export default function AdminDashboardPage() {
               <p className="text-xs font-semibold text-brand-gray">
                 {stat.label}
               </p>
-  
+
               <div className="h-2 w-2 rounded-full bg-brand-primary/60" />
             </div>
-  
+
             <p className="text-2xl font-bold tracking-[-0.03em] text-brand-ink">
               {isLoading ? "—" : stat.value}
             </p>
-  
+
             {stat.sub && !isLoading && (
               <p className="mt-2 text-[11px] font-semibold text-brand-primary-dark">
                 {stat.sub}
               </p>
             )}
-  
+
             <div className="mt-5 h-1 overflow-hidden rounded-full bg-brand-surface">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-orange-400 to-orange-600"
@@ -179,7 +183,7 @@ export default function AdminDashboardPage() {
           </div>
         ))}
       </div>
-  
+
       {/* Chart */}
       <div className="overflow-hidden rounded-2xl border border-brand-border bg-white shadow-brand-sm">
         <div className="flex items-center justify-between border-b border-brand-border-light px-5 py-4">
@@ -187,25 +191,25 @@ export default function AdminDashboardPage() {
             <h2 className="text-sm font-bold text-brand-ink">
               Budget & spend
             </h2>
-  
+
             <p className="mt-1 text-xs text-brand-gray">
               Performance across the selected period
             </p>
           </div>
-  
+
           <div className="hidden items-center gap-4 sm:flex">
             <div className="flex items-center gap-2 text-[11px] text-brand-gray">
               <span className="h-2 w-2 rounded-full bg-brand-primary" />
               Spend
             </div>
-  
+
             <div className="flex items-center gap-2 text-[11px] text-brand-gray">
               <span className="h-2 w-2 rounded-full bg-brand-ink" />
               Budget
             </div>
           </div>
         </div>
-  
+
         <div className="p-4 sm:p-6">
           <BudgetSpendChart
             byPlatform={byPlatform}

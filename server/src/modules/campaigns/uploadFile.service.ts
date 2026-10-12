@@ -38,6 +38,13 @@ export async function getUploadedFile(
     );
   }
 
+  if (!upload.storageKey) {
+    throw new ApiError(
+      404,
+      "Original uploaded file is not available",
+    );
+  }
+
   let buffer: Buffer;
 
   try {

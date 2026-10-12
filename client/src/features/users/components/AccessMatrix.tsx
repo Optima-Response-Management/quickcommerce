@@ -8,6 +8,7 @@ import {
 import {
   FEATURE_LABELS,
   ROLE_ACCESS,
+  type Feature,
 } from "../access";
 
 import {
@@ -41,8 +42,7 @@ export default function AccessMatrix() {
 
       <div className="grid gap-4 p-5 lg:grid-cols-3">
         {ROLES.map((role) => {
-          const features =
-            ROLE_ACCESS[role];
+          const features = ROLE_ACCESS[role];
 
           return (
             <div
@@ -51,8 +51,7 @@ export default function AccessMatrix() {
             >
               <div className="flex items-start justify-between">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-surface text-brand-primary">
-                  {role ===
-                  "super_admin" ? (
+                  {role === "super_admin" ? (
                     <ShieldCheck className="h-4 w-4" />
                   ) : role === "admin" ? (
                     <Users className="h-4 w-4" />
@@ -71,31 +70,18 @@ export default function AccessMatrix() {
               </h3>
 
               <p className="mt-1 text-[11px] leading-5 text-brand-gray">
-                {
-                  ROLE_DESCRIPTIONS[
-                    role
-                  ]
-                }
+                {ROLE_DESCRIPTIONS[role]}
               </p>
 
               <div className="mt-4 space-y-2">
-                {Object.entries(
-                  FEATURE_LABELS,
-                ).map(
-                  ([
-                    feature,
-                    label,
-                  ]) => {
-                    const enabled =
-                      features.includes(
-                        feature as any,
-                      );
+                {(Object.keys(FEATURE_LABELS) as Feature[]).map(
+                  (feature) => {
+                    const label = FEATURE_LABELS[feature];
+                    const enabled = features.includes(feature);
 
                     return (
                       <div
-                        key={
-                          feature
-                        }
+                        key={feature}
                         className="flex items-center justify-between"
                       >
                         <span className="text-[11px] text-brand-gray">

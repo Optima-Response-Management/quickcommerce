@@ -232,7 +232,6 @@ export default function UploadExcel() {
         reportDate,
       }).unwrap();
 
-      console.log("Campaign upload successful:", result);
 
       setSuccess(
         `Successfully uploaded ${result.rowCount.toLocaleString()} campaign${

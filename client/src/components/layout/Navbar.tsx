@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
@@ -5,17 +6,27 @@ import {
   UserRound,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
 
 import type { RootState } from "../../app/store";
+
 import { logout } from "../../features/auth/authSlice";
-import { useLogoutMutation } from "../../features/auth/authApi";
+import {
+  authApi,
+  useLogoutMutation,
+} from "../../features/auth/authApi";
+import { dashboardApi } from "../../features/campaigns/dashboardApi";
+import { uploadApi } from "../../features/campaigns/uploadApi";
+import { uploadHistoryApi } from "../../features/campaigns/uploadHistoryApi";
+import { usersApi } from "../../features/users/usersApi";
 
 export default function Navbar() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const user = useSelector(
     (state: RootState) => state.auth.user,
   );
-
-  const dispatch = useDispatch();
 
   const [logoutApi, { isLoading: isLoggingOut }] =
     useLogoutMutation();
@@ -34,9 +45,7 @@ export default function Navbar() {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         profileRef.current &&
-        !profileRef.current.contains(
-          event.target as Node,
-        )
+        !profileRef.current.contains(event.target as Node)
       ) {
         setProfileOpen(false);
       }
@@ -57,9 +66,29 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
+      // Ask the backend to invalidate the session and clear
+      // the authentication cookie.
       await logoutApi().unwrap();
+    } catch (error) {
+      // Still clear the local session if the request fails.
+      // Confirm that the backend logout endpoint works too.
+      console.error("Logout request failed:", error);
     } finally {
+      // Remove the authenticated user from Redux.
       dispatch(logout());
+
+      // Clear cached data so another user/session cannot see
+      // stale dashboard, upload, history, or user information.
+      dispatch(authApi.util.resetApiState());
+      dispatch(dashboardApi.util.resetApiState());
+      dispatch(uploadApi.util.resetApiState());
+      dispatch(uploadHistoryApi.util.resetApiState());
+      dispatch(usersApi.util.resetApiState());
+
+      setProfileOpen(false);
+
+      // Replace the current history entry with the login page.
+      navigate("/login", { replace: true });
     }
   };
 
@@ -80,15 +109,10 @@ export default function Navbar() {
         </div>
 
         {/* Profile */}
-        <div
-          ref={profileRef}
-          className="relative"
-        >
+        <div ref={profileRef} className="relative">
           <button
             type="button"
-            onClick={() =>
-              setProfileOpen((open) => !open)
-            }
+            onClick={() => setProfileOpen((open) => !open)}
             className={[
               "group flex items-center gap-3 rounded-xl p-1.5",
               "transition-all duration-200",
@@ -173,6 +197,7 @@ export default function Navbar() {
 
                 <div className="my-1 h-px bg-brand-border-light" />
 
+                {/* Logout */}
                 <button
                   type="button"
                   onClick={handleLogout}

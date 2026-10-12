@@ -1,4 +1,6 @@
+
 import { useMemo } from "react";
+
 import {
   AlertCircle,
   BarChart3,
@@ -10,8 +12,11 @@ import {
 import { useSelector } from "react-redux";
 
 import BudgetSpendChart from "../components/BudgetSpendChart";
-import { useGetCampaignsQuery, useGetDashboardSummaryQuery } from "../dashboardApi";
-import type { RootState } from "../../../store/store";
+import {
+  useGetCampaignsQuery,
+  useGetDashboardSummaryQuery,
+} from "../dashboardApi";
+import type { RootState } from "../../../app/store";
 
 export default function CustomerDashboardPage() {
   const user = useSelector((state: RootState) => state.auth.user);
@@ -21,12 +26,9 @@ export default function CustomerDashboardPage() {
    * the authenticated user.
    *
    * For a custom-access user:
-   *
    * user.platforms = ["zepto", "blinkit"]
    *
-   * Only those platforms are requested.
-   *
-   * For an "all" user we don't need to send a platform filter.
+   * For an "all" user, no platform filter is required.
    */
   const allowedPlatforms = useMemo(() => {
     if (!user) {
@@ -45,13 +47,7 @@ export default function CustomerDashboardPage() {
   /**
    * Dashboard summary.
    *
-   * Backend returns:
-   *
-   * {
-   *   totals,
-   *   byPlatform,
-   *   byDate
-   * }
+   * Backend returns totals, byPlatform and byDate.
    */
   const {
     data: dashboard,
@@ -71,14 +67,8 @@ export default function CustomerDashboardPage() {
   /**
    * Campaign table.
    *
-   * This uses the existing /campaigns endpoint.
-   *
-   * IMPORTANT:
    * /campaigns requires data_grid permission.
-   *
-   * Therefore a user who only has dashboard permission
-   * will still be able to see the dashboard cards/charts,
-   * but won't be shown the campaign table.
+   * Dashboard-only users can still see their analytics.
    */
   const canViewDataGrid =
     user?.role === "super_admin" ||
@@ -114,14 +104,6 @@ export default function CustomerDashboardPage() {
     campaignCount: 0,
   };
 
-  const byPlatform = Array.isArray(dashboard?.byPlatform)
-    ? dashboard.byPlatform
-    : [];
-
-  const byDate = Array.isArray(dashboard?.byDate)
-    ? dashboard.byDate
-    : [];
-
   const campaigns = Array.isArray(campaignsResponse?.campaigns)
     ? campaignsResponse.campaigns
     : [];
@@ -137,32 +119,35 @@ export default function CustomerDashboardPage() {
   };
 
   /**
-   * Convert backend dashboard format to the format expected
+   * Convert backend platform data to the format expected
    * by BudgetSpendChart.
+   *
+   * Validation is inside useMemo to avoid creating new
+   * fallback arrays on every render.
    */
-  const chartByPlatform = useMemo(
-    () =>
-      byPlatform.map((item) => ({
-        label: item.platformName ?? item.platform,
-        budget: Number(item.Budget ?? 0),
-        spend: Number(item.Spend ?? 0),
-        revenue: Number(item.Revenue ?? 0),
-        orders: Number(item.Orders ?? 0),
-      })),
-    [byPlatform],
-  );
-
-  const chartByDate = useMemo(
-    () =>
-      byDate.map((item) => ({
-        label: item.reportDate,
-        budget: Number(item.Budget ?? 0),
-        spend: Number(item.Spend ?? 0),
-        revenue: Number(item.Revenue ?? 0),
-        orders: Number(item.Orders ?? 0),
-      })),
-    [byDate],
-  );
+  const chartByPlatform = (
+    Array.isArray(dashboard?.byPlatform)
+      ? dashboard.byPlatform
+      : []
+  ).map((item) => ({
+    label: item.platformName ?? item.platform,
+    budget: Number(item.Budget ?? 0),
+    spend: Number(item.Spend ?? 0),
+    revenue: Number(item.Revenue ?? 0),
+    orders: Number(item.Orders ?? 0),
+  }));
+  
+  const chartByDate = (
+    Array.isArray(dashboard?.byDate)
+      ? dashboard.byDate
+      : []
+  ).map((item) => ({
+    label: item.reportDate,
+    budget: Number(item.Budget ?? 0),
+    spend: Number(item.Spend ?? 0),
+    revenue: Number(item.Revenue ?? 0),
+    orders: Number(item.Orders ?? 0),
+  }));
 
   const stats = [
     {
@@ -196,9 +181,7 @@ export default function CustomerDashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-brand-ink">
@@ -226,9 +209,7 @@ export default function CustomerDashboardPage() {
         </button>
       </div>
 
-      {/* =====================================================
-          ERROR
-      ===================================================== */}
+      {/* ERROR */}
       {dashboardError && (
         <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
@@ -245,9 +226,7 @@ export default function CustomerDashboardPage() {
         </div>
       )}
 
-      {/* =====================================================
-          STAT CARDS
-      ===================================================== */}
+      {/* STAT CARDS */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
@@ -283,9 +262,7 @@ export default function CustomerDashboardPage() {
         })}
       </div>
 
-      {/* =====================================================
-          NO DATA STATE
-      ===================================================== */}
+      {/* NO DATA STATE */}
       {!isLoading &&
         !dashboardError &&
         totals.campaignCount === 0 && (
@@ -305,9 +282,7 @@ export default function CustomerDashboardPage() {
           </div>
         )}
 
-      {/* =====================================================
-          CHART
-      ===================================================== */}
+      {/* CHART */}
       {totals.campaignCount > 0 && (
         <BudgetSpendChart
           byPlatform={chartByPlatform}
@@ -315,10 +290,7 @@ export default function CustomerDashboardPage() {
         />
       )}
 
-      {/* =====================================================
-          CAMPAIGN TABLE
-      ===================================================== */}
-
+      {/* CAMPAIGN TABLE */}
       {canViewDataGrid ? (
         <div className="overflow-hidden rounded-xl border border-brand-border bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-brand-border-light px-5 py-4">
@@ -446,9 +418,7 @@ export default function CustomerDashboardPage() {
           )}
         </div>
       ) : (
-        /* ===================================================
-           LIMITED USER STATE
-        =================================================== */
+        /* LIMITED USER STATE */
         <div className="rounded-xl border border-brand-border bg-white p-6 shadow-sm">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary-soft">
@@ -461,9 +431,8 @@ export default function CustomerDashboardPage() {
               </h3>
 
               <p className="mt-1 text-sm text-brand-gray">
-                You don't have Data Grid permission. Dashboard
-                analytics are available based on your assigned
-                access.
+                You don&apos;t have Data Grid permission. Dashboard
+                analytics are available based on your assigned access.
               </p>
             </div>
           </div>

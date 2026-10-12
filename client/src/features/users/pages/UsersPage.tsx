@@ -20,7 +20,6 @@ import {
 import CreateUserModal from "../components/CreateUserModal";
 import ManageAccessModal from "../components/ManageAccessModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
-import AccessMatrix from "../components/AccessMatrix";
 
 import {
   useCreateUserMutation,
@@ -32,6 +31,8 @@ import {
 import {
   FEATURE_LABELS,
   GRANTABLE_FEATURES,
+  type Feature,
+
 } from "../access";
 
 import {
@@ -150,8 +151,10 @@ export default function UsersPage() {
       window.clearTimeout(timer);
   }, [searchInput]);
 
-  const users =
-    data?.users ?? [];
+  const users = useMemo(
+    () => data?.users ?? [],
+    [data?.users],
+  );
 
   const total =
     data?.total ?? 0;
@@ -206,23 +209,27 @@ export default function UsersPage() {
     }, 3500);
   };
 
-  const showError = (
-    error: unknown,
-  ) => {
-    const message =
-      typeof error ===
-        "object" &&
+  const showError = (error: unknown) => {
+    let message =
+      "Something went wrong. Please try again.";
+  
+    if (
+      typeof error === "object" &&
       error !== null &&
-      "data" in error &&
-      typeof (
-        error as any
-      ).data?.message ===
-        "string"
-        ? (
-            error as any
-          ).data.message
-        : "Something went wrong. Please try again.";
-
+      "data" in error
+    ) {
+      const data = error.data;
+  
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "message" in data &&
+        typeof data.message === "string"
+      ) {
+        message = data.message;
+      }
+    }
+  
     setActionSuccess("");
     setActionError(message);
   };
@@ -264,7 +271,7 @@ export default function UsersPage() {
   const handleAccessSave =
     async (
       changes: {
-        features: any[];
+        features: Feature[];
         platformAccess:
           | "all"
           | "custom";
