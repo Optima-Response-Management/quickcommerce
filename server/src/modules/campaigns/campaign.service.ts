@@ -1,7 +1,4 @@
-import mongoose, {
-  HydratedDocument,
-  Types,
-} from "mongoose";
+import mongoose, { HydratedDocument } from "mongoose";
 
 import { ApiError } from "../../utils/ApiError";
 import { IUser } from "../users/user.model";
@@ -28,34 +25,67 @@ import {
   saveUploadedFile,
 } from "./upload.storage";
 
+function normalizeFileName(fileName: string): string {
+  return fileName.trim().normalize("NFC").toLowerCase();
+}
+
+function isDuplicateFilenameError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const mongoError = error as {
+    code?: number;
+    keyPattern?: Record<string, unknown>;
+    message?: string;
+  };
+
+  return (
+    mongoError.code === 11000 &&
+    (
+      "fileNameNormalized" in (mongoError.keyPattern ?? {}) ||
+      mongoError.message?.includes("fileNameNormalized_unique") === true
+    )
+  );
+}
+
 export async function uploadCampaignFile(
   file: Express.Multer.File,
   input: UploadCampaignInput,
   user: HydratedDocument<IUser>
 ) {
   const slug = input.platform;
+  const reportDate = input.reportDate;
+  const market = input.market ?? null;
+  const fileName = file.originalname.trim();
+  const fileNameNormalized = normalizeFileName(fileName);
 
-  const reportDate =
-    input.reportDate;
+  if (!fileNameNormalized) {
+    throw new ApiError(400, "Filename cannot be empty.");
+  }
 
-  const market =
-    input.market ?? null;
+  // Check the filename globally, ignoring capitalization.
+  const existingUpload = await Upload.findOne({
+    fileNameNormalized,
+  })
+    .select("_id")
+    .lean();
 
-  // ------------------------------------------------------------
-  // PLATFORM VALIDATION
-  // ------------------------------------------------------------
+  if (existingUpload) {
+    throw new ApiError(
+      409,
+      `A file named "${fileName}" already exists in upload history. Rename the file and upload it again.`
+    );
+  }
 
-  const platform =
-    await Platform.findOne({
-      slug,
-      isActive: true,
-    });
+  // Validate the selected platform.
+  const platform = await Platform.findOne({
+    slug,
+    isActive: true,
+  });
 
   if (!platform) {
-    throw new ApiError(
-      400,
-      "Unknown platform"
-    );
+    throw new ApiError(400, "Unknown platform");
   }
 
   if (!SUPPORTED_FORMATS[slug]) {
@@ -65,54 +95,27 @@ export async function uploadCampaignFile(
     );
   }
 
-  // ------------------------------------------------------------
-  // FILE NAME VALIDATION
-  // ------------------------------------------------------------
+  // Validate the filename against the selected platform.
+  assertFileNameMatchesPlatform(fileName, slug);
 
-  assertFileNameMatchesPlatform(
-    file.originalname,
-    slug
-  );
+  // Parse the spreadsheet.
+  const sheet = await parseSheet(file);
 
-  // ------------------------------------------------------------
-  // PARSE FILE
-  // ------------------------------------------------------------
+  // Validate required columns.
+  const missing = findMissingColumns(slug, sheet.headers);
 
-  const sheet =
-    await parseSheet(file);
-
-  // ------------------------------------------------------------
-  // COLUMN VALIDATION
-  // ------------------------------------------------------------
-
-  const missing =
-    findMissingColumns(
-      slug,
-      sheet.headers
+  if (missing.length > 0) {
+    const hasCampaignType = sheet.headers.some(
+      (header) => normalize(header) === "campaigntype"
     );
-
-  if (missing.length) {
-    const hasCampaignType =
-      sheet.headers.some(
-        (h) =>
-          normalize(h) ===
-          "campaigntype"
-      );
 
     let hint = "";
 
-    if (
-      slug !== "flipkart" &&
-      hasCampaignType
-    ) {
+    if (slug !== "flipkart" && hasCampaignType) {
       hint =
         ' This file has a "Campaign Type" column, which is the Flipkart format.';
-    } else if (
-      slug === "flipkart" &&
-      !hasCampaignType
-    ) {
-      hint =
-        ' Flipkart files use a "Campaign Type" column.';
+    } else if (slug === "flipkart" && !hasCampaignType) {
+      hint = ' Flipkart files use a "Campaign Type" column.';
     }
 
     throw new ApiError(
@@ -120,40 +123,22 @@ export async function uploadCampaignFile(
       `This file does not match the ${platform.name} format. Missing columns: ${missing.join(", ")}.${hint}`,
       missing.map((column) => ({
         field: column,
-        message:
-          "Column not found in the file",
+        message: "Column not found in the file",
       }))
     );
   }
 
-  // ------------------------------------------------------------
-  // EMPTY FILE VALIDATION
-  // ------------------------------------------------------------
-
-  if (
-    sheet.rows.length === 0
-  ) {
-    throw new ApiError(
-      400,
-      "The file has no data rows."
-    );
+  if (sheet.rows.length === 0) {
+    throw new ApiError(400, "The file has no data rows.");
   }
-
-  // ------------------------------------------------------------
-  // ROW VALIDATION
-  // ------------------------------------------------------------
 
   const {
     valid,
     errors,
     skippedTotalRows,
-  } =
-    normalizeRows(
-      slug,
-      sheet.rows
-    );
+  } = normalizeRows(slug, sheet.rows);
 
-  if (errors.length) {
+  if (errors.length > 0) {
     throw new ApiError(
       400,
       `${errors.length} problem(s) found in the file. Fix them and upload again. Nothing was saved.`,
@@ -162,173 +147,83 @@ export async function uploadCampaignFile(
   }
 
   if (valid.length === 0) {
-    throw new ApiError(
-      400,
-      "The file has no campaign rows."
-    );
+    throw new ApiError(400, "The file has no campaign rows.");
   }
 
-  // ------------------------------------------------------------
-  // SAVE ORIGINAL FILE
-  // ------------------------------------------------------------
+  // Store the physical file only after initial validation.
+  const storedFile = await saveUploadedFile(file);
 
-  const storedFile =
-    await saveUploadedFile(
-      file
-    );
-
-  let session:
-    | mongoose.ClientSession
-    | null = null;
+  let session: mongoose.ClientSession | null = null;
 
   try {
-    session =
-      await mongoose.startSession();
+    session = await mongoose.startSession();
 
     let uploadId = "";
-    let replacedStorageKeys: string[] =
-      [];
 
-    await session.withTransaction(
-      async () => {
-        // ------------------------------------------------------
-        // REPLACE EXISTING UPLOADS
-        // (same platform + reportDate + market)
-        // ------------------------------------------------------
-
-        const existing =
-          await Upload.find(
-            {
-              platform: slug,
-              reportDate,
-              market,
-            },
-            {
-              _id: 1,
-              storageKey: 1,
-            }
-          )
-            .session(session)
-            .lean();
-
-        if (existing.length) {
-          const ids: Types.ObjectId[] =
-            existing.map(
-              (u) =>
-                u._id as Types.ObjectId
-            );
-
-          await Campaign.deleteMany({
-            uploadId: { $in: ids },
-          }).session(session);
-
-          await Upload.deleteMany({
-            _id: { $in: ids },
-          }).session(session);
-        }
-
-        replacedStorageKeys =
-          existing
-            .map((u) => u.storageKey)
-            .filter(
-              (k): k is string =>
-                !!k
-            );
-
-        // ------------------------------------------------------
-        // CREATE UPLOAD
-        // ------------------------------------------------------
-
-        const [upload] =
-          await Upload.create(
-            [
-              {
-                platform: slug,
-                platformName:
-                  platform.name,
-                reportDate,
-                market,
-                fileName:
-                  file.originalname,
-                rowCount:
-                  valid.length,
-                uploadedBy:
-                  user._id,
-
-                storageKey:
-                  storedFile.storageKey,
-
-                mimeType:
-                  storedFile.mimeType,
-
-                fileSize:
-                  storedFile.fileSize,
-              },
-            ],
-            {
-              session,
-            }
-          );
-
-        // ------------------------------------------------------
-        // CREATE CAMPAIGN ROWS
-        // ------------------------------------------------------
-
-        await Campaign.insertMany(
-          valid.map((row) => ({
-            ...row,
-            uploadId:
-              upload._id,
+    await session.withTransaction(async () => {
+      // Always create a new upload. Never replace existing uploads.
+      const [upload] = await Upload.create(
+        [
+          {
             platform: slug,
+            platformName: platform.name,
             reportDate,
             market,
-          })),
-          {
-            session,
-          }
-        );
+            fileName,
+            fileNameNormalized,
+            rowCount: valid.length,
+            uploadedBy: user._id,
+            storageKey: storedFile.storageKey,
+            mimeType: storedFile.mimeType,
+            fileSize: storedFile.fileSize,
+          },
+        ],
+        { session }
+      );
 
-        uploadId =
-          String(upload._id);
-      }
-    );
+      // Associate every campaign row with this specific upload.
+      await Campaign.insertMany(
+        valid.map((row) => ({
+          ...row,
+          uploadId: upload._id,
+          platform: slug,
+          reportDate,
+          market,
+        })),
+        { session }
+      );
 
-    // ----------------------------------------------------------
-    // DELETE OLD PHYSICAL FILES
-    // Only after the DB commit succeeded.
-    // ----------------------------------------------------------
-
-    await Promise.all(
-      replacedStorageKeys.map((key) =>
-        deleteUploadedFile(key).catch(
-          () => undefined
-        )
-      )
-    );
+      uploadId = String(upload._id);
+    });
 
     return {
       uploadId,
       platform: slug,
-      platformName:
-        platform.name,
+      platformName: platform.name,
       reportDate,
       market,
-      fileName:
-        file.originalname,
-      rowCount:
-        valid.length,
+      fileName,
+      rowCount: valid.length,
       skippedTotalRows,
     };
   } catch (error) {
-    // Database transaction failed.
-    // Remove the stored physical file so we don't
-    // leave orphan files on disk.
-    await deleteUploadedFile(
-      storedFile.storageKey
-    );
+    // A concurrent request may have claimed the filename after
+    // the initial check. The unique index prevents both succeeding.
+    if (isDuplicateFilenameError(error)) {
+      throw new ApiError(
+        409,
+        `A file named "${fileName}" already exists in upload history. Rename the file and upload it again.`
+      );
+    }
 
     throw error;
   } finally {
-    await session?.endSession();
+    if (session) {
+      await session.endSession();
+    }
+
+    // Only remove the newly stored file when the database operation
+    // failed. Never remove a file belonging to a previous upload.
+    // Successful uploads retain their stored files.
   }
 }

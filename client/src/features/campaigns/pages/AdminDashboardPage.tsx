@@ -76,33 +76,7 @@ export default function AdminDashboardPage() {
   ];
   return (
     <div className="page-enter space-y-6">
-      {/* Hero */}
-      <div className="relative overflow-hidden rounded-3xl border border-brand-border bg-white p-6 shadow-brand-sm sm:p-7">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-200/25 blur-3xl" />
-
-        <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-primary/10 bg-brand-primary-soft px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-brand-primary-dark">
-              <span className="h-1.5 w-1.5 animate-soft-pulse rounded-full bg-brand-primary" />
-              Live workspace
-            </div>
-
-            <h1 className="text-2xl font-bold tracking-[-0.03em] text-brand-ink sm:text-3xl">
-              Campaign performance
-            </h1>
-
-            <p className="mt-2 max-w-xl text-sm leading-6 text-brand-gray">
-              Full visibility across your campaign ecosystem,
-              spend, revenue, orders, and return on ad spend.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-brand-border bg-brand-surface px-3.5 py-2.5 text-xs text-brand-gray">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Data synced
-          </div>
-        </div>
-      </div>
+      
 
       {/* Filters */}
       <div className="rounded-2xl border border-brand-border bg-white p-4 shadow-brand-sm">
