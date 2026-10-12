@@ -9,7 +9,6 @@ import {
   Table2,
   Upload,
   Users,
-  Zap,
 } from "lucide-react";
 
 import { useDispatch, useSelector } from "react-redux";
