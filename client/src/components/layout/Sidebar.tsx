@@ -173,86 +173,16 @@ export default function Sidebar() {
 
         {/* Brand content */}
 
-        <div
-          className="
-            relative
-            flex
-            h-full
-            items-center
-            gap-3
-          "
-        >
-          {/* Logo */}
+        
+{/* Brand content */}
+<div className="relative flex h-full items-center">
+  <img
+    src="/logo.svg"
+    alt="Campaign Hub"
+    className="h-auto w-[180px] max-w-full object-contain"
+  />
+</div>
 
-          <div
-            className="
-              flex
-              h-11
-              w-11
-              shrink-0
-              items-center
-              justify-center
-              rounded-xl
-              bg-brand-primary
-              shadow-brand-sm
-            "
-          >
-            <Zap
-              className="
-                h-5
-                w-5
-                fill-white
-                text-white
-              "
-              aria-hidden="true"
-            />
-          </div>
-
-          {/* Brand */}
-
-          <div className="min-w-0">
-            <p
-              className="
-                text-[15px]
-                font-bold
-                tracking-tight
-                text-brand-ink
-              "
-            >
-              Campaign Hub
-            </p>
-
-            <div
-              className="
-                mt-1
-                flex
-                items-center
-                gap-1.5
-              "
-            >
-              <span
-                className="
-                  h-1.5
-                  w-1.5
-                  rounded-full
-                  bg-emerald-500
-                "
-              />
-
-              <p
-                className="
-                  text-[9px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.18em]
-                  text-brand-gray-light
-                "
-              >
-                Intelligence
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* ===================================================== */}
