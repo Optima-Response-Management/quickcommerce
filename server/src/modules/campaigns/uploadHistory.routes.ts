@@ -1,22 +1,11 @@
-import {
-  Router,
-} from "express";
 
-import {
-  authenticate,
-} from "../../middlewares/auth.middleware";
+import { Router } from "express";
 
-import {
-  requireFeature,
-} from "../../middlewares/role.middleware";
+import { authenticate } from "../../middlewares/auth.middleware";
+import { requireFeature } from "../../middlewares/role.middleware";
+import { validateQuery } from "../../middlewares/validate.middleware";
 
-import {
-  validateQuery,
-} from "../../middlewares/validate.middleware";
-
-import {
-  listUploadsSchema,
-} from "./upload.schema";
+import { listUploadsSchema } from "./upload.schema";
 
 import {
   deleteUploadController,
@@ -24,63 +13,30 @@ import {
   listUploadsController,
 } from "./uploadHistory.controller";
 
-const router =
-  Router();
+const router = Router();
 
-/*
- * ============================================================
- * LIST UPLOADS
- * ============================================================
- */
-
+// List upload history.
 router.get(
   "/",
   authenticate,
-  requireFeature(
-    "upload_data",
-  ),
-  validateQuery(
-    listUploadsSchema,
-  ),
+  requireFeature("view_upload_history"),
+  validateQuery(listUploadsSchema),
   listUploadsController,
 );
 
-/*
- * ============================================================
- * GET FILE
- *
- * IMPORTANT:
- * Keep this BEFORE /:id
- * ============================================================
- */
-
+// Keep this route before any generic /:id route.
 router.get(
   "/:id/file",
   authenticate,
-  requireFeature(
-    "upload_data",
-  ),
+  requireFeature("view_upload_history"),
   getUploadedFileController,
 );
 
-/*
- * ============================================================
- * DELETE UPLOAD
- *
- * manage_users is intentionally
- * required here.
- *
- * This prevents normal upload users
- * from deleting campaign history.
- * ============================================================
- */
-
+// Deletion remains restricted to users with manage_users.
 router.delete(
   "/:id",
   authenticate,
-  requireFeature(
-    "manage_users",
-  ),
+  requireFeature("manage_users"),
   deleteUploadController,
 );
 

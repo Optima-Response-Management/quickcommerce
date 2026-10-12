@@ -39,6 +39,7 @@ export const createUserSchema = z
           "dashboard",
           "data_grid",
           "upload_data",
+          "view_upload_history",
           "manage_users",
           "manage_locations",
         ]),
@@ -69,10 +70,8 @@ export const createUserSchema = z
     }
   });
 
-/** Values before Zod validation and transformation. */
 export type CreateUserFormInput =
   z.input<typeof createUserSchema>;
 
-/** Values after Zod validation and transformation. */
 export type CreateUserFormValues =
   z.output<typeof createUserSchema>;

@@ -1,3 +1,4 @@
+
 import { NavLink } from "react-router";
 import {
   BarChart3,
@@ -58,7 +59,7 @@ const navItems: NavItem[] = [
     label: "File History",
     description: "View uploaded files",
     icon: FileClock,
-    feature: "upload_data",
+    feature: "view_upload_history",
   },
   {
     to: "/admin/users",
@@ -87,12 +88,15 @@ export default function Sidebar() {
   // ACCESSIBLE NAVIGATION
   // ----------------------------------------------------------
 
-  const links = navItems.filter((item) =>
-    canAccess(
-      user,
-      item.feature,
-    ),
-  );
+  const links = navItems.filter((item) => {
+    // File History is visible only to Super Admins.
+    if (item.to === "/admin/file-history") {
+      return user?.role === "super_admin";
+    }
+
+    // Preserve existing feature-based access for all other links.
+    return canAccess(user, item.feature);
+  });
 
   // ----------------------------------------------------------
   // LOGOUT
