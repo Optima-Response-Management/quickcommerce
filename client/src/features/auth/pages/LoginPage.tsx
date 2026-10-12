@@ -87,27 +87,16 @@ export default function LoginPage() {
           </div>
 
           {/* Brand header */}
-
-          <div className="relative z-10 p-10 xl:p-14">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand-primary shadow-lg">
-                <Zap
-                  className="h-5 w-5 fill-current"
-                  aria-hidden="true"
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-bold text-white">
-                  Campaign Hub
-                </p>
-
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/60">
-                  Intelligence platform
-                </p>
-              </div>
-            </div>
-          </div>
+{/* Brand header */}
+<div className="relative z-10 p-10 xl:p-14">
+  <div className="inline-flex items-center rounded-2xl bg-white px-4 py-3 shadow-lg">
+    <img
+      src="/logo.svg"
+      alt="Campaign Hub"
+      className="h-auto w-[180px] object-contain"
+    />
+  </div>
+</div>
 
           {/* Main brand content */}
 
