@@ -20,7 +20,6 @@ import {
 import PlatformFilter from "../components/PlatformFilter";
 
 import {
-  useGetCampaignsQuery,
   useGetCampaignFilterOptionsQuery,
   useGetDashboardSummaryQuery,
   useGetLocationsQuery,
@@ -245,44 +244,6 @@ export default function CustomerDashboardPage() {
   );
 
   /**
-   * Preserve the existing permission requirement for
-   * the campaign table.
-   */
-  const canViewDataGrid =
-    user?.role === "super_admin" ||
-    user?.features?.includes("data_grid");
-
-  /**
-   * Campaign table uses the same active filters as analytics.
-   * The API currently loads the first 20 matching records.
-   */
-  const {
-    data: campaignsResponse,
-    isLoading: campaignsLoading,
-    isFetching: campaignsFetching,
-    isError: campaignsError,
-    refetch: refetchCampaigns,
-  } = useGetCampaignsQuery(
-    {
-      page: 1,
-      limit: 20,
-      platform:
-        effectivePlatforms.length > 0
-          ? effectivePlatforms.join(",")
-          : undefined,
-      from: range.from || undefined,
-      to: range.to || undefined,
-      market: market || undefined,
-      subMarket: subMarket || undefined,
-      brand: brand || undefined,
-      subBrand: subBrand || undefined,
-    },
-    {
-      skip: !user || !canViewDataGrid,
-    },
-  );
-
-  /**
    * Market options.
    * Use the locations endpoint as the main source, with
    * dashboard breakdowns as a fallback.
@@ -370,8 +331,6 @@ export default function CustomerDashboardPage() {
     campaignCount: 0,
   };
 
-  const campaigns = campaignsResponse?.campaigns ?? [];
-
   const handlePlatformsChange = (
     nextPlatforms: string[],
   ) => {
@@ -405,10 +364,6 @@ export default function CustomerDashboardPage() {
 
   const handleRefresh = () => {
     void refetchDashboard();
-
-    if (canViewDataGrid) {
-      void refetchCampaigns();
-    }
   };
 
   const chartByPlatform = useMemo(
@@ -715,8 +670,6 @@ export default function CustomerDashboardPage() {
           byDate={chartByDate}
         />
       )}
-
-      
     </div>
   );
 }
