@@ -22,7 +22,6 @@ router.get("/", validateQuery(dropdownLocationsSchema), getLocationsController);
 // Management screen (Super Admin only): flat list with ids and status, paginated
 router.get(
   "/list",
-  requireFeature("manage_locations"),
   validateQuery(listLocationsSchema),
   listLocationsController
 );
