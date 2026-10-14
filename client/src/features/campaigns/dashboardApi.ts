@@ -18,6 +18,16 @@ export interface Platform {
 // DASHBOARD SUMMARY
 // =========================================================
 
+export interface DashboardBreakdown {
+  name: string;
+  Budget: number;
+  Spend: number;
+  Revenue: number;
+  Orders: number;
+  Roas: number;
+  campaignCount: number;
+}
+
 export interface DashboardSummary {
   totals: {
     Budget: number;
@@ -33,7 +43,7 @@ export interface DashboardSummary {
   byPlatform: {
     platform: string;
     platformName: string;
-    budgetType: string;
+    budgetType: "daily" | "total";
     Budget: number;
     Spend: number;
     Revenue: number;
@@ -48,6 +58,11 @@ export interface DashboardSummary {
     Revenue: number;
     Orders: number;
   }[];
+
+  byMarket: DashboardBreakdown[];
+  bySubMarket: DashboardBreakdown[];
+  byBrand: DashboardBreakdown[];
+  bySubBrand: DashboardBreakdown[];
 }
 
 // =========================================================
@@ -104,6 +119,8 @@ export interface CampaignQueryParams {
   platform?: string;
   from?: string;
   to?: string;
+  market?: string;
+  subMarket?: string;
   brand?: string;
   subBrand?: string;
   search?: string;
@@ -112,12 +129,20 @@ export interface CampaignQueryParams {
 }
 
 // =========================================================
-// FILTER OPTIONS
+// CAMPAIGN FILTER OPTIONS
 // =========================================================
 
 export interface CampaignFilterOptions {
   brands: string[];
   subBrands: string[];
+  markets: string[];
+  subMarkets: string[];
+}
+
+export interface CampaignFilterOptionsArgs {
+  platform?: string;
+  market?: string;
+  brand?: string;
 }
 
 // =========================================================
@@ -194,25 +219,32 @@ function toGridRow(
 // SUMMARY ARGS
 // =========================================================
 
-interface SummaryArgs {
+export interface SummaryArgs {
   platforms: string[];
   from?: string;
   to?: string;
+  market?: string;
+  subMarket?: string;
+  brand?: string;
+  subBrand?: string;
 }
 
 // =========================================================
 // LOCATION
+// Matches GET /api/locations/list
 // =========================================================
 
 export interface LocationItem {
   id: string;
   platform: string;
+  platformName: string;
   state: string;
   city: string;
-  brands: {
-    name: string;
-    products: string[];
-  }[];
+  isActive: boolean;
+}
+
+export interface LocationsArgs {
+  platform?: string;
 }
 
 // =========================================================
@@ -237,6 +269,8 @@ export const dashboardApi = createApi({
   reducerPath: "dashboardApi",
 
   baseQuery: fetchBaseQuery({
+    // VITE_API_BASE_URL should include /api.
+    // Example: https://example.com/api
     baseUrl: import.meta.env.VITE_API_BASE_URL,
     credentials: "include",
   }),
@@ -249,13 +283,11 @@ export const dashboardApi = createApi({
     getPlatforms: builder.query<Platform[], void>({
       query: () => "/platforms",
 
-      transformResponse: (
-        res: {
-          data: {
-            platforms: Platform[];
-          };
-        },
-      ) => res.data.platforms,
+      transformResponse: (res: {
+        data: {
+          platforms: Platform[];
+        };
+      }) => res.data.platforms,
     }),
 
     // =====================================================
@@ -270,6 +302,10 @@ export const dashboardApi = createApi({
         platforms,
         from,
         to,
+        market,
+        subMarket,
+        brand,
+        subBrand,
       }) => ({
         url: "/dashboard/summary",
 
@@ -280,14 +316,18 @@ export const dashboardApi = createApi({
 
           from: from || undefined,
           to: to || undefined,
+
+          market: market || undefined,
+          subMarket: subMarket || undefined,
+          brand: brand || undefined,
+          subBrand: subBrand || undefined,
         },
       }),
 
-      transformResponse: (
-        res: {
-          data: DashboardSummary;
-        },
-      ) => res.data,
+      // Expected: { message, data: DashboardSummary, success }
+      transformResponse: (res: {
+        data: DashboardSummary;
+      }): DashboardSummary => res.data,
     }),
 
     // =====================================================
@@ -304,6 +344,8 @@ export const dashboardApi = createApi({
         platform,
         from,
         to,
+        market,
+        subMarket,
         brand,
         subBrand,
         search,
@@ -315,44 +357,69 @@ export const dashboardApi = createApi({
         params: {
           page,
           limit,
+
           platform: platform || undefined,
           from: from || undefined,
           to: to || undefined,
+
+          market: market || undefined,
+          subMarket: subMarket || undefined,
           brand: brand || undefined,
           subBrand: subBrand || undefined,
+
           search: search || undefined,
           sortBy,
           sortOrder,
         },
       }),
 
-      transformResponse: (
-        res: {
-          data: {
-            campaigns?: RawCampaign[];
-            items?: RawCampaign[];
-            rows?: RawCampaign[];
-            pagination?: CampaignPagination;
-          };
-        },
-      ): CampaignsResponse => {
+      transformResponse: (res: {
+        data:
+          | {
+              campaigns?: RawCampaign[];
+              items?: RawCampaign[];
+              rows?: RawCampaign[];
+              pagination?: CampaignPagination;
+            }
+          | RawCampaign[];
+      }): CampaignsResponse => {
         const data = res.data;
 
-        const list: RawCampaign[] = Array.isArray(data)
+        const response = isRecord(data)
           ? data
-          : data?.campaigns ??
-            data?.items ??
-            data?.rows ??
-            [];
+          : undefined;
+
+        const list: RawCampaign[] = Array.isArray(data)
+          ? data.filter(isRecord)
+          : Array.isArray(response?.campaigns)
+            ? response.campaigns.filter(isRecord)
+            : Array.isArray(response?.items)
+              ? response.items.filter(isRecord)
+              : Array.isArray(response?.rows)
+                ? response.rows.filter(isRecord)
+                : [];
 
         const campaigns = list.map(toGridRow);
+        const rawPagination = response?.pagination;
 
-        const pagination = data?.pagination ?? {
-          page: 1,
-          limit: campaigns.length,
-          total: campaigns.length,
-          totalPages: campaigns.length > 0 ? 1 : 1,
-        };
+        const pagination: CampaignPagination =
+          isRecord(rawPagination) &&
+          typeof rawPagination.page === "number" &&
+          typeof rawPagination.limit === "number" &&
+          typeof rawPagination.total === "number" &&
+          typeof rawPagination.totalPages === "number"
+            ? {
+                page: rawPagination.page,
+                limit: rawPagination.limit,
+                total: rawPagination.total,
+                totalPages: rawPagination.totalPages,
+              }
+            : {
+                page: 1,
+                limit: campaigns.length,
+                total: campaigns.length,
+                totalPages: 1,
+              };
 
         return {
           campaigns,
@@ -363,17 +430,16 @@ export const dashboardApi = createApi({
 
     // =====================================================
     // CAMPAIGN FILTER OPTIONS
+    // Used for Brand and Sub-brand
     // =====================================================
 
     getCampaignFilterOptions: builder.query<
       CampaignFilterOptions,
-      {
-        platform?: string;
-        brand?: string;
-      }
+      CampaignFilterOptionsArgs
     >({
       query: ({
         platform,
+        market,
         brand,
       }) => ({
         url: "/campaigns/filter-options",
@@ -384,40 +450,57 @@ export const dashboardApi = createApi({
               ? platform
               : undefined,
 
-          brand:
-            brand && brand !== "all"
-              ? brand
-              : undefined,
+          market: market || undefined,
+          brand: brand || undefined,
         },
       }),
 
-      transformResponse: (
-        res: {
-          data: CampaignFilterOptions;
-        },
-      ) => res.data,
+      transformResponse: (res: {
+        data: Partial<CampaignFilterOptions>;
+      }): CampaignFilterOptions => ({
+        brands: res.data?.brands ?? [],
+        subBrands: res.data?.subBrands ?? [],
+        markets: res.data?.markets ?? [],
+        subMarkets: res.data?.subMarkets ?? [],
+      }),
     }),
 
     // =====================================================
     // LOCATIONS
+    // Market = state
+    // Submarket = city
+    // No pagination on this endpoint
     // =====================================================
 
-    getLocations: builder.query<LocationItem[], void>({
-      query: () => "/locations",
+    getLocations: builder.query<
+      LocationItem[],
+      LocationsArgs | void
+    >({
+      query: (args) => ({
+        url: "/locations/list",
 
-      transformResponse: (
-        res: {
-          data: unknown;
+        params: {
+          platform:
+            args?.platform &&
+            args.platform !== "all"
+              ? args.platform
+              : undefined,
         },
-      ): LocationItem[] => {
+      }),
+
+      transformResponse: (res: {
+        data: unknown;
+      }): LocationItem[] => {
         const data: unknown = res.data;
 
-        // The API may return an array directly or wrap
-        // the location array in locations, items or rows.
         const response = isRecord(data)
           ? data
           : undefined;
 
+        // Supports:
+        // { data: { locations: [...] } }
+        // { data: [...] }
+        // { data: { items: [...] } }
         const rawList: unknown = Array.isArray(data)
           ? data
           : response?.locations ??
@@ -425,60 +508,40 @@ export const dashboardApi = createApi({
             response?.rows ??
             [];
 
-        // Validate the array before accessing its records.
         const list = Array.isArray(rawList)
           ? rawList.filter(isRecord)
           : [];
 
         return list
-          .filter((location) => location.isActive !== false)
+          .filter(
+            (location) => location.isActive !== false,
+          )
           .map(
-            (location, index): LocationItem => {
-              const rawBrands: unknown = location.brands;
+            (location, index): LocationItem => ({
+              id: String(
+                location.id ??
+                  location._id ??
+                  index,
+              ),
 
-              const brands = Array.isArray(rawBrands)
-                ? rawBrands.filter(isRecord)
-                : [];
+              platform: String(
+                location.platform ?? "",
+              ).trim().toLowerCase(),
 
-              return {
-                id: String(
-                  location.id ??
-                    location._id ??
-                    index,
-                ),
+              platformName: String(
+                location.platformName ?? "",
+              ),
 
-                platform: String(
-                  location.platform ?? "",
-                ).toLowerCase(),
+              state: String(
+                location.state ?? "",
+              ).trim(),
 
-                state: String(
-                  location.state ?? "",
-                ),
+              city: String(
+                location.city ?? "",
+              ).trim(),
 
-                city: String(
-                  location.city ?? "",
-                ),
-
-                brands: brands.map((brand) => {
-                  const rawProducts: unknown =
-                    brand.products;
-
-                  const products = Array.isArray(rawProducts)
-                    ? rawProducts.map((product) =>
-                        String(product),
-                      )
-                    : [];
-
-                  return {
-                    name: String(
-                      brand.name ?? "",
-                    ),
-
-                    products,
-                  };
-                }),
-              };
-            },
+              isActive: location.isActive !== false,
+            }),
           );
       },
     }),

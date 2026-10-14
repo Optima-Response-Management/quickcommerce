@@ -22,19 +22,14 @@ export interface ParsedSheet {
 
 export interface CampaignRow {
   CampaignName: string;
-
   BrandName: string;
-
   SubBrandName: string;
-
+  market: string | null;
+  subMarket: string | null;
   Budget: number;
-
   Spend: number;
-
   Revenue: number;
-
   Orders: number;
-
   Roas: number;
 }
 
@@ -51,8 +46,7 @@ const NUMERIC_TERMS = [
   "Roas",
 ] as const;
 
-type NumericTerm =
-  (typeof NUMERIC_TERMS)[number];
+type NumericTerm = (typeof NUMERIC_TERMS)[number];
 
 const TOTAL_LABELS = new Set([
   "total",
@@ -60,9 +54,7 @@ const TOTAL_LABELS = new Set([
   "subtotal",
 ]);
 
-function cellValue(
-  v: ExcelJS.CellValue,
-): unknown {
+function cellValue(v: ExcelJS.CellValue): unknown {
   if (v === null || v === undefined) {
     return "";
   }
@@ -73,9 +65,7 @@ function cellValue(
 
   if (typeof v === "object") {
     if ("result" in v) {
-      return cellValue(
-        v.result as ExcelJS.CellValue,
-      );
+      return cellValue(v.result as ExcelJS.CellValue);
     }
 
     if ("richText" in v) {
@@ -98,7 +88,7 @@ function cellValue(
 
 function toNumber(v: unknown): number {
   if (typeof v === "number") {
-    return v;
+    return Number.isFinite(v) ? v : NaN;
   }
 
   const cleaned = String(v ?? "")
@@ -114,6 +104,20 @@ function toNumber(v: unknown): number {
     : NaN;
 }
 
+function normalizeLocation(value: unknown): string | null {
+  const text = String(value ?? "").trim();
+
+  if (
+    !text ||
+    text.toLowerCase() === "null" ||
+    text.toLowerCase() === "undefined"
+  ) {
+    return null;
+  }
+
+  return text;
+}
+
 export async function parseSheet(
   file: {
     buffer: Buffer;
@@ -126,9 +130,7 @@ export async function parseSheet(
 
   const workbook = new ExcelJS.Workbook();
 
-  let sheet:
-    | ExcelJS.Worksheet
-    | undefined;
+  let sheet: ExcelJS.Worksheet | undefined;
 
   try {
     if (ext === ".xlsx") {
@@ -145,13 +147,15 @@ export async function parseSheet(
       );
 
       sheet = workbook.worksheets[0];
-    } else {
+    } else if (ext === ".csv") {
       sheet = await workbook.csv.read(
         Readable.from(file.buffer),
         {
           map: (value: unknown) => value,
         },
       );
+    } else {
+      throw new Error("unsupported file extension");
     }
   } catch {
     throw new ApiError(
@@ -172,25 +176,23 @@ export async function parseSheet(
     col: number;
   }[] = [];
 
-  sheet
-    .getRow(1)
-    .eachCell(
-      {
-        includeEmpty: false,
-      },
-      (cell, col) => {
-        const name = String(
-          cellValue(cell.value),
-        ).trim();
+  sheet.getRow(1).eachCell(
+    {
+      includeEmpty: false,
+    },
+    (cell, col) => {
+      const name = String(
+        cellValue(cell.value),
+      ).trim();
 
-        if (name) {
-          columns.push({
-            name,
-            col,
-          });
-        }
-      },
-    );
+      if (name) {
+        columns.push({
+          name,
+          col,
+        });
+      }
+    },
+  );
 
   if (columns.length === 0) {
     throw new ApiError(
@@ -201,31 +203,19 @@ export async function parseSheet(
 
   const rows: ParsedRow[] = [];
 
-  for (
-    let r = 2;
-    r <= sheet.rowCount;
-    r++
-  ) {
+  for (let r = 2; r <= sheet.rowCount; r++) {
     const row = sheet.getRow(r);
 
-    const cells: Record<
-      string,
-      unknown
-    > = {};
+    const cells: Record<string, unknown> = {};
 
     let hasValue = false;
 
-    for (const {
-      name,
-      col,
-    } of columns) {
+    for (const { name, col } of columns) {
       const value = cellValue(
         row.getCell(col).value,
       );
 
-      if (
-        String(value).trim() !== ""
-      ) {
+      if (String(value).trim() !== "") {
         hasValue = true;
       }
 
@@ -250,9 +240,7 @@ export async function parseSheet(
   }
 
   return {
-    headers: columns.map(
-      (c) => c.name,
-    ),
+    headers: columns.map((column) => column.name),
     rows,
   };
 }
@@ -261,10 +249,7 @@ export function normalizeRows(
   platformSlug: string,
   rows: ParsedRow[],
 ) {
-  const format =
-    SUPPORTED_FORMATS[
-      platformSlug
-    ];
+  const format = SUPPORTED_FORMATS[platformSlug];
 
   if (!format) {
     throw new ApiError(
@@ -273,9 +258,7 @@ export function normalizeRows(
     );
   }
 
-  const campaignKey = normalize(
-    format.campaignColumn,
-  );
+  const campaignKey = normalize(format.campaignColumn);
 
   const brandKeys = [
     "BrandName",
@@ -290,6 +273,17 @@ export function normalizeRows(
     "SubBrand",
     "Sub Brand",
     "SUB_BRAND_NAME",
+  ].map(normalize);
+
+  const marketKeys = [
+    "Market",
+  ].map(normalize);
+
+  const subMarketKeys = [
+    "Submarket",
+    "SubMarket",
+    "Sub Market",
+    "Sub-Market",
   ].map(normalize);
 
   const findCell = (
@@ -311,15 +305,11 @@ export function normalizeRows(
   };
 
   const valid: CampaignRow[] = [];
-
   const errors: RowError[] = [];
 
   let skippedTotalRows = 0;
 
-  for (const {
-    rowNumber,
-    cells,
-  } of rows) {
+  for (const { rowNumber, cells } of rows) {
     const CampaignName = String(
       cells[campaignKey] ?? "",
     ).trim();
@@ -327,49 +317,42 @@ export function normalizeRows(
     if (!CampaignName) {
       errors.push({
         row: rowNumber,
-        message:
-          "CampaignName is empty",
+        message: "CampaignName is empty",
       });
 
       continue;
     }
 
-    if (
-      TOTAL_LABELS.has(
-        normalize(CampaignName),
-      )
-    ) {
+    if (TOTAL_LABELS.has(normalize(CampaignName))) {
       skippedTotalRows++;
-
       continue;
     }
 
     const BrandName = String(
-      findCell(
-        cells,
-        brandKeys,
-      ) ?? "",
+      findCell(cells, brandKeys) ?? "",
     ).trim();
 
     const SubBrandName = String(
-      findCell(
-        cells,
-        subBrandKeys,
-      ) ?? "",
+      findCell(cells, subBrandKeys) ?? "",
     ).trim();
 
-    const numbers =
-      {} as Record<
-        NumericTerm,
-        number
-      >;
+    // Read location from each Excel row.
+    // normalize() makes Market and market equivalent,
+    // and Submarket and SubMarket equivalent.
+    const market = normalizeLocation(
+      findCell(cells, marketKeys),
+    );
+
+    const subMarket = normalizeLocation(
+      findCell(cells, subMarketKeys),
+    );
+
+    const numbers = {} as Record<NumericTerm, number>;
 
     let rowIsValid = true;
 
     for (const term of NUMERIC_TERMS) {
-      const raw =
-        cells[normalize(term)];
-
+      const raw = cells[normalize(term)];
       const n = toNumber(raw);
 
       if (Number.isNaN(n)) {
@@ -396,11 +379,10 @@ export function normalizeRows(
     if (rowIsValid) {
       valid.push({
         CampaignName,
-
         BrandName,
-
         SubBrandName,
-
+        market,
+        subMarket,
         ...numbers,
       });
     }

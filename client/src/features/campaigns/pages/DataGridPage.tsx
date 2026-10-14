@@ -1302,11 +1302,7 @@ export default function DataGridPage() {
                   )}
               </div>
 
-              <p className="mt-1 text-xs text-brand-gray">
-                {tab === "campaign"
-                  ? "Campaign, brand, sub brand, budget, spend, revenue and date"
-                  : "City level performance"}
-              </p>
+             
             </div>
 
             <div className="flex items-center gap-2">

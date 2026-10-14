@@ -1,122 +1,126 @@
+
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-const STORAGE_ROOT = path.resolve(
-  process.env.UPLOAD_STORAGE_DIR ??
-    path.join(process.cwd(), "uploads")
+const DEFAULT_STORAGE_DIR = path.resolve(
+  process.cwd(),
+  "uploads",
 );
 
-function getExtension(
-  fileName: string
-): string {
-  const extension =
-    path.extname(fileName).toLowerCase();
+const STORAGE_ROOT = path.resolve(
+  process.env.UPLOAD_STORAGE_DIR?.trim() ||
+    DEFAULT_STORAGE_DIR,
+);
 
-  if (
-    extension === ".xlsx" ||
-    extension === ".csv"
-  ) {
-    return extension;
+const ALLOWED_EXTENSIONS = new Set([
+  ".xlsx",
+  ".csv",
+]);
+
+function getExtension(fileName: string): string {
+  const extension = path.extname(fileName).toLowerCase();
+
+  if (!ALLOWED_EXTENSIONS.has(extension)) {
+    throw new Error(
+      "Unsupported file type. Only .xlsx and .csv files are allowed.",
+    );
   }
 
-  return "";
+  return extension;
 }
 
-function resolveStoredPath(
-  storageKey: string
-): string {
-  const root = path.resolve(
-    STORAGE_ROOT
-  );
+function resolveStoredPath(storageKey: string): string {
+  if (
+    !storageKey ||
+    path.isAbsolute(storageKey) ||
+    storageKey.includes("/") ||
+    storageKey.includes("\\") ||
+    storageKey === "." ||
+    storageKey === ".."
+  ) {
+    throw new Error("Invalid storage key");
+  }
 
-  const target = path.resolve(
-    root,
-    storageKey
-  );
+  const target = path.resolve(STORAGE_ROOT, storageKey);
 
   if (
-    target !== root &&
-    !target.startsWith(
-      `${root}${path.sep}`
-    )
+    target === STORAGE_ROOT ||
+    !target.startsWith(`${STORAGE_ROOT}${path.sep}`)
   ) {
-    throw new Error(
-      "Invalid storage key"
-    );
+    throw new Error("Invalid storage key");
   }
 
   return target;
 }
 
+async function ensureStorageDirectory(): Promise<void> {
+  await fs.mkdir(STORAGE_ROOT, {
+    recursive: true,
+  });
+}
+
 export async function saveUploadedFile(
-  file: Express.Multer.File
+  file: Express.Multer.File,
 ): Promise<{
   storageKey: string;
   mimeType: string;
   fileSize: number;
 }> {
-  await fs.mkdir(
-    STORAGE_ROOT,
-    {
-      recursive: true,
-    }
-  );
-
-  const extension =
-    getExtension(
-      file.originalname
+  if (!file?.buffer || !Buffer.isBuffer(file.buffer)) {
+    throw new Error(
+      "Uploaded file buffer is missing. Check your Multer memoryStorage configuration.",
     );
+  }
 
-  const storageKey =
-    `${randomUUID()}${extension}`;
+  const extension = getExtension(file.originalname);
+  const storageKey = `${randomUUID()}${extension}`;
+  const target = resolveStoredPath(storageKey);
 
-  const target =
-    resolveStoredPath(
-      storageKey
-    );
+  await ensureStorageDirectory();
 
-  await fs.writeFile(
-    target,
-    file.buffer
-  );
+  // Use exclusive creation so an existing file is never overwritten.
+  const handle = await fs.open(target, "wx");
+
+  try {
+    await handle.writeFile(file.buffer);
+  } catch (error) {
+    await handle.close().catch(() => undefined);
+    await fs.unlink(target).catch(() => undefined);
+    throw error;
+  }
+
+  await handle.close();
 
   return {
     storageKey,
     mimeType:
-      file.mimetype ||
-      "application/octet-stream",
-    fileSize: file.size,
+      file.mimetype || "application/octet-stream",
+    fileSize: file.size ?? file.buffer.length,
   };
 }
 
 export async function readUploadedFile(
-  storageKey: string
+  storageKey: string,
 ): Promise<Buffer> {
-  return fs.readFile(
-    resolveStoredPath(
-      storageKey
-    )
-  );
+  const target = resolveStoredPath(storageKey);
+
+  return fs.readFile(target);
 }
 
 export async function deleteUploadedFile(
-  storageKey?: string | null
+  storageKey?: string | null,
 ): Promise<void> {
   if (!storageKey) {
     return;
   }
 
+  const target = resolveStoredPath(storageKey);
+
   try {
-    await fs.unlink(
-      resolveStoredPath(
-        storageKey
-      )
-    );
+    await fs.unlink(target);
   } catch (error) {
-    const code =
-      (error as NodeJS.ErrnoException)
-        .code;
+    const code = (error as NodeJS.ErrnoException).code;
 
     if (code !== "ENOENT") {
       throw error;

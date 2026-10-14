@@ -3,82 +3,35 @@ import mongoose, { HydratedDocument } from "mongoose";
 import { ApiError } from "../../utils/ApiError";
 import { IUser } from "../users/user.model";
 import { Platform } from "../platforms/platform.model";
-
 import { Upload } from "./upload.model";
 import { Campaign } from "./campaign.model";
 import { UploadCampaignInput } from "./campaign.schema";
-
 import {
   SUPPORTED_FORMATS,
   assertFileNameMatchesPlatform,
   findMissingColumns,
   normalize,
 } from "./campaign.formats";
-
-import {
-  normalizeRows,
-  parseSheet,
-} from "./campaign.parser";
-
+import { normalizeRows, parseSheet } from "./campaign.parser";
 import {
   deleteUploadedFile,
   saveUploadedFile,
 } from "./upload.storage";
 
-function normalizeFileName(fileName: string): string {
-  return fileName.trim().normalize("NFC").toLowerCase();
-}
-
-function isDuplicateFilenameError(error: unknown): boolean {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const mongoError = error as {
-    code?: number;
-    keyPattern?: Record<string, unknown>;
-    message?: string;
-  };
-
-  return (
-    mongoError.code === 11000 &&
-    (
-      "fileNameNormalized" in (mongoError.keyPattern ?? {}) ||
-      mongoError.message?.includes("fileNameNormalized_unique") === true
-    )
-  );
-}
+const normalizeFileName = (name: string) =>
+  name.normalize("NFC").trim().toLocaleLowerCase("en-US");
 
 export async function uploadCampaignFile(
   file: Express.Multer.File,
   input: UploadCampaignInput,
-  user: HydratedDocument<IUser>
+  user: HydratedDocument<IUser>,
 ) {
   const slug = input.platform;
   const reportDate = input.reportDate;
-  const market = input.market ?? null;
-  const fileName = file.originalname.trim();
-  const fileNameNormalized = normalizeFileName(fileName);
+  const market = input.market?.trim() || null;
+  const subMarket = input.subMarket?.trim() || null;
+  const fileNameNormalized = normalizeFileName(file.originalname);
 
-  if (!fileNameNormalized) {
-    throw new ApiError(400, "Filename cannot be empty.");
-  }
-
-  // Check the filename globally, ignoring capitalization.
-  const existingUpload = await Upload.findOne({
-    fileNameNormalized,
-  })
-    .select("_id")
-    .lean();
-
-  if (existingUpload) {
-    throw new ApiError(
-      409,
-      `A file named "${fileName}" already exists in upload history. Rename the file and upload it again.`
-    );
-  }
-
-  // Validate the selected platform.
   const platform = await Platform.findOne({
     slug,
     isActive: true,
@@ -91,22 +44,32 @@ export async function uploadCampaignFile(
   if (!SUPPORTED_FORMATS[slug]) {
     throw new ApiError(
       400,
-      `Uploads for ${platform.name} are not set up yet.`
+      `Uploads for ${platform.name} are not set up yet.`,
     );
   }
 
-  // Validate the filename against the selected platform.
-  assertFileNameMatchesPlatform(fileName, slug);
+  assertFileNameMatchesPlatform(file.originalname, slug);
 
-  // Parse the spreadsheet.
+  // Filenames must be unique globally, regardless of platform/date/market.
+  const duplicate = await Upload.findOne({
+    fileNameNormalized,
+  })
+    .select("_id")
+    .lean();
+
+  if (duplicate) {
+    throw new ApiError(
+      409,
+      `A file named "${file.originalname}" has already been uploaded. Rename the file before uploading it again.`,
+    );
+  }
+
   const sheet = await parseSheet(file);
-
-  // Validate required columns.
   const missing = findMissingColumns(slug, sheet.headers);
 
-  if (missing.length > 0) {
+  if (missing.length) {
     const hasCampaignType = sheet.headers.some(
-      (header) => normalize(header) === "campaigntype"
+      (header) => normalize(header) === "campaigntype",
     );
 
     let hint = "";
@@ -115,7 +78,8 @@ export async function uploadCampaignFile(
       hint =
         ' This file has a "Campaign Type" column, which is the Flipkart format.';
     } else if (slug === "flipkart" && !hasCampaignType) {
-      hint = ' Flipkart files use a "Campaign Type" column.';
+      hint =
+        ' Flipkart files use a "Campaign Type" column.';
     }
 
     throw new ApiError(
@@ -124,7 +88,7 @@ export async function uploadCampaignFile(
       missing.map((column) => ({
         field: column,
         message: "Column not found in the file",
-      }))
+      })),
     );
   }
 
@@ -138,11 +102,11 @@ export async function uploadCampaignFile(
     skippedTotalRows,
   } = normalizeRows(slug, sheet.rows);
 
-  if (errors.length > 0) {
+  if (errors.length) {
     throw new ApiError(
       400,
       `${errors.length} problem(s) found in the file. Fix them and upload again. Nothing was saved.`,
-      errors.slice(0, 20)
+      errors.slice(0, 20),
     );
   }
 
@@ -150,7 +114,6 @@ export async function uploadCampaignFile(
     throw new ApiError(400, "The file has no campaign rows.");
   }
 
-  // Store the physical file only after initial validation.
   const storedFile = await saveUploadedFile(file);
 
   let session: mongoose.ClientSession | null = null;
@@ -161,7 +124,8 @@ export async function uploadCampaignFile(
     let uploadId = "";
 
     await session.withTransaction(async () => {
-      // Always create a new upload. Never replace existing uploads.
+      // Never delete or replace previous uploads based on platform,
+      // report date, market, or submarket.
       const [upload] = await Upload.create(
         [
           {
@@ -169,7 +133,8 @@ export async function uploadCampaignFile(
             platformName: platform.name,
             reportDate,
             market,
-            fileName,
+            subMarket,
+            fileName: file.originalname,
             fileNameNormalized,
             rowCount: valid.length,
             uploadedBy: user._id,
@@ -178,19 +143,22 @@ export async function uploadCampaignFile(
             fileSize: storedFile.fileSize,
           },
         ],
-        { session }
+        { session },
       );
 
-      // Associate every campaign row with this specific upload.
       await Campaign.insertMany(
         valid.map((row) => ({
           ...row,
           uploadId: upload._id,
           platform: slug,
           reportDate,
-          market,
+
+          // Prefer each row's Excel location.
+          // Fall back to the upload-level location only when absent.
+          market: row.market ?? market,
+          subMarket: row.subMarket ?? subMarket,
         })),
-        { session }
+        { session },
       );
 
       uploadId = String(upload._id);
@@ -202,28 +170,33 @@ export async function uploadCampaignFile(
       platformName: platform.name,
       reportDate,
       market,
-      fileName,
+      subMarket,
+      fileName: file.originalname,
       rowCount: valid.length,
       skippedTotalRows,
     };
   } catch (error) {
-    // A concurrent request may have claimed the filename after
-    // the initial check. The unique index prevents both succeeding.
-    if (isDuplicateFilenameError(error)) {
+    // If this upload fails, remove only the file created by this request.
+    await deleteUploadedFile(storedFile.storageKey).catch(
+      () => undefined,
+    );
+
+    // The unique database index also protects against simultaneous
+    // uploads with the same normalized filename.
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: number }).code === 11000
+    ) {
       throw new ApiError(
         409,
-        `A file named "${fileName}" already exists in upload history. Rename the file and upload it again.`
+        `A file named "${file.originalname}" has already been uploaded. Rename the file before uploading it again.`,
       );
     }
 
     throw error;
   } finally {
-    if (session) {
-      await session.endSession();
-    }
-
-    // Only remove the newly stored file when the database operation
-    // failed. Never remove a file belonging to a previous upload.
-    // Successful uploads retain their stored files.
+    await session?.endSession();
   }
 }

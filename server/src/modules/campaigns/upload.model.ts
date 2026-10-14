@@ -1,3 +1,4 @@
+
 import { Schema, model, Types } from "mongoose";
 
 export interface IUpload {
@@ -5,6 +6,7 @@ export interface IUpload {
   platformName: string;
   reportDate: string;
   market: string | null;
+  subMarket: string | null;
   fileName: string;
   fileNameNormalized: string;
   rowCount: number;
@@ -33,6 +35,12 @@ const uploadSchema = new Schema<IUpload>(
     market: {
       type: String,
       default: null,
+      trim: true,
+    },
+    subMarket: {
+      type: String,
+      default: null,
+      trim: true,
     },
     fileName: {
       type: String,
@@ -74,6 +82,7 @@ const uploadSchema = new Schema<IUpload>(
 );
 
 // A filename can exist only once across all uploads.
+// Filename uniqueness is global and case-insensitive through fileNameNormalized.
 uploadSchema.index(
   { fileNameNormalized: 1 },
   {
@@ -83,6 +92,7 @@ uploadSchema.index(
 );
 
 // This index is intentionally non-unique.
+// Multiple uploads may share the same platform and report date.
 uploadSchema.index(
   { platform: 1, reportDate: 1 },
   {
