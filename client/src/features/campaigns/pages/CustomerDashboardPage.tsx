@@ -68,7 +68,7 @@ function FilterSelect({
   );
 }
 
-// Local date formatting avoids UTC date shifts.
+// Use local date formatting to avoid UTC date shifts.
 const toYMD = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
     2,
@@ -87,7 +87,8 @@ function getMonthToDateRange(): DateRange {
   };
 }
 
-// Normalize names such as "Tamil Nadu" and "Tamilnadu".
+// Treat "Tamil Nadu", "TamilNadu", and "Tamilnadu" as the same
+// location for dropdown deduplication.
 const normalizeLocationName = (
   value: string | null | undefined,
 ) =>
@@ -113,11 +114,8 @@ export default function CustomerDashboardPage() {
   const [subBrand, setSubBrand] = useState("");
 
   /**
-   * The backend must enforce the authenticated user's
-   * platform permissions independently of these filters.
-   *
-   * Empty allowedPlatforms means the user has all-platform
-   * access, based on the existing user model.
+   * Empty allowedPlatforms means all-platform access,
+   * based on the existing user model.
    */
   const allowedPlatforms = useMemo(() => {
     if (!user || user.platformAccess === "all") {
@@ -135,8 +133,7 @@ export default function CustomerDashboardPage() {
     Boolean(user) && user?.platformAccess !== "all";
 
   /**
-   * Only users with all-platform access can choose arbitrary
-   * platforms. Restricted users retain their assigned access.
+   * Restricted users can only query their assigned platforms.
    */
   const effectivePlatforms = useMemo(() => {
     if (hasRestrictedPlatformAccess) {
@@ -220,7 +217,7 @@ export default function CustomerDashboardPage() {
   );
 
   /**
-   * Dashboard metrics respond to every selected filter.
+   * Dashboard summary responds to all selected filters.
    */
   const {
     data: dashboard,
@@ -244,23 +241,27 @@ export default function CustomerDashboardPage() {
   );
 
   /**
-   * Market options.
-   * Use the locations endpoint as the main source, with
-   * dashboard breakdowns as a fallback.
+   * FIX:
+   * Prefer market names from the dashboard API because those
+   * names come from the actual campaign data. Use locations
+   * only when dashboard market breakdowns are unavailable.
+   *
+   * Deduplicate spelling variants for display, but retain the
+   * first original value as the actual dropdown/query value.
    */
   const markets = useMemo(() => {
-    const locationMarkets = platformLocations
-      .map((location) => location.state.trim())
-      .filter(Boolean);
-
     const dashboardMarkets = (dashboard?.byMarket ?? [])
       .map((item) => item.name.trim())
       .filter(Boolean);
 
+    const locationMarkets = platformLocations
+      .map((location) => location.state.trim())
+      .filter(Boolean);
+
     const availableMarkets =
-      locationMarkets.length > 0
-        ? locationMarkets
-        : dashboardMarkets;
+      dashboardMarkets.length > 0
+        ? dashboardMarkets
+        : locationMarkets;
 
     const unique = new Map<string, string>();
 
@@ -275,10 +276,12 @@ export default function CustomerDashboardPage() {
     return [...unique.values()].sort((a, b) =>
       a.localeCompare(b),
     );
-  }, [platformLocations, dashboard?.byMarket]);
+  }, [dashboard?.byMarket, platformLocations]);
 
   /**
-   * Submarket depends on the selected Market.
+   * Submarket options depend on the selected Market.
+   * Normalize names when comparing them so that spacing and
+   * capitalization differences do not break the comparison.
    */
   const subMarkets = useMemo(() => {
     if (!market) {
@@ -498,15 +501,15 @@ export default function CustomerDashboardPage() {
               options={markets}
               onChange={handleMarketChange}
               placeholder={
-                locationsLoading
+                locationsLoading && markets.length === 0
                   ? "Loading markets..."
-                  : locationsError
+                  : locationsError && markets.length === 0
                     ? "Could not load markets"
                     : "All Markets"
               }
               disabled={
-                locationsLoading ||
-                locationsError ||
+                (locationsLoading && markets.length === 0) ||
+                (locationsError && markets.length === 0) ||
                 markets.length === 0
               }
             />
