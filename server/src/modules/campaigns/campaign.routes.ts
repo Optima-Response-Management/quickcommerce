@@ -1,16 +1,11 @@
+
 import { Router } from "express";
 
-import {
-  authenticate,
-} from "../../middlewares/auth.middleware";
+import { authenticate } from "../../middlewares/auth.middleware";
 
-import {
-  requireFeature,
-} from "../../middlewares/role.middleware";
+import { requireFeature } from "../../middlewares/role.middleware";
 
-import {
-  uploadSingleFile,
-} from "../../middlewares/upload.middleware";
+import { uploadSingleFile } from "../../middlewares/upload.middleware";
 
 import {
   validate,
@@ -39,36 +34,35 @@ router.post(
   authenticate,
   requireFeature("upload_data"),
   uploadSingleFile("file"),
-  validate(
-    uploadCampaignSchema,
-  ),
+  validate(uploadCampaignSchema),
   uploadCampaignController,
 );
 
 // ============================================================
 // CAMPAIGN FILTER OPTIONS
 //
-// Must be before the generic campaign listing route.
+// Dropdown options for the Customer Dashboard.
+// Authentication is retained, but the Data Grid feature
+// permission is not required just to load filter options.
 // ============================================================
 
 router.get(
   "/filter-options",
   authenticate,
-  requireFeature("data_grid"),
   getCampaignFilterOptionsController,
 );
 
 // ============================================================
 // DATA GRID
+//
+// Keep Data Grid permission for retrieving campaign records.
 // ============================================================
 
 router.get(
   "/",
   authenticate,
   requireFeature("data_grid"),
-  validateQuery(
-    listCampaignsSchema,
-  ),
+  validateQuery(listCampaignsSchema),
   listCampaignsController,
 );
 
