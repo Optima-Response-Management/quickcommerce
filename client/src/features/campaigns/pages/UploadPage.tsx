@@ -1,10 +1,4 @@
 
-import {
-  Activity,
-  FileCheck2,
-  ShieldCheck,
-  UploadCloud,
-} from "lucide-react";
 
 import UploadExcel from "../components/UploadExcel";
 
