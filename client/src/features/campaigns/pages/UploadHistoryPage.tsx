@@ -33,6 +33,28 @@ import {
 
 const PAGE_SIZE = 20;
 
+function formatUploadedAt(value: string | null): string {
+  if (!value) {
+    return "Timestamp unavailable";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Timestamp unavailable";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(date);
+}
+
 const apiBaseUrl = String(
   import.meta.env
     .VITE_API_BASE_URL ?? "",
@@ -1122,6 +1144,10 @@ const loadPage = useCallback(
                       </th>
 
                       <th className="px-5 py-3.5 font-semibold text-brand-ink">
+                        Uploaded at
+                      </th>
+
+                      <th className="px-5 py-3.5 font-semibold text-brand-ink">
                         Rows
                       </th>
 
@@ -1224,6 +1250,21 @@ const loadPage = useCallback(
                               {
                                 upload.reportDate
                               }
+                            </td>
+
+                            {/* UPLOAD TIMESTAMP */}
+
+                            <td className="whitespace-nowrap px-5 py-4 text-brand-gray">
+                              <time
+                                dateTime={upload.uploadedAt ?? undefined}
+                                title={
+                                  upload.uploadedAt
+                                    ? new Date(upload.uploadedAt).toLocaleString()
+                                    : undefined
+                                }
+                              >
+                                {formatUploadedAt(upload.uploadedAt)}
+                              </time>
                             </td>
 
                             {/* ROWS */}
