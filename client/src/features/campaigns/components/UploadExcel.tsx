@@ -257,23 +257,7 @@ export default function UploadExcel() {
   return (
     <div className="min-h-full bg-brand-offwhite px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-border bg-white px-3 py-1.5 text-xs font-semibold text-brand-primary shadow-sm">
-            <Upload className="h-3.5 w-3.5" />
-            Campaign Data Import
-          </div>
-
-          <h1 className="text-2xl font-bold tracking-tight text-brand-ink sm:text-3xl">
-            Upload Campaign Data
-          </h1>
-
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-brand-gray sm:text-base">
-            Import your campaign report and make the latest data
-            available across the platform.
-          </p>
-        </div>
-
+        
         {/* Main Card */}
         <div className="overflow-hidden rounded-2xl border border-brand-border bg-white shadow-sm">
           <form onSubmit={handleSubmit}>
@@ -597,23 +581,7 @@ export default function UploadExcel() {
           </form>
         </div>
 
-        {/* Bottom information */}
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-brand-border bg-white px-4 py-3.5">
-          <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10 text-brand-primary">
-            <FileSpreadsheet className="h-4 w-4" />
-          </div>
-
-          <div>
-            <p className="text-xs font-semibold text-brand-ink">
-              Before uploading
-            </p>
-
-            <p className="mt-0.5 text-xs leading-5 text-brand-gray">
-              Verify the platform, report date, file format, and
-              campaign data before submitting the import.
-            </p>
-          </div>
-        </div>
+       
       </div>
     </div>
   );
