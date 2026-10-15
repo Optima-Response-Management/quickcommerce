@@ -16,29 +16,34 @@ app.set("trust proxy", 1);
 
 const allowedOrigins = new Set(
   env.CLIENT_URLS.split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
     .filter(Boolean),
 );
 
-const privateNetwork =
-  /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+const developmentOrigins = new Set([
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+]);
 
 app.use(
   cors({
     origin(origin, callback) {
+      // Requests without Origin include health checks and server-to-server calls.
       if (!origin) {
         callback(null, true);
         return;
       }
 
-      if (allowedOrigins.has(origin)) {
+      const normalizedOrigin = origin.replace(/\/+$/, "");
+
+      if (allowedOrigins.has(normalizedOrigin)) {
         callback(null, true);
         return;
       }
 
       if (
         env.NODE_ENV !== "production" &&
-        privateNetwork.test(origin)
+        developmentOrigins.has(normalizedOrigin)
       ) {
         callback(null, true);
         return;
@@ -46,7 +51,9 @@ app.use(
 
       callback(new Error("Origin not allowed by CORS"));
     },
+
     credentials: true,
+
     methods: [
       "GET",
       "POST",
@@ -55,11 +62,14 @@ app.use(
       "DELETE",
       "OPTIONS",
     ],
+
     allowedHeaders: [
       "Content-Type",
       "Authorization",
       "X-CSRF-Token",
     ],
+
+    optionsSuccessStatus: 204,
   }),
 );
 
