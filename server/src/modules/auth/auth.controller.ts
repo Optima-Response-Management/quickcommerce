@@ -1,30 +1,26 @@
 import type { CookieOptions, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-import { env } from "../../config/env";
 import { ApiResponse } from "../../utils/ApiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as authService from "./auth.service";
 
-const isProduction = env.NODE_ENV === "production";
-
-// The browser talks only to the Vercel domain (the /api rewrite forwards to
-// Hostinger), so the cookie is first-party and "lax" works on mobile too.
-const sameSite: CookieOptions["sameSite"] = "lax";
-const secure = isProduction;
-
+// Frontend (qcom.optimaresponse.com) and API (onrender.com) are different
+// sites, so the cookie must be SameSite=None, and None requires Secure.
+// If the API moves to api.optimaresponse.com, change this to "lax".
 const cookieOptions: CookieOptions = {
   httpOnly: true,
-  secure,
-  sameSite,
+  secure: true,
+  sameSite: "none",
   path: "/",
-  // Leave COOKIE_DOMAIN empty in production so the cookie belongs to the
-  // domain the browser is actually on (the Vercel domain).
-  ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
 };
 
 const FALLBACK_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Keep the cookie lifetime identical to the JWT lifetime so changing
+ * JWT_EXPIRES_IN can never leave a live cookie holding a dead token.
+ */
 function getCookieMaxAge(token: string): number {
   const decoded = jwt.decode(token);
 
@@ -43,18 +39,8 @@ function getCookieMaxAge(token: string): number {
   return FALLBACK_MAX_AGE_MS;
 }
 
-function setNoCacheHeaders(res: Response): void {
-  res.set({
-    "Cache-Control": "no-store, no-cache, must-revalidate, private",
-    Pragma: "no-cache",
-    Expires: "0",
-  });
-}
-
 export const signInController = asyncHandler(
   async (req: Request, res: Response) => {
-    setNoCacheHeaders(res);
-
     const { token, user } = await authService.signIn(req.body);
 
     res.cookie("token", token, {
@@ -72,8 +58,6 @@ export const signInController = asyncHandler(
 
 export const meController = asyncHandler(
   async (req: Request, res: Response) => {
-    setNoCacheHeaders(res);
-
     if (!req.user) {
       res.status(401).json({
         success: false,
@@ -92,9 +76,7 @@ export const meController = asyncHandler(
 
 export const logoutController = asyncHandler(
   async (_req: Request, res: Response) => {
-    setNoCacheHeaders(res);
-
-    // Same attributes as sign-in, otherwise the browser won't clear the cookie.
+    // Attributes must match the ones used when the cookie was set.
     res.clearCookie("token", cookieOptions);
 
     res.status(200).json({
