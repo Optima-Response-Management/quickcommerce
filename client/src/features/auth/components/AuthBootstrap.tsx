@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+
+import { useEffect, type ReactNode } from "react";
 import { useDispatch } from "react-redux";
 
 import { useMeQuery } from "../authApi";
@@ -8,17 +9,21 @@ import {
   sessionChecked,
 } from "../authSlice";
 
-export default function AuthBootstrap() {
+interface AuthBootstrapProps {
+  children: ReactNode;
+}
+
+export default function AuthBootstrap({
+  children,
+}: AuthBootstrapProps) {
   const dispatch = useDispatch();
 
-  const {
-    data,
-    error,
-    isLoading,
-    isFetching,
-  } = useMeQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data, error, isLoading, isFetching } = useMeQuery(
+    undefined,
+    {
+      refetchOnMountOrArgChange: true,
+    },
+  );
 
   useEffect(() => {
     if (data?.user) {
@@ -36,5 +41,5 @@ export default function AuthBootstrap() {
     return null;
   }
 
-  return null;
+  return <>{children}</>;
 }
