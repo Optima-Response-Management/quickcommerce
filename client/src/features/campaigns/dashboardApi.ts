@@ -472,79 +472,76 @@ export const dashboardApi = createApi({
     // No pagination on this endpoint
     // =====================================================
 
-    getLocations: builder.query<
-      LocationItem[],
-      LocationsArgs | void
-    >({
-      query: (args) => ({
-        url: "/locations/list",
+    
+getLocations: builder.query<
+LocationItem[],
+LocationsArgs | void
+>({
+query: (args) => ({
+  url: "/locations",
+  params: {
+    platform:
+      args?.platform &&
+      args.platform !== "all"
+        ? args.platform
+        : undefined,
+  },
+}),
 
-        params: {
-          platform:
-            args?.platform &&
-            args.platform !== "all"
-              ? args.platform
-              : undefined,
-        },
-      }),
+transformResponse: (res: {
+  data: unknown;
+}): LocationItem[] => {
+  const data: unknown = res.data;
 
-      transformResponse: (res: {
-        data: unknown;
-      }): LocationItem[] => {
-        const data: unknown = res.data;
+  const response = isRecord(data)
+    ? data
+    : undefined;
 
-        const response = isRecord(data)
-          ? data
-          : undefined;
+  const rawList: unknown = Array.isArray(data)
+    ? data
+    : response?.locations ??
+      response?.items ??
+      response?.rows ??
+      [];
 
-        // Supports:
-        // { data: { locations: [...] } }
-        // { data: [...] }
-        // { data: { items: [...] } }
-        const rawList: unknown = Array.isArray(data)
-          ? data
-          : response?.locations ??
-            response?.items ??
-            response?.rows ??
-            [];
+  const list = Array.isArray(rawList)
+    ? rawList.filter(isRecord)
+    : [];
 
-        const list = Array.isArray(rawList)
-          ? rawList.filter(isRecord)
-          : [];
+  return list
+    .filter(
+      (location) => location.isActive !== false
+    )
+    .map((location, index): LocationItem => ({
+      id: String(
+        location.id ??
+          location._id ??
+          index
+      ),
 
-        return list
-          .filter(
-            (location) => location.isActive !== false,
-          )
-          .map(
-            (location, index): LocationItem => ({
-              id: String(
-                location.id ??
-                  location._id ??
-                  index,
-              ),
+      platform: String(
+        location.platform ?? ""
+      )
+        .trim()
+        .toLowerCase(),
 
-              platform: String(
-                location.platform ?? "",
-              ).trim().toLowerCase(),
+      platformName: String(
+        location.platformName ?? ""
+      ),
 
-              platformName: String(
-                location.platformName ?? "",
-              ),
+      state: String(
+        location.state ?? ""
+      ).trim(),
 
-              state: String(
-                location.state ?? "",
-              ).trim(),
+      city: String(
+        location.city ?? ""
+      ).trim(),
 
-              city: String(
-                location.city ?? "",
-              ).trim(),
+      isActive: location.isActive !== false,
+    }));
+},
+}),
 
-              isActive: location.isActive !== false,
-            }),
-          );
-      },
-    }),
   }),
 });
 
