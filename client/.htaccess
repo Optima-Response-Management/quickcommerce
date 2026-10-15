@@ -1,6 +1,11 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # Forward API requests to the PHP reverse proxy.
+  RewriteRule ^api(?:/.*)?$ api-proxy.php [QSA,L]
+
+  # Preserve normal React/Vite SPA routing.
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d

@@ -9,8 +9,8 @@ const isProduction = env.NODE_ENV === "production";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? ("none" as const) : ("lax" as const),
+  secure: env.NODE_ENV === "production",
+  sameSite: "lax" as const,
   path: "/",
 };
 
@@ -18,7 +18,6 @@ const sessionCookieOptions = {
   ...cookieOptions,
   maxAge: 24 * 60 * 60 * 1000,
 };
-
 export const signInController = asyncHandler(
   async (req: Request, res: Response) => {
     const { token, user } = await authService.signIn(req.body);
