@@ -3,9 +3,9 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import type { HydratedDocument } from "mongoose";
 
 import { env } from "../config/env";
+import { User, type IUser } from "../modules/users/user.model";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
-import { User, type IUser } from "../modules/users/user.model";
 
 declare global {
   namespace Express {
@@ -17,13 +17,15 @@ declare global {
 
 export const authenticate = asyncHandler(
   async (req, _res, next) => {
-    const header = req.headers.authorization;
+    const cookieToken = req.cookies?.token;
 
-    const token =
-      req.cookies?.token ??
-      (header?.startsWith("Bearer ")
-        ? header.slice(7).trim()
-        : undefined);
+    const authorizationHeader = req.headers.authorization;
+
+    const bearerToken = authorizationHeader
+      ?.match(/^Bearer\s+(.+)$/i)?.[1]
+      ?.trim();
+
+    const token = cookieToken || bearerToken;
 
     if (!token) {
       throw new ApiError(401, "Authentication required");
@@ -38,17 +40,14 @@ export const authenticate = asyncHandler(
 
       if (
         typeof verified === "string" ||
-        typeof verified.id !== "string"
+        typeof verified.id !== "string" ||
+        !verified.id
       ) {
         throw new Error("Invalid token payload");
       }
 
       payload = verified;
     } catch {
-      throw new ApiError(401, "Invalid or expired token");
-    }
-
-    if (!payload.id) {
       throw new ApiError(401, "Invalid or expired token");
     }
 
@@ -59,6 +58,7 @@ export const authenticate = asyncHandler(
     }
 
     req.user = user;
+
     next();
-  }
+  },
 );

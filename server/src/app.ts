@@ -17,7 +17,7 @@ app.set("trust proxy", 1);
 const allowedOrigins = new Set(
   env.CLIENT_URLS.split(",")
     .map((origin) => origin.trim())
-    .filter(Boolean)
+    .filter(Boolean),
 );
 
 const privateNetwork =
@@ -26,8 +26,6 @@ const privateNetwork =
 app.use(
   cors({
     origin(origin, callback) {
-      // Requests without an Origin header are allowed through CORS.
-      // Authentication and authorization still protect private routes.
       if (!origin) {
         callback(null, true);
         return;
@@ -62,16 +60,19 @@ app.use(
       "Authorization",
       "X-CSRF-Token",
     ],
-  })
+  }),
 );
 
 app.use(cookieParser());
 
 app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({
-  extended: false,
-  limit: "1mb",
-}));
+
+app.use(
+  express.urlencoded({
+    extended: false,
+    limit: "1mb",
+  }),
+);
 
 app.use("/api", routes);
 

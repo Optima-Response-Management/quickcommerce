@@ -1,5 +1,6 @@
 
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
+
 import { env } from "../../config/env";
 import { ApiResponse } from "../../utils/ApiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
@@ -8,25 +9,27 @@ import * as authService from "./auth.service";
 const cookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === "production",
-  sameSite: "lax" as const,
+  sameSite: "none" as const,
   path: "/",
+};
+
+const sessionCookieOptions = {
+  ...cookieOptions,
+  maxAge: 24 * 60 * 60 * 1000,
 };
 
 export const signInController = asyncHandler(
   async (req: Request, res: Response) => {
     const { token, user } = await authService.signIn(req.body);
 
-    res.cookie("token", token, {
-      ...cookieOptions,
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, sessionCookieOptions);
 
     res.status(200).json({
       success: true,
       message: "Signed in successfully",
       data: { user },
     });
-  }
+  },
 );
 
 export const meController = asyncHandler(
@@ -42,9 +45,9 @@ export const meController = asyncHandler(
     res.status(200).json(
       new ApiResponse("Authenticated", {
         user: authService.toSafeUser(req.user),
-      })
+      }),
     );
-  }
+  },
 );
 
 export const logoutController = asyncHandler(
@@ -55,5 +58,5 @@ export const logoutController = asyncHandler(
       success: true,
       message: "Logged out successfully",
     });
-  }
+  },
 );
