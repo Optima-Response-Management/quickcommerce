@@ -1,4 +1,3 @@
-
 import type { CookieOptions, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
@@ -9,20 +8,19 @@ import * as authService from "./auth.service";
 
 const isProduction = env.NODE_ENV === "production";
 
-// SameSite=None requires Secure cookies.
-// This supports cross-origin frontend requests when the browser permits
-// third-party cookies.
-const sameSite: CookieOptions["sameSite"] = "none";
-const secure = isProduction || sameSite === "none";
+// The browser talks only to the Vercel domain (the /api rewrite forwards to
+// Hostinger), so the cookie is first-party and "lax" works on mobile too.
+const sameSite: CookieOptions["sameSite"] = "lax";
+const secure = isProduction;
 
 const cookieOptions: CookieOptions = {
   httpOnly: true,
   secure,
   sameSite,
   path: "/",
-  ...(env.COOKIE_DOMAIN
-    ? { domain: env.COOKIE_DOMAIN }
-    : {}),
+  // Leave COOKIE_DOMAIN empty in production so the cookie belongs to the
+  // domain the browser is actually on (the Vercel domain).
+  ...(env.COOKIE_DOMAIN ? { domain: env.COOKIE_DOMAIN } : {}),
 };
 
 const FALLBACK_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -96,7 +94,7 @@ export const logoutController = asyncHandler(
   async (_req: Request, res: Response) => {
     setNoCacheHeaders(res);
 
-    // Use the same cookie attributes as sign-in when clearing the cookie.
+    // Same attributes as sign-in, otherwise the browser won't clear the cookie.
     res.clearCookie("token", cookieOptions);
 
     res.status(200).json({
