@@ -1,4 +1,6 @@
+
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+
 import type { AuthUser } from "./authSlice";
 import type { LoginFormValues } from "./authSchema";
 
@@ -12,32 +14,67 @@ type RawAuthResponse = {
 };
 
 function extractUser(res: RawAuthResponse): AuthUser {
-  const d = res.data;
-  if (d && "user" in d) return d.user;
-  if (d) return d;
-  return res.user as AuthUser;
+  const data = res.data;
+
+  if (data && "user" in data) {
+    return data.user;
+  }
+
+  if (data) {
+    return data;
+  }
+
+  if (res.user) {
+    return res.user;
+  }
+
+  throw new Error("Invalid authentication response from server.");
 }
 
 export const authApi = createApi({
   reducerPath: "authApi",
+
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_BASE_URL,
     credentials: "include",
   }),
+
   endpoints: (builder) => ({
     login: builder.mutation<AuthResponse, LoginFormValues>({
-      query: (body) => ({ url: "/auth/signin", method: "POST", body }),
-      transformResponse: (res: RawAuthResponse): AuthResponse => ({ user: extractUser(res) }),
+      query: (body) => ({
+        url: "/auth/signin",
+        method: "POST",
+        body,
+      }),
+
+      transformResponse: (res: RawAuthResponse): AuthResponse => ({
+        user: extractUser(res),
+      }),
     }),
+
     me: builder.query<AuthResponse, void>({
-      query: () => "/auth/me",
-      transformResponse: (res: RawAuthResponse): AuthResponse => ({ user: extractUser(res) }),
+      query: () => ({
+        url: "/auth/me",
+        method: "GET",
+      }),
+
+      transformResponse: (res: RawAuthResponse): AuthResponse => ({
+        user: extractUser(res),
+      }),
     }),
+
     logout: builder.mutation<void, void>({
-      query: () => ({ url: "/auth/logout", method: "POST" }),
+      query: () => ({
+        url: "/auth/logout",
+        method: "POST",
+      }),
     }),
   }),
 });
 
-
-export const { useLoginMutation, useMeQuery, useLogoutMutation } = authApi;
+export const {
+  useLoginMutation,
+  useMeQuery,
+  useLazyMeQuery,
+  useLogoutMutation,
+} = authApi;
