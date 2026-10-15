@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
-
 import {
   ArrowUpRight,
   BarChart3,
@@ -25,6 +24,15 @@ const benefits = [
   "Fast data imports and reporting",
 ];
 
+interface ApiError {
+  status?: number | string;
+  data?: {
+    message?: string;
+  };
+  error?: string;
+  message?: string;
+}
+
 export default function LoginPage() {
   const [error, setError] = useState("");
 
@@ -41,11 +49,11 @@ export default function LoginPage() {
     setError("");
 
     try {
-      // Step 1: Authenticate the user.
+      // 1. Sign in. The backend sets the HTTP-only token cookie.
       await login(values).unwrap();
 
-      // Step 2: Explicitly verify the session.
-      // The API client must use credentials: "include".
+      // 2. Verify the session using the cookie.
+      // fetchBaseQuery sends it because credentials is "include".
       const session = await fetchMe().unwrap();
 
       if (!session?.user) {
@@ -54,28 +62,21 @@ export default function LoginPage() {
         );
       }
 
-      // Step 3: Store the verified user.
+      // 3. Save the verified user in Redux.
       dispatch(
         setCredentials({
           user: session.user,
         }),
       );
 
-      // Step 4: Navigate after session verification.
+      // 4. Navigate only after session verification succeeds.
       navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
-      const apiError = err as {
-        status?: number | string;
-        data?: {
-          message?: string;
-        };
-        error?: string;
-        message?: string;
-      };
+      const apiError = err as ApiError;
 
       if (apiError?.status === 401) {
         setError(
-          "Your login succeeded, but the session could not be verified. Please check the authentication cookie and API configuration.",
+          "Authentication failed or your session could not be verified. Please check your credentials and API cookie configuration.",
         );
       } else {
         setError(

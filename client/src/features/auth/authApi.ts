@@ -1,77 +1,83 @@
-
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-
-import type { AuthUser } from "./authSlice";
 import type { LoginFormValues } from "./authSchema";
+import type { AuthUser } from "./authSlice";
 
 interface AuthResponse {
+  success?: boolean;
+  message?: string;
+  user?: AuthUser;
+  data?: {
+    user?: AuthUser;
+  } | AuthUser;
+}
+
+interface AuthUserResponse {
   user: AuthUser;
 }
 
-type RawAuthResponse = {
-  user?: AuthUser;
-  data?: AuthUser | { user: AuthUser };
-};
+function extractUser(response: AuthResponse): AuthUserResponse {
+  const user =
+    response?.data &&
+    "user" in response.data
+      ? response.data.user
+      : response?.user ??
+        (response?.data &&
+        "id" in response.data
+          ? response.data
+          : undefined);
 
-function extractUser(response: RawAuthResponse): AuthUser {
-  const data = response.data;
-
-  if (data && "user" in data) {
-    return data.user;
+  if (!user || !user.id) {
+    throw new Error(
+      "Invalid authentication response: user not found.",
+    );
   }
 
-  if (data) {
-    return data;
-  }
-
-  if (response.user) {
-    return response.user;
-  }
-
-  throw new Error("Invalid authentication response from server.");
-}
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/+$/, "");
-
-if (!API_BASE_URL) {
-  throw new Error(
-    "VITE_API_BASE_URL is missing. Configure it to point to your backend API.",
-  );
+  return { user };
 }
 
 export const authApi = createApi({
   reducerPath: "authApi",
 
   baseQuery: fetchBaseQuery({
-    baseUrl: API_BASE_URL,
+    // VITE_API_BASE_URL should include /api if your
+    // backend routes are mounted under /api.
+    baseUrl: import.meta.env.VITE_API_BASE_URL,
+
+    // Send the HTTP-only authentication cookie.
     credentials: "include",
+
+    prepareHeaders: (headers) => {
+      headers.set("Accept", "application/json");
+      return headers;
+    },
   }),
 
   endpoints: (builder) => ({
-    login: builder.mutation<AuthResponse, LoginFormValues>({
-      query: (body) => ({
+    login: builder.mutation<AuthUserResponse, LoginFormValues>({
+      query: (credentials) => ({
         url: "/auth/signin",
         method: "POST",
-        body,
+        body: credentials,
       }),
 
-      transformResponse: (response: RawAuthResponse): AuthResponse => ({
-        user: extractUser(response),
-      }),
+      transformResponse: (response: AuthResponse) =>
+        extractUser(response),
     }),
 
-    me: builder.query<AuthResponse, void>({
+    me: builder.query<AuthUserResponse, void>({
       query: () => ({
         url: "/auth/me",
         method: "GET",
       }),
 
-      transformResponse: (response: RawAuthResponse): AuthResponse => ({
-        user: extractUser(response),
-      }),
+      transformResponse: (response: AuthResponse) =>
+        extractUser(response),
     }),
 
-    logout: builder.mutation<void, void>({
+    logout: builder.mutation<
+      { success?: boolean; message?: string },
+      void
+    >({
       query: () => ({
         url: "/auth/logout",
         method: "POST",
