@@ -11,6 +11,8 @@ import {
 
 const app = express();
 
+app.disable("x-powered-by");
+
 app.set("trust proxy", 1);
 
 const allowedOrigins = new Set(
@@ -21,7 +23,7 @@ const allowedOrigins = new Set(
 
 const developmentOrigins = new Set([
   "http://localhost:5173",
-  "http://127.0.0.1:5173",
+  "http://192.168.1.7:5173",
 ]);
 
 app.use(
@@ -83,6 +85,19 @@ app.use(
     limit: "1mb",
   }),
 );
+
+// Authentication responses must never be cached by browsers, the PHP
+// proxy, a CDN or shared-hosting caches. A cached 401 from /auth/me is
+// a classic cause of "signed in but unauthorized".
+app.use("/api/auth", (_req, res, next) => {
+  res.set({
+    "Cache-Control": "no-store, no-cache, must-revalidate, private",
+    Pragma: "no-cache",
+    Expires: "0",
+    Vary: "Cookie, Origin",
+  });
+  next();
+});
 
 app.use("/api", routes);
 

@@ -42,7 +42,6 @@ export const authApi = createApi({
     // VITE_API_BASE_URL should include /api if your
     // backend routes are mounted under /api.
     baseUrl: import.meta.env.VITE_API_BASE_URL,
-
     // Send the HTTP-only authentication cookie.
     credentials: "include",
 

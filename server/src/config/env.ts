@@ -30,6 +30,27 @@ const schema = z.object({
   JWT_EXPIRES_IN: z
     .string()
     .default("1d"),
+
+  // "lax" works when the browser calls the API through the same origin
+  // (the PHP /api proxy). Use "none" ONLY if the browser calls the API
+  // host directly (cross-site); it still fails in Safari/iOS and
+  // browsers that block third-party cookies.
+  COOKIE_SAMESITE: z
+    .enum(["lax", "strict", "none"])
+    .default("lax"),
+
+  // Optional. Leave empty for a host-only cookie (recommended).
+  COOKIE_DOMAIN: z
+    .string()
+    .optional()
+    .transform((value) => value?.trim() || undefined),
+
+  // Number of reverse proxies in front of the app (Render = 1).
+  TRUST_PROXY_HOPS: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(1),
 });
 
 const parsed = schema.safeParse(process.env);
