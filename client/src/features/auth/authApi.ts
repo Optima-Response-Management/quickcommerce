@@ -47,8 +47,10 @@ export const authApi = createApi({
         body,
       }),
 
-      transformResponse: (res: RawAuthResponse): AuthResponse => ({
-        user: extractUser(res),
+      transformResponse: (
+        response: RawAuthResponse,
+      ): AuthResponse => ({
+        user: extractUser(response),
       }),
     }),
 
@@ -58,8 +60,10 @@ export const authApi = createApi({
         method: "GET",
       }),
 
-      transformResponse: (res: RawAuthResponse): AuthResponse => ({
-        user: extractUser(res),
+      transformResponse: (
+        response: RawAuthResponse,
+      ): AuthResponse => ({
+        user: extractUser(response),
       }),
     }),
 
