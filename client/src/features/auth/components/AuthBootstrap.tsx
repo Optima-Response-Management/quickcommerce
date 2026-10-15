@@ -6,6 +6,7 @@ import type { RootState } from "../../../app/store";
 import { useMeQuery } from "../authApi";
 import {
   logout,
+  sessionChecked,
   setCredentials,
 } from "../authSlice";
 
@@ -19,31 +20,52 @@ export default function AuthBootstrap({
   const dispatch = useDispatch();
 
   const checking = useSelector(
-    (state: RootState) => state.auth.checking,
+    (state: RootState) => state.auth.checking
   );
 
-  const { data, isError } = useMeQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
+  const { data, error, isError, isLoading } = useMeQuery(
+    undefined,
+    {
+      refetchOnMountOrArgChange: true,
+    }
+  );
 
-  // Restore the user when the server confirms the session.
   useEffect(() => {
     if (data?.user) {
       dispatch(setCredentials({ user: data.user }));
     }
   }, [data, dispatch]);
 
-  // No valid session: keep the app logged out.
   useEffect(() => {
-    if (isError) {
+    if (!isError) return;
+
+    const status =
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error
+        ? error.status
+        : undefined;
+
+    if (status === 401) {
       dispatch(logout());
+      return;
     }
-  }, [isError, dispatch]);
+
+    // A server/network error is not necessarily an expired session.
+    // Finish bootstrapping without forcibly clearing any existing user.
+    dispatch(sessionChecked());
+  }, [isError, error, dispatch]);
+
+  useEffect(() => {
+    if (!isLoading && !data && !isError) {
+      dispatch(sessionChecked());
+    }
+  }, [isLoading, data, isError, dispatch]);
 
   if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-brand-gray">
-        Loading...
+        Checking your session...
       </div>
     );
   }

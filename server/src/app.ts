@@ -1,42 +1,77 @@
+
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
 import { env } from "./config/env";
 import routes from "./routes";
-import { errorHandler, notFound } from "./middlewares/error.middleware";
+import {
+  errorHandler,
+  notFound,
+} from "./middlewares/error.middleware";
 
 const app = express();
+
 app.set("trust proxy", 1);
 
-const allowedOrigins = env.CLIENT_URLS.split(",").map((o) => o.trim());
+const allowedOrigins = new Set(
+  env.CLIENT_URLS.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 
-// localhost + private network ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
 const privateNetwork =
   /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$/;
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // No Origin header = Apidog, curl, health checks. Auth still protects the routes.
-      if (!origin) return callback(null, true);
-
-      // Exact URLs from CLIENT_URLS always work (production domain goes here)
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-
-      // Any local network address, development only
-      if (env.NODE_ENV !== "production" && privateNetwork.test(origin)) {
-        return callback(null, true);
+    origin(origin, callback) {
+      // Requests without an Origin header are allowed through CORS.
+      // Authentication and authorization still protect private routes.
+      if (!origin) {
+        callback(null, true);
+        return;
       }
 
-      // Not allowed: no CORS headers are sent, so the browser blocks it
-      return callback(null, false);
+      if (allowedOrigins.has(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      if (
+        env.NODE_ENV !== "production" &&
+        privateNetwork.test(origin)
+      ) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Origin not allowed by CORS"));
     },
     credentials: true,
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-CSRF-Token",
+    ],
   })
 );
 
 app.use(cookieParser());
-app.use(express.json());
+
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({
+  extended: false,
+  limit: "1mb",
+}));
 
 app.use("/api", routes);
 
