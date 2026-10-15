@@ -37,9 +37,11 @@ const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
   console.error("Invalid environment variables:");
 
-  parsed.error.issues.forEach((i) =>
-    console.error(`  ${i.path.join(".")}: ${i.message}`)
-  );
+  parsed.error.issues.forEach((issue) => {
+    console.error(
+      `  ${issue.path.join(".")}: ${issue.message}`,
+    );
+  });
 
   process.exit(1);
 }

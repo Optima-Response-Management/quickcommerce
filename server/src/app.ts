@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -28,7 +27,7 @@ const developmentOrigins = new Set([
 app.use(
   cors({
     origin(origin, callback) {
-      // Requests without Origin include health checks and server-to-server calls.
+      // Allow requests without an Origin header, such as health checks.
       if (!origin) {
         callback(null, true);
         return;
@@ -73,6 +72,7 @@ app.use(
   }),
 );
 
+// Parse cookies before authentication middleware runs.
 app.use(cookieParser());
 
 app.use(express.json({ limit: "1mb" }));

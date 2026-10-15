@@ -1,4 +1,3 @@
-
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import type { HydratedDocument } from "mongoose";
 
@@ -17,26 +16,22 @@ declare global {
 
 export const authenticate = asyncHandler(
   async (req, _res, next) => {
-    const cookieToken = req.cookies?.token;
+    const token = req.cookies?.token;
 
-    const authorizationHeader = req.headers.authorization;
-
-    const bearerToken = authorizationHeader
-      ?.match(/^Bearer\s+(.+)$/i)?.[1]
-      ?.trim();
-
-    const token = cookieToken || bearerToken;
-
-    if (!token) {
+    if (!token || typeof token !== "string") {
       throw new ApiError(401, "Authentication required");
     }
 
     let payload: JwtPayload;
 
     try {
-      const verified = jwt.verify(token, env.JWT_SECRET, {
-        algorithms: ["HS256"],
-      });
+      const verified = jwt.verify(
+        token,
+        env.JWT_SECRET,
+        {
+          algorithms: ["HS256"],
+        },
+      );
 
       if (
         typeof verified === "string" ||
