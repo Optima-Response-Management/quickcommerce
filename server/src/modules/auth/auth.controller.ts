@@ -1,17 +1,19 @@
 import type { CookieOptions, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
+import { env } from "../../config/env";
 import { ApiResponse } from "../../utils/ApiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as authService from "./auth.service";
 
-// Frontend (qcom.optimaresponse.com) and API (onrender.com) are different
-// sites, so the cookie must be SameSite=None, and None requires Secure.
-// If the API moves to api.optimaresponse.com, change this to "lax".
+// Frontend (qcom.optimaresponse.com) and API (api.optimaresponse.com) share
+// the same site (optimaresponse.com), so a "lax" cookie works on every
+// device, including iPhone Safari. Secure is only on in production so local
+// development over http still works.
 const cookieOptions: CookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite: "none",
+  secure: env.NODE_ENV === "production",
+  sameSite: "lax",
   path: "/",
 };
 
