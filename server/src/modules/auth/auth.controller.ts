@@ -1,15 +1,14 @@
 
 import type { Request, Response } from "express";
 
-import { env } from "../../config/env";
 import { ApiResponse } from "../../utils/ApiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
 import * as authService from "./auth.service";
 
 const cookieOptions = {
   httpOnly: true,
-  secure: env.NODE_ENV === "production",
-  sameSite: "none" as const,
+  secure: true,
+  sameSite: "lax" as const,
   path: "/",
 };
 
