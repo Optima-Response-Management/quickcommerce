@@ -271,8 +271,7 @@ export const dashboardApi = createApi({
   baseQuery: fetchBaseQuery({
     // VITE_API_BASE_URL should include /api.
     // Example: https://example.com/api
-    baseUrl: import.meta.env.VITE_API_BASE_URL,
-    credentials: "include",
+    baseUrl: import.meta.env.VITE_API_BASE_URL,    credentials: "include",
   }),
 
   endpoints: (builder) => ({
