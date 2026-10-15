@@ -1,82 +1,69 @@
+
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { LoginFormValues } from "./authSchema";
+
 import type { AuthUser } from "./authSlice";
+import type { LoginFormValues } from "./authSchema";
 
 interface AuthResponse {
-  success?: boolean;
-  message?: string;
-  user?: AuthUser;
-  data?: {
-    user?: AuthUser;
-  } | AuthUser;
-}
-
-interface AuthUserResponse {
   user: AuthUser;
 }
 
-function extractUser(response: AuthResponse): AuthUserResponse {
-  const user =
-    response?.data &&
-    "user" in response.data
-      ? response.data.user
-      : response?.user ??
-        (response?.data &&
-        "id" in response.data
-          ? response.data
-          : undefined);
+type RawAuthResponse = {
+  user?: AuthUser;
+  data?: AuthUser | { user: AuthUser };
+};
 
-  if (!user || !user.id) {
-    throw new Error(
-      "Invalid authentication response: user not found.",
-    );
+function extractUser(res: RawAuthResponse): AuthUser {
+  const data = res.data;
+
+  if (data && "user" in data) {
+    return data.user;
   }
 
-  return { user };
+  if (data) {
+    return data;
+  }
+
+  if (res.user) {
+    return res.user;
+  }
+
+  throw new Error("Invalid authentication response from server.");
 }
 
 export const authApi = createApi({
   reducerPath: "authApi",
 
   baseQuery: fetchBaseQuery({
-    // VITE_API_BASE_URL should include /api if your
-    // backend routes are mounted under /api.
     baseUrl: import.meta.env.VITE_API_BASE_URL,
-    // Send the HTTP-only authentication cookie.
     credentials: "include",
-
-    prepareHeaders: (headers) => {
-      headers.set("Accept", "application/json");
-      return headers;
-    },
   }),
 
   endpoints: (builder) => ({
-    login: builder.mutation<AuthUserResponse, LoginFormValues>({
-      query: (credentials) => ({
+    login: builder.mutation<AuthResponse, LoginFormValues>({
+      query: (body) => ({
         url: "/auth/signin",
         method: "POST",
-        body: credentials,
+        body,
       }),
 
-      transformResponse: (response: AuthResponse) =>
-        extractUser(response),
+      transformResponse: (res: RawAuthResponse): AuthResponse => ({
+        user: extractUser(res),
+      }),
     }),
 
-    me: builder.query<AuthUserResponse, void>({
+    me: builder.query<AuthResponse, void>({
       query: () => ({
         url: "/auth/me",
         method: "GET",
       }),
 
-      transformResponse: (response: AuthResponse) =>
-        extractUser(response),
+      transformResponse: (res: RawAuthResponse): AuthResponse => ({
+        user: extractUser(res),
+      }),
     }),
 
-    logout: builder.mutation<
-      { success?: boolean; message?: string },
-      void
-    >({
+    logout: builder.mutation<void, void>({
       query: () => ({
         url: "/auth/logout",
         method: "POST",
@@ -91,3 +78,6 @@ export const {
   useLazyMeQuery,
   useLogoutMutation,
 } = authApi;
+
+
+
